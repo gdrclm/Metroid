@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#101d23" />
+    <meta name="build-mode" content="development" />
+    <title>Последний причал — метроидвания</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='%23d5b579' d='M20 2 34 20 20 38 6 20Zm0 8L13 20l7 10 7-10Z'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="app">
+      <canvas
+        id="game"
+        width="1280"
+        height="720"
+        aria-label="Игровой мир. Управление: стрелки или A D, пробел — прыжок, J — удар, Shift — рывок, E — взаимодействие."
+        tabindex="0"
+      ></canvas>
+      <div class="vignette" aria-hidden="true"></div>
+      <header class="hud" id="hud" hidden>
+        <div class="vitals">
+          <span class="sigil">◈</span>
+          <div>
+            <div class="eyebrow">СТРАННИК</div>
+            <div id="health" aria-label="Здоровье"></div>
+          </div>
+          <span id="fragments" title="Осколки памяти">◇ 00</span>
+        </div>
+        <div class="location">
+          <span id="region" class="eyebrow"></span><span id="room-name"></span>
+        </div>
+        <button class="map-button" id="map-button" title="Открыть карту — M">
+          <canvas id="mini-map" width="148" height="72"></canvas
+          ><span>КАРТА <kbd>M</kbd></span>
+        </button>
+      </header>
+      <div id="room-caption" hidden>
+        <span id="caption-index" class="eyebrow"></span>
+        <h2 id="caption-name"></h2>
+        <div class="small-rule"></div>
+      </div>
+      <aside id="objective" hidden>
+        <span class="objective-mark">◇</span>
+        <div>
+          <span class="eyebrow">ПУТЬ НАВЕРХ</span>
+          <p id="objective-text"></p>
+        </div>
+      </aside>
+      <button id="interaction" hidden><kbd>E</kbd><span></span></button>
+      <div id="toast" role="status" aria-live="polite" hidden></div>
+      <div id="save-status" role="status"></div>
+      <footer id="controls" hidden>
+        <div>
+          <span><kbd>A</kbd><kbd>D</kbd> идти</span
+          ><span><kbd>Space</kbd> прыжок</span><span><kbd>J</kbd> удар</span
+          ><span id="dash-control" class="unavailable"
+            ><kbd>Shift</kbd> рывок</span
+          ><span><kbd>E</kbd> действие</span>
+        </div>
+        <button id="pause-button" aria-label="Пауза">
+          <span class="pause-symbol">Ⅱ</span> ПАУЗА <kbd>Esc</kbd>
+        </button>
+      </footer>
+      <div id="abilities" hidden>
+        <span id="dash-icon" title="Воздушный рывок — Shift">➝</span
+        ><span
+          id="grip-icon"
+          title="Зацеп — удерживайте направление к стене, Space для отталкивания"
+          >⋮</span
+        >
+      </div>
+
+      <section id="title-screen" class="screen title-screen">
+        <div class="edition">
+          <span class="small-rule"></span> ИСТОРИЯ ПОД СПЯЩИМ ГОРОДОМ
+        </div>
+        <div class="title-content">
+          <div class="chapter">ГЛАВА I <span> / </span> ПУТЬ НАВЕРХ</div>
+          <h1>
+            Последний<br /><em>причал</em><span class="title-dot">.</span>
+          </h1>
+          <p class="intro">
+            У города погасли огни.<br />Но где-то наверху ещё ждут рассвет.
+          </p>
+          <div class="title-actions">
+            <button id="play" class="primary">
+              Начать путешествие <span>⟶</span></button
+            ><button id="new-game" class="text-button" hidden>
+              Начать заново</button
+            ><button id="title-settings" class="text-button">Настройки</button>
+          </div>
+          <div class="title-note">
+            <span>◈</span> ИССЛЕДУЙТЕ. ВОЗВРАЩАЙТЕСЬ. НАХОДИТЕ ПУТЬ.
+          </div>
+        </div>
+        <div class="title-bottom">
+          <span>НИЖНИЙ ПРИЧАЛ · ВОКЗАЛ · РАБОЧИЕ КВАРТАЛЫ</span
+          ><span>01 — 20 <i> / </i> ИГРОВОЙ СРЕЗ</span>
+        </div>
+      </section>
+
+      <section id="pause-screen" class="screen modal-screen" hidden>
+        <div class="panel">
+          <span class="eyebrow">МОЖНО ПЕРЕВЕСТИ ДУХ</span>
+          <h2>Тихая минута</h2>
+          <p>Город никуда не уйдёт.</p>
+          <button id="resume" class="primary">Продолжить <span>⟶</span></button
+          ><button id="open-map" class="secondary">
+            Карта города <kbd>M</kbd></button
+          ><button id="open-settings" class="secondary">Настройки</button
+          ><button id="return-rest" class="text-button">
+            Вернуться к месту отдыха</button
+          ><button id="to-title" class="text-button">В главное меню</button>
+        </div>
+      </section>
+
+      <section id="map-screen" class="screen map-screen" hidden>
+        <header>
+          <div>
+            <span class="eyebrow">ПРОЙДЕННЫЕ ПУТИ</span>
+            <h2>Атлас города</h2>
+          </div>
+          <button id="close-map" class="close-button">
+            Закрыть <kbd>M / Esc</kbd>
+          </button>
+        </header>
+        <div class="map-stage">
+          <canvas
+            id="world-map"
+            width="1120"
+            height="540"
+            aria-label="Карта исследованных комнат"
+          ></canvas>
+        </div>
+        <footer>
+          <div class="map-legend">
+            <span>◆ Вы здесь</span><span>◉ Отдых</span
+            ><span>━ Открытый путь</span><span>┄ Закрытый проход</span
+            ><span>◇ Неизведанное</span>
+          </div>
+          <div class="map-tools">
+            <button id="zoom-out" aria-label="Уменьшить карту">−</button
+            ><button id="map-center">Центр</button
+            ><button id="zoom-in" aria-label="Увеличить карту">+</button>
+          </div>
+        </footer>
+        <p class="map-help">Колесо — масштаб · перетащите, чтобы переместить</p>
+      </section>
+
+      <section id="settings-screen" class="screen modal-screen" hidden>
+        <div class="panel settings-panel">
+          <span class="eyebrow">ВАШ РИТМ</span>
+          <h2>Настройки</h2>
+          <label
+            >Звук <input id="sound-setting" type="checkbox" checked /></label
+          ><label
+            >Громкость
+            <input
+              id="volume-setting"
+              type="range"
+              min="0"
+              max="100"
+              value="40" /></label
+          ><label
+            >Тряска камеры
+            <input id="shake-setting" type="checkbox" checked /></label
+          ><label
+            >Меньше вспышек <input id="flash-setting" type="checkbox" /></label
+          ><label
+            >Помощь в бою <input id="assist-setting" type="checkbox" /></label
+          ><label
+            >Крупный текст <input id="text-setting" type="checkbox"
+          /></label>
+          <p class="settings-note">
+            Помощь уменьшает получаемый урон вдвое.<br />Прогресс сохраняется
+            автоматически. Геймпад: A — прыжок, X — удар, B — рывок, Y —
+            действие.
+          </p>
+          <button id="close-settings" class="primary">
+            Готово <span>⟶</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="dialogue-screen" class="dialogue" hidden>
+        <span id="speaker" class="eyebrow"></span>
+        <p id="dialogue-text"></p>
+        <button id="dialogue-close">Продолжить <kbd>E / Enter</kbd></button>
+      </section>
+      <section id="death-screen" class="screen modal-screen" hidden>
+        <div class="panel">
+          <span class="eyebrow">СВЕТ НЕ ПОГАС</span>
+          <h2>Ещё одна попытка</h2>
+          <p>Способности и открытые пути остались с вами.</p>
+          <button id="respawn" class="primary">
+            К месту отдыха <span>⟶</span>
+          </button>
+        </div>
+      </section>
+      <section id="complete-screen" class="screen modal-screen" hidden>
+        <div class="panel completion">
+          <span class="eyebrow">ПЕРВЫЙ СВЕТ</span>
+          <h2>Город больше,<br />чем казалось.</h2>
+          <p>
+            За крышами — сады, литейные и затопленный архив.<br />Путешествие
+            только начинается.
+          </p>
+          <div id="completion-stats"></div>
+          <button id="keep-exploring" class="primary">
+            Продолжить исследование <span>⟶</span>
+          </button>
+        </div>
+      </section>
+      <section id="confirm-screen" class="screen modal-screen" hidden>
+        <div class="panel">
+          <span class="eyebrow">НОВОЕ ПУТЕШЕСТВИЕ</span>
+          <h2>Начать сначала?</h2>
+          <p>Текущий прогресс будет заменён.</p>
+          <button id="confirm-new" class="primary">
+            Начать заново <span>⟶</span></button
+          ><button id="cancel-new" class="secondary">
+            Сохранить путешествие
+          </button>
+        </div>
+      </section>
+      <div id="touch-controls" hidden>
+        <div class="touch-directions">
+          <button data-action="left" aria-label="Влево">◁</button
+          ><button data-action="right" aria-label="Вправо">▷</button>
+          <button data-action="down" aria-label="Вниз">↓</button>
+        </div>
+        <div class="touch-actions">
+          <button data-action="interact" aria-label="Действие">
+            <b>E</b><small>Действие</small></button
+          ><button data-action="attack" aria-label="Удар">
+            <b>⚔</b><small>Удар</small></button
+          ><button data-action="dash" aria-label="Рывок">
+            <b>➝</b><small>Рывок</small></button
+          ><button data-action="jump" aria-label="Прыжок">
+            <b>↑</b><small>Прыжок</small>
+          </button>
+        </div>
+      </div>
+      <aside id="debug" hidden>
+        <h3>Пульт смотрителя</h3>
+        <label
+          >Комната
+          <select id="debug-room"></select></label
+        ><button id="debug-warp">Перейти</button
+        ><button id="debug-reset">Сбросить комнату</button
+        ><label><input id="debug-dash" type="checkbox" /> Рывок</label
+        ><label><input id="debug-grip" type="checkbox" /> Зацеп</label
+        ><label><input id="debug-god" type="checkbox" /> Неуязвимость</label
+        ><label><input id="debug-fly" type="checkbox" /> Свободный полёт</label
+        ><label
+          ><input id="debug-collision" type="checkbox" /> Коллайдеры</label
+        >
+        <pre id="debug-state"></pre>
+      </aside>
+      <div id="loading" class="loading">Зажигаем огни…</div>
+    </main>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "last-harbour",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A vanilla JavaScript metroidvania — twenty rooms beneath a sleeping city.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node tools/server.mjs",
+    "start": "node tools/server.mjs",
+    "validate": "node tools/validate.mjs",
+    "test": "node --test tests/*.test.js",
+    "test:browser": "python tools/browser_smoke.py",
+    "metrics": "node tools/metrics.mjs",
+    "build": "node tools/build.mjs",
+    "preview": "node tools/server.mjs --dist",
+    "test:mobile": "python tools/mobile_smoke.py"
+  }
+}
