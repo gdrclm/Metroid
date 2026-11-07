@@ -8,6 +8,8 @@ export const defaultSettings = () => ({
   reducedFlash: false,
   assist: false,
   largeText: false,
+  particleQuality: "high",
+  mix: { music: 0.65, ambience: 0.85, actions: 1, interface: 0.65 },
 });
 export const newProgress = () => ({
   version: VERSION,
@@ -17,6 +19,7 @@ export const newProgress = () => ({
   hints: [],
   seenExits: [],
   markers: [],
+  scenes: {},
   stats: {
     roomTime: {},
     falls: 0,
@@ -100,7 +103,19 @@ export function decodeSave(text) {
       typeof p.retryCheckpoint.spawnPointId !== "string"
     )
       p.retryCheckpoint = null;
+    if (!p.scenes || typeof p.scenes !== "object" || Array.isArray(p.scenes)) {
+      p.scenes = {};
+      if (p.playTime > 0) p.scenes["scene.boat_departed"] = true;
+      if (p.rests.includes("rest.pier")) p.scenes["scene.warm_house"] = true;
+    }
     p.settings = { ...defaultSettings(), ...p.settings };
+    p.settings.mix = { ...defaultSettings().mix, ...p.settings.mix };
+    for (const key of Object.keys(defaultSettings().mix))
+      p.settings.mix[key] = Number.isFinite(p.settings.mix[key])
+        ? Math.max(0, Math.min(1, p.settings.mix[key]))
+        : defaultSettings().mix[key];
+    p.settings.particleQuality =
+      p.settings.particleQuality === "low" ? "low" : "high";
     p.playTime = Number.isFinite(p.playTime) ? Math.max(0, p.playTime) : 0;
     p.deaths = Number.isFinite(p.deaths) ? Math.max(0, p.deaths) : 0;
     p.settings.volume = Number.isFinite(p.settings.volume)

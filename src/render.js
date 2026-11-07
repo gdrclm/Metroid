@@ -1,3 +1,5 @@
+import { drawParticles } from "./particles.js";
+import { drawAtmosphere, drawAtmosphereDebug } from "./atmosphere-render.js";
 import { clamp, conditionMet } from "./core.js";
 import { attackBox } from "./physics.js";
 import { signText } from "./tutorial.js";
@@ -325,11 +327,20 @@ export class Renderer {
     }
     c.save();
     c.translate(-camera.x + sx, -camera.y + sy);
+    drawParticles(c, game, "back");
     c.save();
     c.scale(room.worldBounds.w / 1280, 1);
     this.roomDecor(c, room, t, game);
     c.restore();
-    for (const s of game.surfaces) this.surface(c, s, room, t);
+    for (const s of game.surfaces) {
+      if (
+        game.debug.atmospherePreview &&
+        game.debug.atmospherePreview !== "live" &&
+        (s.mechanismId || s.id.endsWith(".collider"))
+      )
+        continue;
+      this.surface(c, s, room, t);
+    }
     if (!menu)
       for (const sign of room.tutorialSigns || []) {
         if (game.progress.hints.includes("training." + sign.action)) continue;
@@ -348,6 +359,8 @@ export class Renderer {
       }
     for (const e of room.exits) this.exit(c, e, game, t);
     this.mechanisms(c, game, t);
+    drawAtmosphere(c, game);
+    drawParticles(c, game, "middle");
     if (game.editor?.active) game.editor.draw(c);
     for (const e of room.entities) {
       if (e.type === "enemy") continue;
@@ -412,27 +425,11 @@ export class Renderer {
       this.hero(c, ghost, t, game);
       c.restore();
     }
-    for (const p of game.particles) {
-      c.globalAlpha = Math.min(1, p.life * 1.5);
-      rect(c, p.x, p.y, p.size, p.size, p.color);
-    }
-    c.globalAlpha = 1;
+    drawParticles(c, game, "gameplay");
+    drawParticles(c, game, "front");
     if (game.debug.collisions) this.debug(c, game);
+    drawAtmosphereDebug(c, game);
     c.restore();
-    // Atmospheric motion stays out of the collision and gameplay layers.
-    c.save();
-    c.globalAlpha = 0.15;
-    for (let i = 0; i < 55; i++) {
-      const x = (i * 149.3 - t * 12) % 1340,
-        y = (i * 73.7 + t * (14 + (i % 3) * 5)) % 740;
-      line(c, x, y, x - 1, y + 7, "#bacac0", 0.6);
-    }
-    c.restore();
-    for (let i = 0; i < 13; i++) {
-      const x = (i * 113 + t * 3) % 1320,
-        y = 560 + Math.sin(i * 7 + t * 0.5) * 50;
-      ellipse(c, x, y, 1.2, 1.2, "#d3c49155");
-    }
     const vignette = c.createRadialGradient(
       viewW / 2,
       viewH / 2,
@@ -588,7 +585,12 @@ export class Renderer {
     if (s.h < 60) line(c, s.x, s.y + s.h, s.x + s.w, s.y + s.h, "#071821", 3);
   }
   mechanisms(c, game, t) {
-    for (const m of game.mechanisms.values()) {
+    for (const actual of game.mechanisms.values()) {
+      const preview = game.debug.atmospherePreview;
+      const m =
+        preview && preview !== "live"
+          ? { ...actual, value: preview === "after" ? 1 : 0 }
+          : actual;
       const x = m.x,
         y = m.y;
       if (m.vista) {
@@ -1268,8 +1270,14 @@ export class Renderer {
       c,
       [
         [-4, -32],
-        [-20 - lean * 2, -31 + Math.sin(t * 9) * 3],
-        [-35 - lean, -24 + Math.sin(t * 8 + 1) * 4],
+        [
+          -20 - lean * 2,
+          -31 + Math.sin(t * 9) * (2 + game.atmosphere.wind.gust * 2),
+        ],
+        [
+          -35 - lean,
+          -24 + Math.sin(t * 8 + 1) * (3 + game.atmosphere.wind.gust * 3),
+        ],
         [-22 - lean, -24],
         [-2, -27],
       ],

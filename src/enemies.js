@@ -96,7 +96,7 @@ export function updateEnemy(e, player, dt, surfaces, game) {
       e.state = "attack";
       e.timer = keeper ? 0.34 : 0.18;
       if (keeper && e.attackKind === "wave") {
-        game.emit?.("sound", "keeperWave");
+        game.emit?.("sound", "keeperWave", { x: e.x, y: e.y, warning: true });
         game.projectiles.push({
           id: e.id + ".wave." + game.time,
           x: e.x + (e.facing > 0 ? e.w : 0),
@@ -112,7 +112,12 @@ export function updateEnemy(e, player, dt, surfaces, game) {
       } else {
         e.attackKind = "lunge";
         if (keeper && dy < -55) e.vy = -620;
-        if (keeper) game.emit?.("sound", "keeperLunge");
+        if (keeper)
+          game.emit?.("sound", "keeperLunge", {
+            x: e.x,
+            y: e.y,
+            warning: true,
+          });
         e.vx = e.facing * (keeper ? 540 : 210);
       }
     }
@@ -139,7 +144,11 @@ export function updateEnemy(e, player, dt, surfaces, game) {
       e.lastAttack = next;
       e.attackKind = next;
       if (keeper)
-        game.emit?.("sound", next === "wave" ? "keeperWaveReady" : "keeperLungeReady");
+        game.emit?.(
+          "sound",
+          next === "wave" ? "keeperWaveReady" : "keeperLungeReady",
+          { x: e.x, y: e.y, warning: true },
+        );
       e.vx = 0;
     } else e.vx = e.facing * (keeper ? 95 : 70);
   } else {

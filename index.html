@@ -187,8 +187,50 @@
               type="range"
               min="0"
               max="100"
-              value="40" /></label
-          ><label
+              value="40"
+          /></label>
+          <details class="sound-mix">
+            <summary>Баланс звука</summary>
+            <label
+              >Музыка
+              <input id="mix-music" type="range" min="0" max="100" value="65"
+            /></label>
+            <label
+              >Окружение
+              <input
+                id="mix-ambience"
+                type="range"
+                min="0"
+                max="100"
+                value="85"
+            /></label>
+            <label
+              >Действия
+              <input
+                id="mix-actions"
+                type="range"
+                min="0"
+                max="100"
+                value="100"
+            /></label>
+            <label
+              >Интерфейс
+              <input
+                id="mix-interface"
+                type="range"
+                min="0"
+                max="100"
+                value="65"
+            /></label>
+          </details>
+          <label
+            >Частицы
+            <select id="particle-quality">
+              <option value="high">Обычные</option>
+              <option value="low">Меньше</option>
+            </select></label
+          >
+          <label
             >Тряска камеры
             <input id="shake-setting" type="checkbox" checked /></label
           ><label
@@ -253,14 +295,16 @@
       <div id="touch-controls" hidden>
         <div class="touch-movement">
           <div
-            id="swipe-zone"
+            class="touch-direction-buttons"
             role="group"
-            aria-label="Движение: проведите пальцем влево или вправо и удерживайте. Отпустите, чтобы остановиться."
+            aria-label="Движение"
           >
-            <div class="swipe-track">
-              <span id="swipe-thumb" aria-hidden="true">↔</span>
-            </div>
-            <small>Свайп и удержание</small>
+            <button data-action="left" aria-label="Влево">
+              <span aria-hidden="true">←</span>
+            </button>
+            <button data-action="right" aria-label="Вправо">
+              <span aria-hidden="true">→</span>
+            </button>
           </div>
           <div class="vertical-steps">
             <button data-action="up" aria-label="Вверх">↑</button

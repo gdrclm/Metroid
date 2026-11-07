@@ -14,6 +14,7 @@ import {
 } from "./safety.js";
 import { updateCamera } from "./camera.js";
 import { record, newStats } from "./telemetry.js";
+import { Atmosphere } from "./atmosphere.js";
 import { createEnemy, updateEnemy } from "./enemies.js";
 import { setFlag, maxHealth, newProgress, fragmentCount } from "./save.js";
 
@@ -43,6 +44,7 @@ export class Game {
     this.defeatedOrdinary = new Set();
     this.mechanisms = new Map();
     this.safeHistory = [];
+    this.atmosphere = new Atmosphere(this);
     this.loadRoom("P01", "start", false);
   }
   get flags() {
@@ -97,6 +99,7 @@ export class Game {
   }
   flag(flag) {
     if (!setFlag(this.progress, flag)) return false;
+    this.atmosphere?.trigger("flag", { flag });
     this.save();
     this.emit("progress", flag);
     return true;
@@ -104,6 +107,7 @@ export class Game {
   start(fresh = false) {
     if (fresh) {
       this.progress = newProgress();
+      this.atmosphere.active.clear();
       this.save();
     }
     let { roomId, spawnPointId } =
@@ -168,6 +172,7 @@ export class Game {
       ]),
     );
     this.surfaces = this.currentSurfaces();
+    this.atmosphere.load(room, record);
     if (record && room.arena && !this.flags.includes("boss.courtyard_keeper"))
       this.progress.retryCheckpoint = {
         roomId: room.roomId,
@@ -236,6 +241,7 @@ export class Game {
       loaded: false,
     };
     if (exit.type === "lift") this.emit("toast", "Подъёмник в пути…");
+    this.atmosphere.trigger("travel", { exit });
     return true;
   }
   interact() {
@@ -250,6 +256,7 @@ export class Game {
       this.emit("toast", lockReason(target));
       return;
     }
+    this.atmosphere.trigger("interact", { entity: target.id });
     if (target.type === "ability") {
       if (this.flag(target.flag)) {
         this.demonstration = {
@@ -407,15 +414,14 @@ export class Game {
     )
       return false;
     this.health -= this.progress.settings.assist ? amount * 0.5 : amount;
-    record(this,'damage',{cause,amount});
+    record(this, "damage", { cause, amount });
     p.invulnerable = this.config.hurtInvulnerability;
     p.hurtTime = 0.23;
     p.dashTime = 0;
     p.vx = direction * 245;
     p.vy = -230;
     this.shake = 0.22;
-    this.emit("sound", "hurt");
-    this.burst(p.x + p.w / 2, p.y + 20, 15, "#cb927c");
+    this.atmosphere.feedback("hurt", { y: p.y + 20 });
     if (this.health <= 0) this.die(cause);
     return true;
   }
@@ -426,6 +432,7 @@ export class Game {
     this.player.vx = 0;
     this.player.vy = 0;
     this.progress.deaths++;
+    this.atmosphere.active.clear();
     record(this, "death", { cause });
     this.defeatedOrdinary.clear();
     this.save();
@@ -455,14 +462,16 @@ export class Game {
     if (this.mode === "death") return;
     const recoverySurfaces = [
       ...this.surfaces,
-      ...this.enemies.filter((e) => e.hp > 0).map((e) => ({
-        id: e.id + ".avoid",
-        x: e.x - 20,
-        y: e.y - 10,
-        w: e.w + 40,
-        h: e.h + 10,
-        kind: "hazard",
-      })),
+      ...this.enemies
+        .filter((e) => e.hp > 0)
+        .map((e) => ({
+          id: e.id + ".avoid",
+          x: e.x - 20,
+          y: e.y - 10,
+          w: e.w + 40,
+          h: e.h + 10,
+          kind: "hazard",
+        })),
     ];
     const point = safeReturnPoint(
       this.player,
@@ -495,28 +504,25 @@ export class Game {
     this.snapCamera();
   }
   burst(x, y, count, color) {
-    if (this.progress.settings.reducedFlash) count = Math.ceil(count * 0.4);
-    for (let i = 0; i < count; i++) {
-      const a = Math.random() * Math.PI * 2,
-        s = 30 + Math.random() * 130;
-      this.particles.push({
-        x,
-        y,
-        vx: Math.cos(a) * s,
-        vy: Math.sin(a) * s,
-        life: 0.4 + Math.random() * 0.5,
-        maxLife: 1,
-        color,
-        size: 1 + Math.random() * 2,
-      });
-    }
-    if (this.particles.length > 160)
-      this.particles.splice(0, this.particles.length - 160);
+    this.atmosphere.particles.burst("impact", x, y, count, {
+      color,
+      direction: { x: 0, y: -1 },
+      spread: Math.PI,
+      speed: [30, 160],
+      life: [0.4, 0.9],
+    });
   }
+
   update(dt, input) {
     if (this.mode !== "playing") return;
-    if(!['left','right','up','down','interact'].some(k=>input.down(k)||input.pressed(k)))this.blockedExitLatch=null;
+    if (
+      !["left", "right", "up", "down", "interact"].some(
+        (k) => input.down(k) || input.pressed(k),
+      )
+    )
+      this.blockedExitLatch = null;
     this.time += dt;
+    this.atmosphere.update(dt);
     this.progress.playTime += dt;
     this.progress.stats || (this.progress.stats = newStats());
     this.progress.stats.roomTime[this.room.roomId] =
@@ -575,7 +581,8 @@ export class Game {
         0,
         this.room.worldBounds.h - p.h,
       );
-    } else
+    } else {
+      const fallingSpeed = p.vy;
       updatePlayer(
         p,
         input,
@@ -601,13 +608,11 @@ export class Game {
               this.progress.hints.push("training." + learned);
               this.save();
             }
-            this.emit("sound", event);
-            if (event === "dash")
-              this.burst(p.x + p.w / 2, p.y + 24, 16, "#8ec3c2");
-            if (event === "land") this.burst(p.x + 12, p.y + p.h, 5, "#a7a68d");
+            this.atmosphere.feedback(event, { speed: fallingSpeed });
           }
         },
       );
+    }
     const support = this.surfaces.find((s) => s.id === p.contact?.surface);
     p.support = support ? { id: support.id, x: support.x, y: support.y } : null;
     if (
@@ -627,7 +632,7 @@ export class Game {
       p.stepTimer += dt;
       if (p.stepTimer > 0.32) {
         p.stepTimer = 0;
-        this.emit("sound", "step");
+        this.atmosphere.feedback("step");
       }
     }
     if (p.dashTime > 0) {
@@ -671,8 +676,11 @@ export class Game {
             e.state = "stunned";
             e.timer = 0.32;
           }
-          this.burst(e.x + e.w / 2, e.y + e.h / 2, 12, "#e0c88f");
-          this.emit("sound", "hit");
+          this.atmosphere.feedback("hit", {
+            x: e.x + e.w / 2,
+            y: e.y + e.h / 2,
+            material: e.enemyType === "parasite" ? "stone" : "metal",
+          });
           this.hitStop = 0.035;
           this.shake = 0.08;
           if (e.hp <= 0) {
@@ -697,7 +705,14 @@ export class Game {
       shot.y += shot.vy * dt;
       shot.life -= dt;
       if (overlaps(p, shot)) {
-        if (this.hurt(1, shot.vx >= 0 ? 1 : -1,shot.wave?'keeper_wave':'parasite_projectile')) shot.life = 0;
+        if (
+          this.hurt(
+            1,
+            shot.vx >= 0 ? 1 : -1,
+            shot.wave ? "keeper_wave" : "parasite_projectile",
+          )
+        )
+          shot.life = 0;
       }
       if (
         this.surfaces.some(
@@ -710,13 +725,6 @@ export class Game {
     this.projectiles = this.projectiles.filter(
       (s) => s.life > 0 && s.x > -100 && s.x < this.room.worldBounds.w + 100,
     );
-    for (const s of this.particles) {
-      s.x += s.vx * dt;
-      s.y += s.vy * dt;
-      s.vy += 120 * dt;
-      s.life -= dt;
-    }
-    this.particles = this.particles.filter((s) => s.life > 0);
     this.nearby = this.findNearby();
     if (input.pressed("interact")) this.interact();
     if (!this.transition && this.transitionCooldown <= 0)

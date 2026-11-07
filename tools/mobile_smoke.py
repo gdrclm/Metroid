@@ -1,4 +1,4 @@
-"""Real multi-touch swipe controls and quest map checks in Chromium emulation."""
+"""Real multi-touch button controls and quest map checks in Chromium emulation."""
 from pathlib import Path
 import json
 import os
@@ -21,11 +21,14 @@ with sync_playwright() as p:
         assert page.locator('#tutorial').count() == 0
         page.locator('#play').click()
         page.wait_for_timeout(300)
-        assert page.locator('[data-action=left], [data-action=right]').count() == 0
-        for selector in ['#swipe-zone'] + ['[data-action=' + a + ']' for a in ['up', 'down', 'jump', 'attack', 'dash', 'interact']]:
+        assert page.locator('[data-action=left], [data-action=right]').count() == 2
+        assert page.locator('#swipe-zone').count() == 0
+        for selector in ['[data-action=' + a + ']' for a in ['left', 'right', 'up', 'down', 'jump', 'attack', 'dash', 'interact']]:
             box = page.locator(selector).bounding_box()
             assert box['x'] >= 0 and box['y'] >= 0 and box['x'] + box['width'] <= width + 1 and box['y'] + box['height'] <= height + 1, (selector, box)
-        zone = page.locator('#swipe-zone').bounding_box()
+        right = page.locator('[data-action=right]').bounding_box()
+        left = page.locator('[data-action=left]').bounding_box()
+        assert right['width'] >= 72 and right['height'] >= 72
         jump = page.locator('[data-action=jump]').bounding_box()
         def point(box, pointer_id, dx=0):
             return {'x': box['x'] + box['width'] / 2 + dx, 'y': box['y'] + box['height'] / 2, 'id': pointer_id}
@@ -33,12 +36,13 @@ with sync_playwright() as p:
         def touches(kind, points):
             cdp.send('Input.dispatchTouchEvent', {'type': kind, 'touchPoints': points})
         start_x = page.evaluate('__game.player.x')
-        touches('touchStart', [point(zone, 1)])
-        page.wait_for_timeout(100)
-        assert page.evaluate('__game.player.x') == start_x  # touching alone must not move
-        touches('touchMove', [point(zone, 1, 45)])
+        # Press the transparent padding, beyond the visible 52px direction circle.
+        padded_right = point(right, 1, right['width']/2 - 3)
+        touches('touchStart', [padded_right])
         page.wait_for_timeout(180)
-        touches('touchStart', [point(zone, 1, 45), point(jump, 2)])
+        # The jump also accepts a touch just outside its visible border.
+        padded_jump = point(jump, 2, jump['width']/2 + 3)
+        touches('touchStart', [padded_right, padded_jump])
         page.wait_for_timeout(200)
         assert page.evaluate('__game.player.x') > start_x + 30
         assert page.evaluate('__game.player.y') < 540
@@ -47,22 +51,21 @@ with sync_playwright() as p:
         stopped_x = page.evaluate('__game.player.x')
         page.wait_for_timeout(180)
         assert abs(page.evaluate('__game.player.x') - stopped_x) < 2
-        touches('touchStart', [point(zone, 3)])
-        touches('touchMove', [point(zone, 3, -45)])
+        touches('touchStart', [point(left, 3, -left['width']/2 + 3)])
         page.wait_for_timeout(230)
         assert page.evaluate('__game.player.x') < stopped_x - 15
         touches('touchCancel', [])
-        page.wait_for_timeout(150)
+        page.wait_for_timeout(300)
         cancelled_x = page.evaluate('__game.player.x')
         page.wait_for_timeout(150)
         assert abs(page.evaluate('__game.player.x') - cancelled_x) < 2
-        # A swipe can start on the left half of the world as well as in the thumb zone.
+        # Dragging the world no longer issues movement.
         world_box = page.locator('#game').bounding_box()
         world_touch = {'x': world_box['x'] + world_box['width'] * .2, 'y': world_box['y'] + world_box['height'] * .45, 'id': 4}
         touches('touchStart', [world_touch])
         touches('touchMove', [{**world_touch, 'x': world_touch['x'] + 45}])
         page.wait_for_timeout(120)
-        assert page.evaluate('__game.player.vx') > 0
+        assert abs(page.evaluate('__game.player.vx')) < 1
         touches('touchEnd', [])
         page.wait_for_timeout(200)
         page.screenshot(path=f'artifacts/mobile-play-{width}.png')
@@ -91,7 +94,7 @@ with sync_playwright() as p:
             assert page.evaluate('__game.viewport.h') == 540
             assert page.evaluate('__game.player.x>=__game.camera.x && __game.player.x<__game.camera.x+__game.viewport.w')
         assert not errors, errors
-        results.append({'viewport': [width, height], 'swipe': 'passed', 'multitouchJump': 'passed', 'releaseCancel': 'passed', 'questR04': 'passed', 'markerUpdate': 'passed', 'pageErrors': errors})
+        results.append({'viewport': [width, height], 'directionButtons': 'passed', 'paddedTargets': 'passed', 'worldDragIgnored': 'passed', 'multitouchJump': 'passed', 'releaseCancel': 'passed', 'questR04': 'passed', 'markerUpdate': 'passed', 'pageErrors': errors})
         print(json.dumps(results[-1], ensure_ascii=False), flush=True)
         context.close()
     browser.close()

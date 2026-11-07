@@ -52,7 +52,7 @@ async function boot() {
   let audio, map;
   const game = new Game(world, config, store, {
     toast: (text) => toast(text),
-    sound: (name) => audio?.play(name),
+    sound: (name, options) => audio?.play(name, options),
     room: (room) => roomCaption(room),
     progress: () => {
       map?.draw();
@@ -70,7 +70,6 @@ async function boot() {
     },
     mode: (mode) => setMode(mode),
   });
-  input.canSwipe = () => game.mode === "playing";
   audio = new Audio(game.progress.settings);
   const renderer = new Renderer($("game"));
   function resizeViewport() {
@@ -244,6 +243,7 @@ async function boot() {
   function start(fresh = false) {
     audio.settings = game.progress.settings;
     audio.unlock();
+    if (fresh) audio.resetJourney();
     game.start(fresh);
     audio.settings = game.progress.settings;
     audio.update();
@@ -258,6 +258,7 @@ async function boot() {
   $("pause-button").onclick = () => setMode("pause");
   $("to-title").onclick = () => {
     game.save();
+    game.atmosphere.active.clear();
     game.loadRoom("P01", "start", false);
     setMode("title");
   };
@@ -293,7 +294,25 @@ async function boot() {
       if (key === "volume") $(id).value = game.progress.settings[key] * 100;
       else $(id).checked = game.progress.settings[key];
     }
+    for (const key of ["music", "ambience", "actions", "interface"])
+      $("mix-" + key).value = game.progress.settings.mix[key] * 100;
+    $("particle-quality").value = game.progress.settings.particleQuality;
   }
+  for (const key of ["music", "ambience", "actions", "interface"])
+    $("mix-" + key).oninput = () => {
+      game.progress.settings.mix[key] = Number($("mix-" + key).value) / 100;
+      audio.settings = game.progress.settings;
+      audio.unlock();
+      audio.update();
+      game.save();
+    };
+  $("particle-quality").onchange = () => {
+    game.progress.settings.particleQuality = $("particle-quality").value;
+    game.save();
+  };
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("button")) audio.play("ui", { channel: "interface" });
+  });
   function settings() {
     settingsParent = game.mode;
     syncSettings();
@@ -387,6 +406,23 @@ async function boot() {
     // The test harness uses the same public simulation and interactions as the UI.
     window.__game = game;
     window.__setMode = setMode;
+    window.__audio = audio;
+    const atmospherePanel = document.createElement("div");
+    atmospherePanel.innerHTML = `<h3>Атмосфера</h3><label><input type="checkbox" data-atmosphere="audioSources"> Источники и радиусы звука</label><label><input type="checkbox" data-atmosphere="emitters"> Области частиц</label><label>Состояние <select id="atmosphere-preview"><option value="live">Игра</option><option value="before">До события</option><option value="after">После события</option></select></label><p id="atmosphere-card"></p>`;
+    $("debug").append(atmospherePanel);
+    atmospherePanel
+      .querySelectorAll("[data-atmosphere]")
+      .forEach(
+        (input) =>
+          (input.onchange = () =>
+            (game.debug[input.dataset.atmosphere] = input.checked)),
+      );
+    $("atmosphere-preview").onchange = () => {
+      game.debug.atmospherePreview = $("atmosphere-preview").value;
+      setMode(
+        game.debug.atmospherePreview === "live" ? "playing" : "atmosphere",
+      );
+    };
   }
   function handleMenus() {
     if (input.pressed("debug") && debugAllowed)
@@ -465,6 +501,8 @@ async function boot() {
       if (game.mode === "title") game.time += dt;
     }
     game.controlDevice = input.device;
+    audio.updateScene(game, dt);
+    game.audioDebugSources = audio.debugSources;
     renderer.draw(game, elapsed);
     uiElapsed += dt;
     if (uiElapsed > 0.08) {
@@ -481,6 +519,9 @@ async function boot() {
             contact: game.player.contact,
             flags: game.flags,
             stats: game.progress.stats,
+            audio: audio.summary(),
+            wind: game.atmosphere.wind,
+            scenes: game.progress.scenes,
             objects:
               game.enemies.length +
               game.projectiles.length +
@@ -496,6 +537,11 @@ async function boot() {
         );
         $("debug-dash").checked = game.abilities.dash;
         $("debug-grip").checked = game.abilities.wall_grip;
+        $("atmosphere-card").textContent = Object.entries(
+          game.room.narrative || {},
+        )
+          .map(([key, value]) => key + ": " + value)
+          .join(" · ");
       }
     }
     requestAnimationFrame(frame);

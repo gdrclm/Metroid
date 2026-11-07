@@ -6,6 +6,7 @@ export const overlaps = (a, b) =>
 export const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 export function conditionMet(condition, flags, local = {}) {
   if (!condition) return true;
+  if (condition.scene) return Boolean(local.scenes?.[condition.scene]);
   if (condition.flag) return flags.includes(condition.flag);
   if (condition.local) return Boolean(local[condition.local]);
   if (condition.and)
@@ -52,15 +53,28 @@ export function validateWorld(world, physics) {
     }
     if (!world.regions[room.regionId])
       errors.push(`${room.roomId}: unknown region`);
-    const finiteRect = (r) => r && [r.x, r.y, r.w, r.h].every(Number.isFinite) && r.w > 0 && r.h > 0;
-    if (!finiteRect(room.worldBounds) || room.worldBounds.w < physics.width || room.worldBounds.h < physics.height)
+    const finiteRect = (r) =>
+      r && [r.x, r.y, r.w, r.h].every(Number.isFinite) && r.w > 0 && r.h > 0;
+    if (
+      !finiteRect(room.worldBounds) ||
+      room.worldBounds.w < physics.width ||
+      room.worldBounds.h < physics.height
+    )
       errors.push(`${room.roomId}: invalid physics dimensions`);
-    if (!finiteRect(room.mapShape)) errors.push(`${room.roomId}: invalid map dimensions`);
+    if (!finiteRect(room.mapShape))
+      errors.push(`${room.roomId}: invalid map dimensions`);
     for (const zone of room.cameraZones)
-      if (!finiteRect(zone) || zone.x < 0 || zone.y < 0 || zone.x + zone.w > room.worldBounds.w || zone.y + zone.h > room.worldBounds.h)
+      if (
+        !finiteRect(zone) ||
+        zone.x < 0 ||
+        zone.y < 0 ||
+        zone.x + zone.w > room.worldBounds.w ||
+        zone.y + zone.h > room.worldBounds.h
+      )
         errors.push(`${room.roomId}: camera zone outside bounds`);
     for (const surface of room.collisionLayers)
-      if (!finiteRect(surface)) errors.push(`${surface.id}: invalid collider dimensions`);
+      if (!finiteRect(surface))
+        errors.push(`${surface.id}: invalid collider dimensions`);
     if (world.geography?.kind === "schematic") {
       if (room.worldBounds.x !== 0 || room.worldBounds.y !== 0)
         errors.push(`${room.roomId}: physics bounds must use the local origin`);
@@ -107,7 +121,11 @@ export function validateWorld(world, physics) {
     }
     for (const mechanism of room.mechanisms || []) {
       unique(mechanism.id, room.roomId);
-      if (!['gate', 'ladder', 'bridge'].includes(mechanism.kind) || !mechanism.flag || !(mechanism.duration > 0))
+      if (
+        !["gate", "ladder", "bridge"].includes(mechanism.kind) ||
+        !mechanism.flag ||
+        !(mechanism.duration > 0)
+      )
         errors.push(`${mechanism.id}: invalid mechanism state`);
       for (const id of mechanism.controlledExits || [])
         if (!room.exits.some((e) => e.exitId === id))
@@ -141,8 +159,78 @@ export function validateWorld(world, physics) {
         errors.push(`${room.roomId}/${id}: spawn in hazard`);
       if (![point.x, point.y].every(Number.isFinite))
         errors.push(`${room.roomId}/${id}: non-finite spawn`);
-      if (!room.collisionLayers.some((s) => s.kind !== 'hazard' && !s.motion && Math.abs(body.y + body.h - s.y) <= 2 && body.x + body.w > s.x && body.x < s.x + s.w))
+      if (
+        !room.collisionLayers.some(
+          (s) =>
+            s.kind !== "hazard" &&
+            !s.motion &&
+            Math.abs(body.y + body.h - s.y) <= 2 &&
+            body.x + body.w > s.x &&
+            body.x < s.x + s.w,
+        )
+      )
         errors.push(`${room.roomId}/${id}: spawn has no static support`);
+    }
+    if (world.atmosphereVersion) {
+      if (!room.narrative || Object.keys(room.narrative).length < 10)
+        errors.push(`${room.roomId}: missing narrative card`);
+      for (const e of room.emitters || []) {
+        unique(e.id, room.roomId);
+        if (
+          ![e.x, e.y, e.rate, e.direction?.x, e.direction?.y].every(
+            Number.isFinite,
+          ) ||
+          e.rate <= 0 ||
+          !["continuous", "burst"].includes(e.mode) ||
+          !["back", "middle", "front", "gameplay"].includes(e.layer) ||
+          e.life?.length !== 2 ||
+          !e.life.every((v) => v > 0) ||
+          e.life[0] > e.life[1]
+        )
+          errors.push(`${e.id}: invalid emitter`);
+      }
+      for (const source of room.audioSources || []) {
+        unique(source.id, room.roomId);
+        if (
+          ![source.x, source.y, source.radius].every(Number.isFinite) ||
+          source.radius <= 0 ||
+          !(source.gain >= 0)
+        )
+          errors.push(`${source.id}: invalid audio source`);
+        if (
+          source.interval &&
+          (source.interval.length !== 2 ||
+            !source.interval.every((v) => v > 0) ||
+            source.interval[1] < source.interval[0])
+        )
+          errors.push(`${source.id}: invalid audio interval`);
+      }
+      for (const event of room.storyEvents || []) {
+        unique(event.id, room.roomId);
+        if (
+          !(event.duration > 0) ||
+          !["enter", "interact", "flag", "proximity", "travel"].includes(
+            event.trigger?.type,
+          )
+        )
+          errors.push(`${event.id}: invalid story event`);
+        for (const effect of event.effects || []) {
+          if (
+            !Number.isFinite(effect.at) ||
+            effect.at < 0 ||
+            effect.at > event.duration ||
+            !["sound", "particles"].includes(effect.type)
+          )
+            errors.push(`${event.id}: invalid scene effect`);
+          if (
+            effect.type === "particles" &&
+            !(rooms.get(effect.roomId || room.roomId)?.emitters || []).some(
+              (e) => e.id === effect.emitter,
+            )
+          )
+            errors.push(`${event.id}: missing emitter ${effect.emitter}`);
+        }
+      }
     }
   }
   if (!rooms.has(world.startRoomId)) errors.push("Missing start room");

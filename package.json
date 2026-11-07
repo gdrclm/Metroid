@@ -19,6 +19,7 @@
     "test:mobile": "python tools/mobile_smoke.py",
     "test:editor": "python tools/editor_smoke.py",
     "test:production": "python tools/production_smoke.py",
+    "test:atmosphere": "python tools/atmosphere_smoke.py",
     "test:continuous": "node tools/continuous.mjs",
     "test:journey": "python tools/continuous_browser.py",
     "metrics:shortcuts": "node tools/shortcut_metrics.mjs"

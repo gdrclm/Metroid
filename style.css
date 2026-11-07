@@ -543,6 +543,23 @@ kbd {
 }
 .settings-panel {
   width: 410px;
+  max-height: 88dvh;
+  overflow-y: auto;
+}
+.sound-mix summary {
+  color: #bec8bd;
+  padding: 12px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.sound-mix label {
+  padding-left: 12px;
+}
+.settings-panel select {
+  color: #d5c49a;
+  background: #1b343c;
+  border: 1px solid #718578;
+  padding: 6px;
 }
 .settings-panel label {
   display: flex;
@@ -1353,74 +1370,52 @@ kbd {
   font-size: 0 !important;
 }
 
-/* The left thumb drags and holds; movement stops on release. */
+/* A padded hit box surrounds each visible direction key. */
 .touch-movement {
   display: flex;
   align-items: flex-end;
   gap: 12px;
 }
-#swipe-zone {
-  pointer-events: auto;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  width: clamp(140px, 44vw, 190px);
-  height: 72px;
-  padding: 7px 12px;
-  border: 1px solid #92aaa24d;
-  border-radius: 24px;
-  background: #102b36d9;
+.touch-direction-buttons {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
+  gap: 0;
 }
-.swipe-track {
+#touch-controls button {
   position: relative;
-  width: 100%;
-  height: 32px;
-  border-radius: 16px;
-  background: #79918716;
-  display: grid;
-  place-items: center;
 }
-.swipe-track::before,
-.swipe-track::after {
+#touch-controls button::before {
+  content: "";
   position: absolute;
-  color: #819b94;
-  font-size: 12px;
+  inset: -5px;
+  border-radius: 50%;
 }
-.swipe-track::before {
-  content: "‹";
-  left: 8px;
-}
-.swipe-track::after {
-  content: "›";
-  right: 8px;
-}
-#swipe-thumb {
+#touch-controls .touch-direction-buttons button {
+  width: 72px;
+  height: 72px;
+  padding: 10px;
+  border: 0;
+  background: transparent;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 32px;
-  border: 1px solid #b4b68875;
-  background: #35504d;
+}
+#touch-controls .touch-direction-buttons button::before {
+  display: none;
+}
+.touch-direction-buttons span {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  font-size: 20px;
-  color: #e8d7a6;
+  border: 1px solid #c6c19c80;
+  background: #142f39d9;
+  font-size: 26px;
   pointer-events: none;
 }
-#swipe-zone small {
-  color: #acbbb0;
-  font-size: 10px;
-}
-#swipe-zone.active {
-  border-color: #d9c28a;
-}
-#swipe-zone.active #swipe-thumb {
-  background: #5d6649;
-  border-color: #e7cc8b;
+#touch-controls .touch-direction-buttons button.pressed span,
+#touch-controls .touch-direction-buttons button:active span {
+  background: #77774a80;
+  border-color: #e2cc91;
 }
 .map-objective {
   display: flex;
@@ -1451,9 +1446,6 @@ kbd {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-  }
-  #swipe-zone {
-    height: 82px;
   }
   .map-objective {
     padding: 9px 11px;

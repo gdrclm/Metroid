@@ -32,7 +32,7 @@
     {
       "roomId": "P01",
       "regionId": "pier",
-      "revision": 1,
+      "revision": 2,
       "name": "Тихая пристань",
       "worldBounds": {
         "x": 0,
@@ -54,7 +54,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P01.first_step",
@@ -63,7 +64,8 @@
           "w": 145.0,
           "h": 60,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P01.landing",
@@ -72,7 +74,8 @@
           "w": 140.0,
           "h": 18,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         }
       ],
       "cameraZones": [
@@ -171,12 +174,187 @@
           "w": 275.0
         }
       ],
-      "purpose": "Первый прыжок; впереди видны подъёмник и затопленный тоннель."
+      "purpose": "Первый прыжок; впереди видны подъёмник и затопленный тоннель.",
+      "narrative": {
+        "past": "Причал грузовых лодок",
+        "change": "Вода поднялась выше старых дверей",
+        "present": "Редкая высадка путников",
+        "mainClue": "Три отметки воды и лодка у новой сходни",
+        "secondaryClue": "Заколоченная нижняя дверь",
+        "action": "Сойти на настил",
+        "reward": "Первый путь в город",
+        "soundLandmark": "Уходящая лодка и удары воды",
+        "environmentEffect": "Брызги у свай, капли с каната",
+        "afterVisit": "Лодка уходит, её канат остаётся на столбе"
+      },
+      "atmosphere": {
+        "exposure": 0.4,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "P01.sound.water",
+          "sound": "water",
+          "x": 409.6,
+          "y": 612,
+          "radius": 700,
+          "gain": 0.8,
+          "loop": true,
+          "filter": 380
+        },
+        {
+          "id": "P01.sound.rope",
+          "sound": "rope",
+          "x": 896.0,
+          "y": 480,
+          "radius": 420,
+          "gain": 0.45,
+          "interval": [
+            6,
+            13
+          ]
+        },
+        {
+          "id": "P01.sound.bell",
+          "sound": "bell",
+          "x": 1250,
+          "y": 100,
+          "radius": 1400,
+          "gain": 0.12,
+          "interval": [
+            28,
+            48
+          ]
+        },
+        {
+          "id": "P01.sound.boat",
+          "sound": "boat",
+          "x": 210,
+          "y": 590,
+          "radius": 600,
+          "gain": 0.6,
+          "loop": true,
+          "filter": 200,
+          "sceneFade": "scene.boat_departed"
+        }
+      ],
+      "emitters": [
+        {
+          "id": "P01.fx.mooring",
+          "effect": "spray",
+          "x": 320.0,
+          "y": 608,
+          "direction": {
+            "x": -0.3,
+            "y": -1
+          },
+          "rate": 1.4,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            20,
+            65
+          ],
+          "floor": 623
+        },
+        {
+          "id": "P01.fx.rope",
+          "effect": "drip",
+          "x": 908.8,
+          "y": 420,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.5,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "spread": 0.1,
+          "speed": [
+            2,
+            8
+          ],
+          "floor": 620
+        },
+        {
+          "id": "P01.fx.wake",
+          "effect": "spray",
+          "x": 170,
+          "y": 611,
+          "direction": {
+            "x": 1,
+            "y": -0.25
+          },
+          "rate": 1,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "burst",
+          "speed": [
+            30,
+            90
+          ],
+          "floor": 630
+        }
+      ],
+      "storyEvents": [
+        {
+          "id": "scene.boat_departed",
+          "trigger": {
+            "type": "enter"
+          },
+          "duration": 6,
+          "effects": [
+            {
+              "at": 0,
+              "type": "sound",
+              "name": "music.arrival"
+            },
+            {
+              "at": 0,
+              "type": "sound",
+              "name": "boat",
+              "channel": "ambience",
+              "x": 210,
+              "y": 590
+            },
+            {
+              "at": 0.15,
+              "type": "particles",
+              "emitter": "P01.fx.wake",
+              "count": 14
+            }
+          ]
+        }
+      ],
+      "storyProps": [
+        {
+          "kind": "floodMarks",
+          "x": 90,
+          "y": 555
+        },
+        {
+          "kind": "patchedPlanks",
+          "x": 716.8000000000001,
+          "y": 616
+        }
+      ]
     },
     {
       "roomId": "P02",
       "regionId": "pier",
-      "revision": 1,
+      "revision": 2,
       "name": "Дом смотрителя",
       "worldBounds": {
         "x": 0,
@@ -198,7 +376,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wood"
         }
       ],
       "cameraZones": [
@@ -387,12 +566,257 @@
             "P02.to.P07"
           ]
         }
+      ],
+      "narrative": {
+        "past": "Дом портового смотрителя",
+        "change": "Порт опустел, но дом поддерживают",
+        "present": "Тёплое убежище для редкого гостя",
+        "mainClue": "Сложенное одеяло у приготовленного места",
+        "secondaryClue": "Посуда вымыта и стоит по порядку",
+        "action": "Отдохнуть у огня",
+        "reward": "Здоровье и запомненное гостеприимство",
+        "soundLandmark": "Печь, ткань и чайная чашка",
+        "environmentEffect": "Дым из дымохода и редкие искры печи",
+        "afterVisit": "Смотритель перестаёт складывать ткань и наливает гостю чай"
+      },
+      "atmosphere": {
+        "exposure": 0.12,
+        "reverb": 0.045,
+        "sheltered": true
+      },
+      "audioSources": [
+        {
+          "id": "P02.sound.water",
+          "sound": "water",
+          "x": 409.6,
+          "y": 612,
+          "radius": 700,
+          "gain": 0.3,
+          "loop": true,
+          "filter": 380
+        },
+        {
+          "id": "P02.sound.rope",
+          "sound": "rope",
+          "x": 896.0,
+          "y": 480,
+          "radius": 420,
+          "gain": 0.45,
+          "interval": [
+            6,
+            13
+          ]
+        },
+        {
+          "id": "P02.sound.bell",
+          "sound": "bell",
+          "x": 1250,
+          "y": 100,
+          "radius": 1400,
+          "gain": 0.12,
+          "interval": [
+            28,
+            48
+          ]
+        },
+        {
+          "id": "P02.sound.stove",
+          "sound": "stove",
+          "x": 375,
+          "y": 585,
+          "radius": 330,
+          "gain": 0.8,
+          "loop": true,
+          "filter": 500
+        },
+        {
+          "id": "P02.sound.cloth",
+          "sound": "cloth",
+          "x": 555,
+          "y": 590,
+          "radius": 260,
+          "gain": 0.6,
+          "interval": [
+            5,
+            10
+          ],
+          "requires": {
+            "not": {
+              "scene": "scene.warm_house"
+            }
+          }
+        },
+        {
+          "id": "P02.sound.cups",
+          "sound": "crockery",
+          "x": 555,
+          "y": 585,
+          "radius": 260,
+          "gain": 0.6,
+          "interval": [
+            7,
+            13
+          ],
+          "requires": {
+            "scene": "scene.warm_house"
+          }
+        }
+      ],
+      "emitters": [
+        {
+          "id": "P02.fx.mooring",
+          "effect": "spray",
+          "x": 320.0,
+          "y": 608,
+          "direction": {
+            "x": -0.3,
+            "y": -1
+          },
+          "rate": 1.4,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            20,
+            65
+          ],
+          "floor": 623
+        },
+        {
+          "id": "P02.fx.rope",
+          "effect": "drip",
+          "x": 908.8,
+          "y": 420,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.5,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "spread": 0.1,
+          "speed": [
+            2,
+            8
+          ],
+          "floor": 620
+        },
+        {
+          "id": "P02.fx.chimney",
+          "effect": "soot",
+          "x": 375,
+          "y": 290,
+          "direction": {
+            "x": 0,
+            "y": -1
+          },
+          "rate": 0.6,
+          "life": [
+            1,
+            2
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            5,
+            12
+          ]
+        },
+        {
+          "id": "P02.fx.hearth",
+          "effect": "spark",
+          "x": 375,
+          "y": 590,
+          "direction": {
+            "x": 0,
+            "y": -1
+          },
+          "rate": 1,
+          "life": [
+            0.2,
+            0.5
+          ],
+          "layer": "back",
+          "mode": "burst",
+          "speed": [
+            18,
+            45
+          ]
+        }
+      ],
+      "storyEvents": [
+        {
+          "id": "scene.warm_house",
+          "trigger": {
+            "type": "interact",
+            "entity": "rest.pier"
+          },
+          "duration": 4,
+          "effects": [
+            {
+              "at": 0,
+              "type": "sound",
+              "name": "cloth",
+              "x": 555,
+              "y": 590,
+              "channel": "ambience"
+            },
+            {
+              "at": 0.15,
+              "type": "sound",
+              "name": "music.warm"
+            },
+            {
+              "at": 0.4,
+              "type": "particles",
+              "emitter": "P02.fx.hearth",
+              "count": 8
+            },
+            {
+              "at": 1.2,
+              "type": "sound",
+              "name": "crockery",
+              "x": 555,
+              "y": 585,
+              "channel": "ambience"
+            }
+          ]
+        }
+      ],
+      "storyProps": [
+        {
+          "kind": "floodMarks",
+          "x": 90,
+          "y": 555
+        },
+        {
+          "kind": "patchedPlanks",
+          "x": 716.8000000000001,
+          "y": 616
+        },
+        {
+          "kind": "boardedDoor",
+          "x": 175,
+          "y": 620
+        },
+        {
+          "kind": "raisedStorage",
+          "x": 832.0,
+          "y": 470
+        }
       ]
     },
     {
       "roomId": "P03",
       "regionId": "pier",
-      "revision": 1,
+      "revision": 2,
       "name": "Соляной склад",
       "worldBounds": {
         "x": 0,
@@ -414,7 +838,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wood"
         },
         {
           "id": "P03.crate",
@@ -423,7 +848,8 @@
           "w": 85.0,
           "h": 72,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wood"
         },
         {
           "id": "P03.wall_left",
@@ -432,7 +858,8 @@
           "w": 28.0,
           "h": 240,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "P03.wall_right",
@@ -441,7 +868,8 @@
           "w": 28.0,
           "h": 370,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "P03.high_niche",
@@ -450,7 +878,8 @@
           "w": 152.0,
           "h": 14,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "wood"
         },
         {
           "id": "P03.bypass_one",
@@ -459,7 +888,8 @@
           "w": 150,
           "h": 16,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "wood"
         },
         {
           "id": "P03.bypass_two",
@@ -468,7 +898,8 @@
           "w": 84,
           "h": 16,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "wood"
         }
       ],
       "cameraZones": [
@@ -624,12 +1055,135 @@
           "w": 230.0
         }
       ],
-      "purpose": "Выбор между дозорным на полу и безопасными балками; нижний секрет и высокая ниша."
+      "purpose": "Выбор между дозорным на полу и безопасными балками; нижний секрет и высокая ниша.",
+      "narrative": {
+        "past": "Склад соли",
+        "change": "Нижние ярусы затапливало несколько раз",
+        "present": "Запасы перенесены на верхние балки",
+        "mainClue": "Мешки стоят выше линии воды",
+        "secondaryClue": "Ступени собраны из крышек ящиков",
+        "action": "Обойти дозорного и вернуться в верхнюю нишу",
+        "reward": "Осколок и позднее сердце",
+        "soundLandmark": "Капля в металлическую ёмкость",
+        "environmentEffect": "Пыль в верхней полосе света, сырость внизу",
+        "afterVisit": "Верхняя ниша освобождается от найденного предмета"
+      },
+      "atmosphere": {
+        "exposure": 0.12,
+        "reverb": 0.045,
+        "sheltered": true
+      },
+      "audioSources": [
+        {
+          "id": "P03.sound.water",
+          "sound": "water",
+          "x": 409.6,
+          "y": 612,
+          "radius": 700,
+          "gain": 0.3,
+          "loop": true,
+          "filter": 380
+        },
+        {
+          "id": "P03.sound.rope",
+          "sound": "rope",
+          "x": 896.0,
+          "y": 480,
+          "radius": 420,
+          "gain": 0.45,
+          "interval": [
+            6,
+            13
+          ]
+        },
+        {
+          "id": "P03.sound.bell",
+          "sound": "bell",
+          "x": 1250,
+          "y": 100,
+          "radius": 1400,
+          "gain": 0.12,
+          "interval": [
+            28,
+            48
+          ]
+        }
+      ],
+      "emitters": [
+        {
+          "id": "P03.fx.mooring",
+          "effect": "spray",
+          "x": 320.0,
+          "y": 608,
+          "direction": {
+            "x": -0.3,
+            "y": -1
+          },
+          "rate": 1.4,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            20,
+            65
+          ],
+          "floor": 623
+        },
+        {
+          "id": "P03.fx.rope",
+          "effect": "drip",
+          "x": 908.8,
+          "y": 420,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.5,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "spread": 0.1,
+          "speed": [
+            2,
+            8
+          ],
+          "floor": 620
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "floodMarks",
+          "x": 90,
+          "y": 555
+        },
+        {
+          "kind": "patchedPlanks",
+          "x": 716.8000000000001,
+          "y": 616
+        },
+        {
+          "kind": "boardedDoor",
+          "x": 175,
+          "y": 620
+        },
+        {
+          "kind": "raisedStorage",
+          "x": 832.0,
+          "y": 470
+        }
+      ]
     },
     {
       "roomId": "P04",
       "regionId": "pier",
-      "revision": 1,
+      "revision": 2,
       "name": "Крановая площадка",
       "worldBounds": {
         "x": 0,
@@ -651,7 +1205,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P04.machine",
@@ -660,7 +1215,8 @@
           "w": 100.0,
           "h": 75,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         }
       ],
       "cameraZones": [
@@ -793,12 +1349,160 @@
           "w": 300.0
         }
       ],
-      "purpose": "Освободить привод крана и забрать порыв ветра."
+      "purpose": "Освободить привод крана и забрать порыв ветра.",
+      "narrative": {
+        "past": "Грузовой кран",
+        "change": "Привод разобран, ветер вращает оставшуюся ткань",
+        "present": "Свет сохраняется в натянутом полотне",
+        "mainClue": "Порыв удерживает ленту у крюка",
+        "secondaryClue": "Оборванные грузовые канаты",
+        "action": "Получить рывок",
+        "reward": "Порыв ветра",
+        "soundLandmark": "Канат и порыв над площадкой",
+        "environmentEffect": "Волокна и направленный след",
+        "afterVisit": "Ветер продолжает двигать пустую ленту"
+      },
+      "atmosphere": {
+        "exposure": 0.9,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "P04.sound.water",
+          "sound": "water",
+          "x": 409.6,
+          "y": 612,
+          "radius": 700,
+          "gain": 0.8,
+          "loop": true,
+          "filter": 380
+        },
+        {
+          "id": "P04.sound.rope",
+          "sound": "rope",
+          "x": 896.0,
+          "y": 480,
+          "radius": 420,
+          "gain": 0.45,
+          "interval": [
+            6,
+            13
+          ]
+        },
+        {
+          "id": "P04.sound.bell",
+          "sound": "bell",
+          "x": 1250,
+          "y": 100,
+          "radius": 1400,
+          "gain": 0.12,
+          "interval": [
+            28,
+            48
+          ]
+        },
+        {
+          "id": "P04.sound.openWind",
+          "sound": "wind",
+          "x": 768.0,
+          "y": 260,
+          "radius": 800,
+          "gain": 0.65,
+          "loop": true,
+          "filter": 850
+        }
+      ],
+      "emitters": [
+        {
+          "id": "P04.fx.mooring",
+          "effect": "spray",
+          "x": 320.0,
+          "y": 608,
+          "direction": {
+            "x": -0.3,
+            "y": -1
+          },
+          "rate": 1.4,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            20,
+            65
+          ],
+          "floor": 623
+        },
+        {
+          "id": "P04.fx.rope",
+          "effect": "drip",
+          "x": 908.8,
+          "y": 420,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.5,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "spread": 0.1,
+          "speed": [
+            2,
+            8
+          ],
+          "floor": 620
+        },
+        {
+          "id": "P04.fx.wind",
+          "effect": "fiber",
+          "x": 704.0,
+          "y": 180,
+          "direction": {
+            "x": 1,
+            "y": -0.1
+          },
+          "rate": 0.45,
+          "life": [
+            2,
+            3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            15,
+            30
+          ],
+          "area": {
+            "w": 100,
+            "h": 160
+          }
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "floodMarks",
+          "x": 90,
+          "y": 555
+        },
+        {
+          "kind": "patchedPlanks",
+          "x": 716.8000000000001,
+          "y": 616
+        }
+      ]
     },
     {
       "roomId": "P05",
       "regionId": "pier",
-      "revision": 1,
+      "revision": 2,
       "name": "Разорванный мост",
       "worldBounds": {
         "x": 0,
@@ -820,7 +1524,8 @@
           "w": 1280.0,
           "h": 80,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P05.launch",
@@ -829,7 +1534,8 @@
           "w": 410.0,
           "h": 30,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P05.landing",
@@ -838,7 +1544,8 @@
           "w": 520.0,
           "h": 200,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P05.step_one",
@@ -847,7 +1554,8 @@
           "w": 100.0,
           "h": 16,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P05.step_two",
@@ -856,7 +1564,8 @@
           "w": 110.0,
           "h": 16,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         }
       ],
       "cameraZones": [
@@ -980,12 +1689,160 @@
           "w": 300.0
         }
       ],
-      "purpose": "Прыжок с рывком к освещённому причальному знаку; ошибка безопасна."
+      "purpose": "Прыжок с рывком к освещённому причальному знаку; ошибка безопасна.",
+      "narrative": {
+        "past": "Мост для грузовых тележек",
+        "change": "Средний пролёт смыло",
+        "present": "Верхний путь для лёгкого путника",
+        "mainClue": "Обрыв виден напротив лампы",
+        "secondaryClue": "Нижний настил собран из разного дерева",
+        "action": "Пересечь разрыв рывком",
+        "reward": "Понимание новой способности",
+        "soundLandmark": "Открытый ветер",
+        "environmentEffect": "Сор подхватывает общий порыв",
+        "afterVisit": "Освоенная надпись становится ненужной"
+      },
+      "atmosphere": {
+        "exposure": 0.9,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "P05.sound.water",
+          "sound": "water",
+          "x": 409.6,
+          "y": 632,
+          "radius": 700,
+          "gain": 0.8,
+          "loop": true,
+          "filter": 380
+        },
+        {
+          "id": "P05.sound.rope",
+          "sound": "rope",
+          "x": 896.0,
+          "y": 500,
+          "radius": 420,
+          "gain": 0.45,
+          "interval": [
+            6,
+            13
+          ]
+        },
+        {
+          "id": "P05.sound.bell",
+          "sound": "bell",
+          "x": 1250,
+          "y": 100,
+          "radius": 1400,
+          "gain": 0.12,
+          "interval": [
+            28,
+            48
+          ]
+        },
+        {
+          "id": "P05.sound.openWind",
+          "sound": "wind",
+          "x": 768.0,
+          "y": 260,
+          "radius": 800,
+          "gain": 0.65,
+          "loop": true,
+          "filter": 850
+        }
+      ],
+      "emitters": [
+        {
+          "id": "P05.fx.mooring",
+          "effect": "spray",
+          "x": 320.0,
+          "y": 628,
+          "direction": {
+            "x": -0.3,
+            "y": -1
+          },
+          "rate": 1.4,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            20,
+            65
+          ],
+          "floor": 643
+        },
+        {
+          "id": "P05.fx.rope",
+          "effect": "drip",
+          "x": 908.8,
+          "y": 440,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.5,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "spread": 0.1,
+          "speed": [
+            2,
+            8
+          ],
+          "floor": 640
+        },
+        {
+          "id": "P05.fx.wind",
+          "effect": "fiber",
+          "x": 704.0,
+          "y": 180,
+          "direction": {
+            "x": 1,
+            "y": -0.1
+          },
+          "rate": 0.45,
+          "life": [
+            2,
+            3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            15,
+            30
+          ],
+          "area": {
+            "w": 100,
+            "h": 160
+          }
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "floodMarks",
+          "x": 90,
+          "y": 575
+        },
+        {
+          "kind": "patchedPlanks",
+          "x": 716.8000000000001,
+          "y": 636
+        }
+      ]
     },
     {
       "roomId": "P06",
       "regionId": "pier",
-      "revision": 1,
+      "revision": 2,
       "name": "Верхние мостки",
       "worldBounds": {
         "x": 0,
@@ -1007,7 +1864,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P06.step",
@@ -1016,7 +1874,8 @@
           "w": 150.0,
           "h": 16,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P06.upper_left",
@@ -1025,7 +1884,8 @@
           "w": 220.0,
           "h": 16,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P06.upper_right",
@@ -1034,7 +1894,8 @@
           "w": 300.0,
           "h": 16,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P06.secret_ledge",
@@ -1043,7 +1904,8 @@
           "w": 130.0,
           "h": 16,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         }
       ],
       "cameraZones": [
@@ -1239,12 +2101,160 @@
       },
       "note": "Мостки ведут к решётке и к центральному подъёмнику.",
       "tutorialSigns": [],
-      "purpose": "Быстрый низ к подъёмнику или верхняя петля с осколком."
+      "purpose": "Быстрый низ к подъёмнику или верхняя петля с осколком.",
+      "narrative": {
+        "past": "Технические мостки",
+        "change": "Мостки надстроили после подъёма воды",
+        "present": "Развилка между лифтом и цепями",
+        "mainClue": "Два каната уходят к разным уровням",
+        "secondaryClue": "Ящики подняты на полки",
+        "action": "Выбрать отклонение от маршрута",
+        "reward": "Доступ к осколку галереи",
+        "soundLandmark": "Стук корпуса внизу",
+        "environmentEffect": "Капли с натянутого каната",
+        "afterVisit": "Развилка становится знакомой обратной дорогой"
+      },
+      "atmosphere": {
+        "exposure": 0.4,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "P06.sound.water",
+          "sound": "water",
+          "x": 409.6,
+          "y": 612,
+          "radius": 700,
+          "gain": 0.8,
+          "loop": true,
+          "filter": 380
+        },
+        {
+          "id": "P06.sound.rope",
+          "sound": "rope",
+          "x": 896.0,
+          "y": 480,
+          "radius": 420,
+          "gain": 0.45,
+          "interval": [
+            6,
+            13
+          ]
+        },
+        {
+          "id": "P06.sound.bell",
+          "sound": "bell",
+          "x": 1250,
+          "y": 100,
+          "radius": 1400,
+          "gain": 0.12,
+          "interval": [
+            28,
+            48
+          ]
+        },
+        {
+          "id": "P06.sound.openWind",
+          "sound": "wind",
+          "x": 768.0,
+          "y": 260,
+          "radius": 800,
+          "gain": 0.65,
+          "loop": true,
+          "filter": 850
+        }
+      ],
+      "emitters": [
+        {
+          "id": "P06.fx.mooring",
+          "effect": "spray",
+          "x": 320.0,
+          "y": 608,
+          "direction": {
+            "x": -0.3,
+            "y": -1
+          },
+          "rate": 1.4,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            20,
+            65
+          ],
+          "floor": 623
+        },
+        {
+          "id": "P06.fx.rope",
+          "effect": "drip",
+          "x": 908.8,
+          "y": 420,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.5,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "spread": 0.1,
+          "speed": [
+            2,
+            8
+          ],
+          "floor": 620
+        },
+        {
+          "id": "P06.fx.wind",
+          "effect": "fiber",
+          "x": 704.0,
+          "y": 180,
+          "direction": {
+            "x": 1,
+            "y": -0.1
+          },
+          "rate": 0.45,
+          "life": [
+            2,
+            3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            15,
+            30
+          ],
+          "area": {
+            "w": 100,
+            "h": 160
+          }
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "floodMarks",
+          "x": 90,
+          "y": 555
+        },
+        {
+          "kind": "patchedPlanks",
+          "x": 716.8000000000001,
+          "y": 616
+        }
+      ]
     },
     {
       "roomId": "P07",
       "regionId": "pier",
-      "revision": 1,
+      "revision": 2,
       "name": "Обратная сторона",
       "worldBounds": {
         "x": 0,
@@ -1266,7 +2276,8 @@
           "w": 720.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         }
       ],
       "cameraZones": [
@@ -1444,12 +2455,183 @@
           ],
           "vista": "Дом смотрителя"
         }
+      ],
+      "narrative": {
+        "past": "Обратный пост решётки",
+        "change": "Проход заклинило со стороны порта",
+        "present": "Ручной механизм короткого пути",
+        "mainClue": "Знакомый дом виден за решёткой",
+        "secondaryClue": "Рукоять отполирована руками",
+        "action": "Поднять решётку",
+        "reward": "Постоянная короткая связь",
+        "soundLandmark": "Скрежет решётки",
+        "environmentEffect": "Единственный выброс пыли при открытии",
+        "afterVisit": "Свет дома виден через открытый проход"
+      },
+      "atmosphere": {
+        "exposure": 0.4,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "P07.sound.water",
+          "sound": "water",
+          "x": 230.4,
+          "y": 612,
+          "radius": 700,
+          "gain": 0.8,
+          "loop": true,
+          "filter": 380
+        },
+        {
+          "id": "P07.sound.rope",
+          "sound": "rope",
+          "x": 503.99999999999994,
+          "y": 480,
+          "radius": 420,
+          "gain": 0.45,
+          "interval": [
+            6,
+            13
+          ]
+        },
+        {
+          "id": "P07.sound.bell",
+          "sound": "bell",
+          "x": 690,
+          "y": 100,
+          "radius": 1400,
+          "gain": 0.12,
+          "interval": [
+            28,
+            48
+          ]
+        }
+      ],
+      "emitters": [
+        {
+          "id": "P07.fx.mooring",
+          "effect": "spray",
+          "x": 180.0,
+          "y": 608,
+          "direction": {
+            "x": -0.3,
+            "y": -1
+          },
+          "rate": 1.4,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            20,
+            65
+          ],
+          "floor": 623
+        },
+        {
+          "id": "P07.fx.rope",
+          "effect": "drip",
+          "x": 511.2,
+          "y": 420,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.5,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "spread": 0.1,
+          "speed": [
+            2,
+            8
+          ],
+          "floor": 620
+        },
+        {
+          "id": "P07.fx.grate",
+          "effect": "dust",
+          "x": 45,
+          "y": 500,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 1,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "burst",
+          "area": {
+            "w": 40,
+            "h": 45
+          },
+          "speed": [
+            10,
+            40
+          ]
+        }
+      ],
+      "storyEvents": [
+        {
+          "id": "scene.pier_grate",
+          "trigger": {
+            "type": "flag",
+            "flag": "shortcut.pier_gate"
+          },
+          "terminalFlag": "shortcut.pier_gate",
+          "duration": 5,
+          "effects": [
+            {
+              "at": 0,
+              "type": "sound",
+              "name": "grate",
+              "x": 45,
+              "y": 560
+            },
+            {
+              "at": 0.1,
+              "type": "particles",
+              "emitter": "P07.fx.grate",
+              "count": 18
+            },
+            {
+              "at": 0.8,
+              "type": "sound",
+              "name": "music.return"
+            }
+          ],
+          "followRooms": [
+            "P02"
+          ]
+        }
+      ],
+      "storyProps": [
+        {
+          "kind": "floodMarks",
+          "x": 90,
+          "y": 555
+        },
+        {
+          "kind": "patchedPlanks",
+          "x": 403.20000000000005,
+          "y": 616
+        }
       ]
     },
     {
       "roomId": "P08",
       "regionId": "pier",
-      "revision": 1,
+      "revision": 2,
       "name": "Старый подъёмник",
       "worldBounds": {
         "x": 0,
@@ -1471,7 +2653,8 @@
           "w": 900.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         }
       ],
       "cameraZones": [
@@ -1596,12 +2779,194 @@
       },
       "note": "Запустите механизм, чтобы подняться к вокзалу.",
       "tutorialSigns": [],
-      "purpose": "Запустить кабину и физически подняться в новый район."
+      "purpose": "Запустить кабину и физически подняться в новый район.",
+      "narrative": {
+        "past": "Грузовой подъёмник",
+        "change": "Станционный привод долго стоял",
+        "present": "Кабина ещё соединяет порт и город",
+        "mainClue": "Старые этажные метки на шахте",
+        "secondaryClue": "Стружка под верхней балкой",
+        "action": "Запустить и вызвать кабину",
+        "reward": "Выход в большой зал",
+        "soundLandmark": "Мотор, натяжение и остановка",
+        "environmentEffect": "Крошка с балки при первом подъёме",
+        "afterVisit": "На верхней остановке открывается объём Вокзала"
+      },
+      "atmosphere": {
+        "exposure": 0.4,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "P08.sound.water",
+          "sound": "water",
+          "x": 288.0,
+          "y": 612,
+          "radius": 700,
+          "gain": 0.8,
+          "loop": true,
+          "filter": 380
+        },
+        {
+          "id": "P08.sound.rope",
+          "sound": "rope",
+          "x": 630.0,
+          "y": 480,
+          "radius": 420,
+          "gain": 0.45,
+          "interval": [
+            6,
+            13
+          ]
+        },
+        {
+          "id": "P08.sound.bell",
+          "sound": "bell",
+          "x": 870,
+          "y": 100,
+          "radius": 1400,
+          "gain": 0.12,
+          "interval": [
+            28,
+            48
+          ]
+        }
+      ],
+      "emitters": [
+        {
+          "id": "P08.fx.mooring",
+          "effect": "spray",
+          "x": 225.0,
+          "y": 608,
+          "direction": {
+            "x": -0.3,
+            "y": -1
+          },
+          "rate": 1.4,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            20,
+            65
+          ],
+          "floor": 623
+        },
+        {
+          "id": "P08.fx.rope",
+          "effect": "drip",
+          "x": 639.0,
+          "y": 420,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.5,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "spread": 0.1,
+          "speed": [
+            2,
+            8
+          ],
+          "floor": 620
+        },
+        {
+          "id": "P08.fx.beamCrumb",
+          "effect": "rust",
+          "x": 720.0,
+          "y": 210,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 1,
+          "life": [
+            0.7,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "burst",
+          "area": {
+            "w": 130,
+            "h": 4
+          },
+          "speed": [
+            15,
+            40
+          ]
+        }
+      ],
+      "storyEvents": [
+        {
+          "id": "scene.first_ascent",
+          "trigger": {
+            "type": "travel",
+            "targetRoom": "V01",
+            "travelType": "lift"
+          },
+          "followRooms": [
+            "V01"
+          ],
+          "duration": 8,
+          "effects": [
+            {
+              "at": 0,
+              "type": "sound",
+              "name": "liftStart",
+              "duck": 1.3
+            },
+            {
+              "at": 0.1,
+              "type": "particles",
+              "emitter": "P08.fx.beamCrumb",
+              "count": 18
+            },
+            {
+              "at": 0.2,
+              "type": "sound",
+              "name": "music.ascent"
+            },
+            {
+              "at": 2.1,
+              "type": "sound",
+              "name": "liftStop"
+            },
+            {
+              "at": 2.6,
+              "type": "sound",
+              "name": "roomBloom",
+              "channel": "ambience",
+              "gain": 0.5
+            }
+          ]
+        }
+      ],
+      "storyProps": [
+        {
+          "kind": "floodMarks",
+          "x": 90,
+          "y": 555
+        },
+        {
+          "kind": "patchedPlanks",
+          "x": 504.00000000000006,
+          "y": 616
+        }
+      ]
     },
     {
       "roomId": "V01",
       "regionId": "station",
-      "revision": 1,
+      "revision": 2,
       "name": "Платформа прибытия",
       "worldBounds": {
         "x": 0,
@@ -1623,7 +2988,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "metal"
         },
         {
           "id": "V01.platform",
@@ -1632,7 +2998,8 @@
           "w": 230.0,
           "h": 70,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "metal"
         }
       ],
       "cameraZones": [
@@ -1745,12 +3112,125 @@
       },
       "note": "Рельсы остыли, но наверху ещё есть жизнь.",
       "tutorialSigns": [],
-      "purpose": "Первый вид большого зала и маршрут к свету."
+      "purpose": "Первый вид большого зала и маршрут к свету.",
+      "narrative": {
+        "past": "Главная пассажирская платформа",
+        "change": "Поезда перестали приходить",
+        "present": "Вход в поселение внутри вокзала",
+        "mainClue": "Расписание соседствует с постелью",
+        "secondaryClue": "Платформенный номер стал адресом",
+        "action": "Выйти из кабины и осмотреть зал",
+        "reward": "Чувство масштаба и безопасный путь",
+        "soundLandmark": "Длинный хвост шага, затем часы у стены",
+        "environmentEffect": "Пыль только в полосе света",
+        "afterVisit": "После подъёма постепенно слышны локальные источники"
+      },
+      "atmosphere": {
+        "exposure": 0.4,
+        "reverb": 0.24,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "V01.sound.vent",
+          "sound": "ventilation",
+          "x": 1024.0,
+          "y": 465,
+          "radius": 550,
+          "gain": 0.5,
+          "loop": true,
+          "filter": 220
+        },
+        {
+          "id": "V01.sound.board",
+          "sound": "board",
+          "x": 576.0,
+          "y": 380,
+          "radius": 350,
+          "gain": 0.5,
+          "interval": [
+            9,
+            18
+          ]
+        },
+        {
+          "id": "V01.sound.coupling",
+          "sound": "coupling",
+          "x": 1230,
+          "y": 550,
+          "radius": 1000,
+          "gain": 0.3,
+          "interval": [
+            23,
+            42
+          ],
+          "duck": true
+        },
+        {
+          "id": "V01.sound.clock",
+          "sound": "clock",
+          "x": 860,
+          "y": 350,
+          "radius": 290,
+          "gain": 0.7,
+          "interval": [
+            0.95,
+            1.05
+          ]
+        }
+      ],
+      "emitters": [
+        {
+          "id": "V01.fx.lightDust",
+          "effect": "dust",
+          "x": 537.6,
+          "y": 200,
+          "direction": {
+            "x": 0.3,
+            "y": 0
+          },
+          "rate": 1.6,
+          "life": [
+            2,
+            4
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "area": {
+            "w": 130,
+            "h": 230
+          },
+          "speed": [
+            1,
+            6
+          ]
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "lightBeam",
+          "x": 537.6,
+          "y": 180,
+          "w": 130,
+          "h": 350
+        },
+        {
+          "kind": "stationHome",
+          "x": 742.4,
+          "y": 620
+        },
+        {
+          "kind": "platformAddress",
+          "x": 793.6,
+          "y": 460
+        }
+      ]
     },
     {
       "roomId": "V02",
       "regionId": "station",
-      "revision": 1,
+      "revision": 2,
       "name": "Зал ожидания",
       "worldBounds": {
         "x": 0,
@@ -1772,7 +3252,8 @@
           "w": 1600.0,
           "h": 180,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "metal"
         }
       ],
       "cameraZones": [
@@ -1940,12 +3421,113 @@
       },
       "note": "Тихое место между причалом и городом.",
       "tutorialSigns": [],
-      "purpose": "Главная ось к городу, отдельная мастерская и безопасный огонь."
+      "purpose": "Главная ось к городу, отдельная мастерская и безопасный огонь.",
+      "narrative": {
+        "past": "Общий зал ожидания",
+        "change": "Пассажиры присвоили служебные уголки",
+        "present": "Главная площадь небольшого поселения",
+        "mainClue": "Рекламный щит превращён в перегородку",
+        "secondaryClue": "Под ним сохнут полотенца",
+        "action": "Найти услуги и выход в кварталы",
+        "reward": "Отдых и направление пути",
+        "soundLandmark": "Посуда, табло и дальняя сцепка",
+        "environmentEffect": "Воздух спокойнее возле жилья",
+        "afterVisit": "Путник узнаёт путь между домами и залом"
+      },
+      "atmosphere": {
+        "exposure": 0.12,
+        "reverb": 0.24,
+        "sheltered": true
+      },
+      "audioSources": [
+        {
+          "id": "V02.sound.vent",
+          "sound": "ventilation",
+          "x": 1280.0,
+          "y": 465,
+          "radius": 550,
+          "gain": 0.5,
+          "loop": true,
+          "filter": 220
+        },
+        {
+          "id": "V02.sound.board",
+          "sound": "board",
+          "x": 720.0,
+          "y": 380,
+          "radius": 350,
+          "gain": 0.5,
+          "interval": [
+            9,
+            18
+          ]
+        },
+        {
+          "id": "V02.sound.coupling",
+          "sound": "coupling",
+          "x": 1550,
+          "y": 550,
+          "radius": 1000,
+          "gain": 0.3,
+          "interval": [
+            23,
+            42
+          ],
+          "duck": true
+        }
+      ],
+      "emitters": [
+        {
+          "id": "V02.fx.lightDust",
+          "effect": "dust",
+          "x": 672.0,
+          "y": 200,
+          "direction": {
+            "x": 0.3,
+            "y": 0
+          },
+          "rate": 1.6,
+          "life": [
+            2,
+            4
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "area": {
+            "w": 130,
+            "h": 230
+          },
+          "speed": [
+            1,
+            6
+          ]
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "lightBeam",
+          "x": 672.0,
+          "y": 180,
+          "w": 130,
+          "h": 350
+        },
+        {
+          "kind": "stationHome",
+          "x": 927.9999999999999,
+          "y": 620
+        },
+        {
+          "kind": "platformAddress",
+          "x": 992.0,
+          "y": 460
+        }
+      ]
     },
     {
       "roomId": "V03",
       "regionId": "station",
-      "revision": 1,
+      "revision": 2,
       "name": "Мастерская часовщика",
       "worldBounds": {
         "x": 0,
@@ -1967,7 +3549,8 @@
           "w": 760.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "metal"
         },
         {
           "id": "V03.workbench",
@@ -1976,7 +3559,8 @@
           "w": 95.0,
           "h": 65,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "metal"
         }
       ],
       "cameraZones": [
@@ -2087,12 +3671,133 @@
       },
       "note": "Некоторые вещи ещё можно починить.",
       "tutorialSigns": [],
-      "purpose": "Повернуть маховик часов и поговорить с часовщиком."
+      "purpose": "Повернуть маховик часов и поговорить с часовщиком.",
+      "narrative": {
+        "past": "Билетная касса",
+        "change": "Кассу переоборудовали под мастерскую",
+        "present": "Часовщик поддерживает нужные механизмы",
+        "mainClue": "След старого кассового окна за верстаком",
+        "secondaryClue": "Билеты служат прокладками под деталями",
+        "action": "Повернуть маховик и поговорить",
+        "reward": "Осколок, история и золотая нить",
+        "soundLandmark": "Часы слышны возле верстака",
+        "environmentEffect": "Пыль в небольшом световом объёме",
+        "afterVisit": "Часы начинают двигаться после ремонта"
+      },
+      "atmosphere": {
+        "exposure": 0.12,
+        "reverb": 0.24,
+        "sheltered": true
+      },
+      "audioSources": [
+        {
+          "id": "V03.sound.vent",
+          "sound": "ventilation",
+          "x": 608.0,
+          "y": 465,
+          "radius": 550,
+          "gain": 0.5,
+          "loop": true,
+          "filter": 220
+        },
+        {
+          "id": "V03.sound.board",
+          "sound": "board",
+          "x": 342.0,
+          "y": 380,
+          "radius": 350,
+          "gain": 0.5,
+          "interval": [
+            9,
+            18
+          ]
+        },
+        {
+          "id": "V03.sound.coupling",
+          "sound": "coupling",
+          "x": 710,
+          "y": 550,
+          "radius": 1000,
+          "gain": 0.3,
+          "interval": [
+            23,
+            42
+          ],
+          "duck": true
+        },
+        {
+          "id": "V03.sound.clock",
+          "sound": "clock",
+          "x": 555,
+          "y": 535,
+          "radius": 230,
+          "gain": 0.7,
+          "interval": [
+            0.85,
+            1.1
+          ],
+          "requires": {
+            "flag": "mechanism.clockwork"
+          }
+        }
+      ],
+      "emitters": [
+        {
+          "id": "V03.fx.lightDust",
+          "effect": "dust",
+          "x": 319.2,
+          "y": 200,
+          "direction": {
+            "x": 0.3,
+            "y": 0
+          },
+          "rate": 1.6,
+          "life": [
+            2,
+            4
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "area": {
+            "w": 130,
+            "h": 230
+          },
+          "speed": [
+            1,
+            6
+          ]
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "lightBeam",
+          "x": 319.2,
+          "y": 180,
+          "w": 130,
+          "h": 350
+        },
+        {
+          "kind": "stationHome",
+          "x": 440.79999999999995,
+          "y": 620
+        },
+        {
+          "kind": "platformAddress",
+          "x": 471.2,
+          "y": 460
+        },
+        {
+          "kind": "ticketWindow",
+          "x": 180,
+          "y": 440
+        }
+      ]
     },
     {
       "roomId": "V04",
       "regionId": "station",
-      "revision": 1,
+      "revision": 2,
       "name": "Городские ворота",
       "worldBounds": {
         "x": 0,
@@ -2114,7 +3819,8 @@
           "w": 900.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "metal"
         }
       ],
       "cameraZones": [
@@ -2234,12 +3940,113 @@
       },
       "note": "За воротами начинается город. Архив пока закрыт.",
       "tutorialSigns": [],
-      "purpose": "Узнать печать Архива и пройти в город."
+      "purpose": "Узнать печать Архива и пройти в город.",
+      "narrative": {
+        "past": "Технический вход в архив",
+        "change": "Архив отделён печатями и приводом",
+        "present": "Закрытая надежда жителей",
+        "mainClue": "Свежая лампа у старой печати",
+        "secondaryClue": "Следы посещений перед закрытой дверью",
+        "action": "Заметить будущую ветвь",
+        "reward": "Запоминаемый ориентир",
+        "soundLandmark": "Вентиляция за дверью",
+        "environmentEffect": "Единичные капли у трубы",
+        "afterVisit": "Будущий путь отмечен на карте"
+      },
+      "atmosphere": {
+        "exposure": 0.4,
+        "reverb": 0.24,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "V04.sound.vent",
+          "sound": "ventilation",
+          "x": 720.0,
+          "y": 465,
+          "radius": 550,
+          "gain": 0.5,
+          "loop": true,
+          "filter": 220
+        },
+        {
+          "id": "V04.sound.board",
+          "sound": "board",
+          "x": 405.0,
+          "y": 380,
+          "radius": 350,
+          "gain": 0.5,
+          "interval": [
+            9,
+            18
+          ]
+        },
+        {
+          "id": "V04.sound.coupling",
+          "sound": "coupling",
+          "x": 850,
+          "y": 550,
+          "radius": 1000,
+          "gain": 0.3,
+          "interval": [
+            23,
+            42
+          ],
+          "duck": true
+        }
+      ],
+      "emitters": [
+        {
+          "id": "V04.fx.lightDust",
+          "effect": "dust",
+          "x": 378.0,
+          "y": 200,
+          "direction": {
+            "x": 0.3,
+            "y": 0
+          },
+          "rate": 1.6,
+          "life": [
+            2,
+            4
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "area": {
+            "w": 130,
+            "h": 230
+          },
+          "speed": [
+            1,
+            6
+          ]
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "lightBeam",
+          "x": 378.0,
+          "y": 180,
+          "w": 130,
+          "h": 350
+        },
+        {
+          "kind": "stationHome",
+          "x": 522.0,
+          "y": 620
+        },
+        {
+          "kind": "platformAddress",
+          "x": 558.0,
+          "y": 460
+        }
+      ]
     },
     {
       "roomId": "R01",
       "regionId": "quarter",
-      "revision": 1,
+      "revision": 2,
       "name": "Улица фонарей",
       "worldBounds": {
         "x": 0,
@@ -2261,7 +4068,8 @@
           "w": 1800.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R01.curb",
@@ -2270,7 +4078,8 @@
           "w": 168.75,
           "h": 55,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R01.balcony",
@@ -2279,7 +4088,8 @@
           "w": 253.12,
           "h": 16,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R01.alley_roof",
@@ -2288,7 +4098,8 @@
           "w": 240,
           "h": 18,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "stone"
         },
         {
           "id": "R01.alley_step",
@@ -2297,7 +4108,8 @@
           "w": 110,
           "h": 16,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "stone"
         }
       ],
       "cameraZones": [
@@ -2421,12 +4233,116 @@
       },
       "note": "За крышами видна старая водонапорная башня.",
       "tutorialSigns": [],
-      "purpose": "Длинная улица с башней на горизонте, укрытием и патрулём."
+      "purpose": "Длинная улица с башней на горизонте, укрытием и патрулём.",
+      "narrative": {
+        "past": "Рабочая улица",
+        "change": "Старые общие проходы разрушились",
+        "present": "Жильцы поддерживают связь поверх улицы",
+        "mainClue": "Кабель идёт через соседнее окно",
+        "secondaryClue": "Башня видна над тесными дворами",
+        "action": "Найти кухню и дом без лестниц",
+        "reward": "Понятное направление подъёма",
+        "soundLandmark": "Трубы и люди за стенами",
+        "environmentEffect": "Вода в желобе",
+        "afterVisit": "Башня узнаётся позже с крыш"
+      },
+      "atmosphere": {
+        "exposure": 0.4,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "R01.sound.pipe",
+          "sound": "pipe",
+          "x": 1224.0,
+          "y": 470,
+          "radius": 420,
+          "gain": 0.5,
+          "interval": [
+            5,
+            11
+          ]
+        },
+        {
+          "id": "R01.sound.neighbors",
+          "sound": "murmur",
+          "x": 630.0,
+          "y": 410,
+          "radius": 420,
+          "gain": 0.22,
+          "loop": true,
+          "filter": 280
+        },
+        {
+          "id": "R01.sound.dishes",
+          "sound": "crockery",
+          "x": 864.0,
+          "y": 450,
+          "radius": 290,
+          "gain": 0.35,
+          "interval": [
+            9,
+            19
+          ]
+        },
+        {
+          "id": "R01.sound.shutter",
+          "sound": "shutter",
+          "x": 1440.0,
+          "y": 340,
+          "radius": 400,
+          "gain": 0.35,
+          "interval": [
+            17,
+            32
+          ]
+        }
+      ],
+      "emitters": [
+        {
+          "id": "R01.fx.gutter",
+          "effect": "drip",
+          "x": 1260.0,
+          "y": 400,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.6,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            0,
+            5
+          ],
+          "spread": 0.1,
+          "floor": 620
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "sharedWire",
+          "x": 630.0,
+          "y": 380,
+          "w": 810.0
+        },
+        {
+          "kind": "windowBridge",
+          "x": 936.0,
+          "y": 475
+        }
+      ]
     },
     {
       "roomId": "R02",
       "regionId": "quarter",
-      "revision": 1,
+      "revision": 2,
       "name": "Общественная кухня",
       "worldBounds": {
         "x": 0,
@@ -2448,7 +4364,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         }
       ],
       "cameraZones": [
@@ -2623,12 +4540,180 @@
             "R02.to.R07"
           ]
         }
+      ],
+      "narrative": {
+        "past": "Столовая нескольких домов",
+        "change": "Лестничный пролёт стал недоступен",
+        "present": "Общая кухня дворов",
+        "mainClue": "Чашки и котёл стоят для нескольких семей",
+        "secondaryClue": "Пустые корзины у закрытого прохода",
+        "action": "Отдохнуть и позднее открыть общий путь",
+        "reward": "Здоровье и короткая связь",
+        "soundLandmark": "Чайник, печь, посуда",
+        "environmentEffect": "Пар у окна и дым из трубы",
+        "afterVisit": "После открытия лестницы загорается окно и появляется принесённая корзина"
+      },
+      "atmosphere": {
+        "exposure": 0.12,
+        "reverb": 0.045,
+        "sheltered": true
+      },
+      "audioSources": [
+        {
+          "id": "R02.sound.pipe",
+          "sound": "pipe",
+          "x": 870.4000000000001,
+          "y": 470,
+          "radius": 420,
+          "gain": 0.5,
+          "interval": [
+            5,
+            11
+          ]
+        },
+        {
+          "id": "R02.sound.neighbors",
+          "sound": "murmur",
+          "x": 448.0,
+          "y": 410,
+          "radius": 420,
+          "gain": 0.22,
+          "loop": true,
+          "filter": 280
+        },
+        {
+          "id": "R02.sound.dishes",
+          "sound": "crockery",
+          "x": 614.4,
+          "y": 450,
+          "radius": 290,
+          "gain": 0.35,
+          "interval": [
+            9,
+            19
+          ]
+        },
+        {
+          "id": "R02.sound.shutter",
+          "sound": "shutter",
+          "x": 1024.0,
+          "y": 340,
+          "radius": 400,
+          "gain": 0.35,
+          "interval": [
+            17,
+            32
+          ]
+        },
+        {
+          "id": "R02.sound.kettle",
+          "sound": "kettle",
+          "x": 340,
+          "y": 550,
+          "radius": 300,
+          "gain": 0.35,
+          "interval": [
+            12,
+            23
+          ]
+        },
+        {
+          "id": "R02.sound.stove",
+          "sound": "stove",
+          "x": 310,
+          "y": 590,
+          "radius": 300,
+          "gain": 0.55,
+          "loop": true,
+          "filter": 450
+        }
+      ],
+      "emitters": [
+        {
+          "id": "R02.fx.gutter",
+          "effect": "drip",
+          "x": 896.0,
+          "y": 400,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.6,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            0,
+            5
+          ],
+          "spread": 0.1,
+          "floor": 620
+        },
+        {
+          "id": "R02.fx.steam",
+          "effect": "steam",
+          "x": 340,
+          "y": 495,
+          "direction": {
+            "x": 0.3,
+            "y": -1
+          },
+          "rate": 2,
+          "life": [
+            1.5,
+            2.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            10,
+            22
+          ]
+        },
+        {
+          "id": "R02.fx.smoke",
+          "effect": "soot",
+          "x": 320,
+          "y": 220,
+          "direction": {
+            "x": 0,
+            "y": -1
+          },
+          "rate": 0.6,
+          "life": [
+            1.4,
+            2.5
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            12,
+            20
+          ]
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "sharedWire",
+          "x": 448.0,
+          "y": 380,
+          "w": 576.0
+        },
+        {
+          "kind": "sharedKitchen",
+          "x": 550,
+          "y": 620
+        }
       ]
     },
     {
       "roomId": "R03",
       "regionId": "quarter",
-      "revision": 1,
+      "revision": 2,
       "name": "Прачечная",
       "worldBounds": {
         "x": 0,
@@ -2650,7 +4735,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R03.passage",
@@ -2659,7 +4745,8 @@
           "w": 340.0,
           "h": 22,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R03.crate",
@@ -2668,7 +4755,8 @@
           "w": 75.0,
           "h": 62,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R03.lower_beam",
@@ -2677,7 +4765,8 @@
           "w": 190,
           "h": 18,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "stone"
         }
       ],
       "cameraZones": [
@@ -2813,12 +4902,137 @@
       },
       "note": "Промокшие простыни скрывают проход дальше.",
       "tutorialSigns": [],
-      "purpose": "Безопасный низ и балки прачечной под подвесным паразитом."
+      "purpose": "Безопасный низ и балки прачечной под подвесным паразитом.",
+      "narrative": {
+        "past": "Общая прачечная",
+        "change": "Сломанные перекрытия заменили подвесами",
+        "present": "Двор связан верёвками и нижним обходом",
+        "mainClue": "Бельё связывает окна разных домов",
+        "secondaryClue": "Старую дверь заменил мостик",
+        "action": "Пройти под подвесами или по настилу",
+        "reward": "Выбор высоты пути",
+        "soundLandmark": "Вода и мягкое движение ткани",
+        "environmentEffect": "Пар из окна и сор на сквозняке",
+        "afterVisit": "Выбранный путь раскрывает устройство двора"
+      },
+      "atmosphere": {
+        "exposure": 0.12,
+        "reverb": 0.045,
+        "sheltered": true
+      },
+      "audioSources": [
+        {
+          "id": "R03.sound.pipe",
+          "sound": "pipe",
+          "x": 870.4000000000001,
+          "y": 470,
+          "radius": 420,
+          "gain": 0.5,
+          "interval": [
+            5,
+            11
+          ]
+        },
+        {
+          "id": "R03.sound.neighbors",
+          "sound": "murmur",
+          "x": 448.0,
+          "y": 410,
+          "radius": 420,
+          "gain": 0.22,
+          "loop": true,
+          "filter": 280
+        },
+        {
+          "id": "R03.sound.dishes",
+          "sound": "crockery",
+          "x": 614.4,
+          "y": 450,
+          "radius": 290,
+          "gain": 0.35,
+          "interval": [
+            9,
+            19
+          ]
+        },
+        {
+          "id": "R03.sound.shutter",
+          "sound": "shutter",
+          "x": 1024.0,
+          "y": 340,
+          "radius": 400,
+          "gain": 0.35,
+          "interval": [
+            17,
+            32
+          ]
+        }
+      ],
+      "emitters": [
+        {
+          "id": "R03.fx.gutter",
+          "effect": "drip",
+          "x": 896.0,
+          "y": 400,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.6,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            0,
+            5
+          ],
+          "spread": 0.1,
+          "floor": 620
+        },
+        {
+          "id": "R03.fx.steam",
+          "effect": "steam",
+          "x": 630,
+          "y": 495,
+          "direction": {
+            "x": 0.3,
+            "y": -1
+          },
+          "rate": 2,
+          "life": [
+            1.5,
+            2.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            10,
+            22
+          ]
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "sharedWire",
+          "x": 448.0,
+          "y": 380,
+          "w": 576.0
+        },
+        {
+          "kind": "windowBridge",
+          "x": 665.6,
+          "y": 475
+        }
+      ]
     },
     {
       "roomId": "R04",
       "regionId": "quarter",
-      "revision": 1,
+      "revision": 2,
       "name": "Дом без лестниц",
       "worldBounds": {
         "x": 0,
@@ -2840,7 +5054,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R04.wall_left",
@@ -2849,7 +5064,8 @@
           "w": 30.0,
           "h": 250,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R04.wall_right",
@@ -2858,7 +5074,8 @@
           "w": 30.0,
           "h": 370,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R04.exit_ledge",
@@ -2867,7 +5084,8 @@
           "w": 160.0,
           "h": 16,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         }
       ],
       "cameraZones": [
@@ -3000,12 +5218,111 @@
           "w": 320.0
         }
       ],
-      "purpose": "Увидеть высокий выход и применить медные когти."
+      "purpose": "Увидеть высокий выход и применить медные когти.",
+      "narrative": {
+        "past": "Дом с внутренней лестницей",
+        "change": "Лестничный пролёт обрушился",
+        "present": "Жильцы приспособили стены для подъёма",
+        "mainClue": "Разломанная лестница под верхним выходом",
+        "secondaryClue": "Металлические следы когтей на стене",
+        "action": "Получить когти и подняться",
+        "reward": "Зацеп и прыжок от стены",
+        "soundLandmark": "Звук за стеной и труба",
+        "environmentEffect": "Крошка в точке зацепа",
+        "afterVisit": "Верхний проход становится доступным"
+      },
+      "atmosphere": {
+        "exposure": 0.12,
+        "reverb": 0.045,
+        "sheltered": true
+      },
+      "audioSources": [
+        {
+          "id": "R04.sound.pipe",
+          "sound": "pipe",
+          "x": 870.4000000000001,
+          "y": 470,
+          "radius": 420,
+          "gain": 0.5,
+          "interval": [
+            5,
+            11
+          ]
+        },
+        {
+          "id": "R04.sound.neighbors",
+          "sound": "murmur",
+          "x": 448.0,
+          "y": 410,
+          "radius": 420,
+          "gain": 0.22,
+          "loop": true,
+          "filter": 280
+        },
+        {
+          "id": "R04.sound.dishes",
+          "sound": "crockery",
+          "x": 614.4,
+          "y": 450,
+          "radius": 290,
+          "gain": 0.35,
+          "interval": [
+            9,
+            19
+          ]
+        },
+        {
+          "id": "R04.sound.shutter",
+          "sound": "shutter",
+          "x": 1024.0,
+          "y": 340,
+          "radius": 400,
+          "gain": 0.35,
+          "interval": [
+            17,
+            32
+          ]
+        }
+      ],
+      "emitters": [
+        {
+          "id": "R04.fx.gutter",
+          "effect": "drip",
+          "x": 896.0,
+          "y": 400,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.6,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            0,
+            5
+          ],
+          "spread": 0.1,
+          "floor": 620
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "sharedWire",
+          "x": 448.0,
+          "y": 380,
+          "w": 576.0
+        }
+      ]
     },
     {
       "roomId": "R05",
       "regionId": "quarter",
-      "revision": 1,
+      "revision": 2,
       "name": "Вентиляционная шахта",
       "worldBounds": {
         "x": 0,
@@ -3027,7 +5344,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R05.left_wall",
@@ -3036,7 +5354,8 @@
           "w": 30.0,
           "h": 550,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R05.right_wall",
@@ -3045,7 +5364,8 @@
           "w": 30.0,
           "h": 730,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R05.rest_one",
@@ -3054,7 +5374,8 @@
           "w": 170.0,
           "h": 14,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R05.rest_two",
@@ -3063,7 +5384,8 @@
           "w": 170.0,
           "h": 14,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R05.rest_three",
@@ -3072,7 +5394,8 @@
           "w": 170.0,
           "h": 14,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R05.upper",
@@ -3081,7 +5404,8 @@
           "w": 330.0,
           "h": 14,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R05.step_out",
@@ -3090,7 +5414,8 @@
           "w": 160.0,
           "h": 16,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R05.exit_roof",
@@ -3099,7 +5424,8 @@
           "w": 280.0,
           "h": 20,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         }
       ],
       "cameraZones": [
@@ -3225,12 +5551,108 @@
           "w": 340.0
         }
       ],
-      "purpose": "Скольжение, первый отскок и подъём в шахте с передышками."
+      "purpose": "Скольжение, первый отскок и подъём в шахте с передышками.",
+      "narrative": {
+        "past": "Служебная вертикальная шахта",
+        "change": "Ступени разобраны на ремонт жилья",
+        "present": "Трёхступенчатый подъём по стенам",
+        "mainClue": "Разные следы ремонта на трёх высотах",
+        "secondaryClue": "Кабель обходит бывшую площадку",
+        "action": "Освоить три коротких подъёма",
+        "reward": "Доступ на крыши",
+        "soundLandmark": "Резонанс шахты",
+        "environmentEffect": "Крошка у стены, пар у клапана",
+        "afterVisit": "Шахта становится понятным обратным путём"
+      },
+      "atmosphere": {
+        "exposure": 0.4,
+        "reverb": 0.16,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "R05.sound.pipe",
+          "sound": "pipe",
+          "x": 870.4000000000001,
+          "y": 850,
+          "radius": 420,
+          "gain": 0.5,
+          "interval": [
+            5,
+            11
+          ]
+        },
+        {
+          "id": "R05.sound.roofWind",
+          "sound": "wind",
+          "x": 768.0,
+          "y": 180,
+          "radius": 800,
+          "gain": 0.7,
+          "loop": true,
+          "filter": 900
+        }
+      ],
+      "emitters": [
+        {
+          "id": "R05.fx.gutter",
+          "effect": "drip",
+          "x": 896.0,
+          "y": 780,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.6,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            0,
+            5
+          ],
+          "spread": 0.1,
+          "floor": 1000
+        },
+        {
+          "id": "R05.fx.valveSteam",
+          "effect": "steam",
+          "x": 900,
+          "y": 700,
+          "direction": {
+            "x": 0,
+            "y": -1
+          },
+          "rate": 1.2,
+          "life": [
+            0.8,
+            1.4
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            8,
+            20
+          ]
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "sharedWire",
+          "x": 448.0,
+          "y": 760,
+          "w": 576.0
+        }
+      ]
     },
     {
       "roomId": "R06",
       "regionId": "quarter",
-      "revision": 1,
+      "revision": 2,
       "name": "Над городом",
       "worldBounds": {
         "x": 0,
@@ -3252,7 +5674,8 @@
           "w": 1280.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R06.entry_roof",
@@ -3261,7 +5684,8 @@
           "w": 320.0,
           "h": 20,
           "kind": "oneWay",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R06.left_wall",
@@ -3270,7 +5694,8 @@
           "w": 28.0,
           "h": 220,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R06.right_roof",
@@ -3279,7 +5704,8 @@
           "w": 580.0,
           "h": 22,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R06.bridge",
@@ -3292,7 +5718,8 @@
           "requires": {
             "flag": "mechanism.tower_bridge"
           },
-          "mechanismId": "mechanism.tower_bridge.body"
+          "mechanismId": "mechanism.tower_bridge.body",
+          "material": "metal"
         },
         {
           "id": "R06.wall_landing",
@@ -3301,7 +5728,8 @@
           "w": 270.0,
           "h": 16,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "stone"
         },
         {
           "id": "R06.lower_step_one",
@@ -3310,7 +5738,8 @@
           "w": 130,
           "h": 16,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "stone"
         },
         {
           "id": "R06.lower_step_two",
@@ -3319,7 +5748,8 @@
           "w": 130,
           "h": 16,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "stone"
         },
         {
           "id": "R06.lower_step_three",
@@ -3328,7 +5758,8 @@
           "w": 130,
           "h": 16,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "stone"
         }
       ],
       "cameraZones": [
@@ -3540,12 +5971,117 @@
             "R06.to.R08"
           ]
         }
+      ],
+      "narrative": {
+        "past": "Обслуживание крыш и водовода",
+        "change": "Уличные проходы перекрылись",
+        "present": "Сеть безопасных низов и быстрых крыш",
+        "mainClue": "Мостики соединяют окна соседей",
+        "secondaryClue": "Водовод продолжается к башне",
+        "action": "Выбрать верхний или нижний путь",
+        "reward": "Путь к смотрителю и панораме",
+        "soundLandmark": "Ветер сильнее, человеческие звуки ниже",
+        "environmentEffect": "Бумажные обрывки в общем порыве",
+        "afterVisit": "Открытый мост связывает башню с крышами"
+      },
+      "atmosphere": {
+        "exposure": 0.9,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "R06.sound.pipe",
+          "sound": "pipe",
+          "x": 870.4000000000001,
+          "y": 470,
+          "radius": 420,
+          "gain": 0.5,
+          "interval": [
+            5,
+            11
+          ]
+        },
+        {
+          "id": "R06.sound.roofWind",
+          "sound": "wind",
+          "x": 768.0,
+          "y": 180,
+          "radius": 800,
+          "gain": 0.7,
+          "loop": true,
+          "filter": 900
+        }
+      ],
+      "emitters": [
+        {
+          "id": "R06.fx.gutter",
+          "effect": "drip",
+          "x": 896.0,
+          "y": 400,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.6,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            0,
+            5
+          ],
+          "spread": 0.1,
+          "floor": 620
+        },
+        {
+          "id": "R06.fx.paper",
+          "effect": "fiber",
+          "x": 384.0,
+          "y": 180,
+          "direction": {
+            "x": 1,
+            "y": 0
+          },
+          "rate": 0.6,
+          "life": [
+            2,
+            4
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "area": {
+            "w": 200,
+            "h": 80
+          },
+          "speed": [
+            15,
+            35
+          ]
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "sharedWire",
+          "x": 448.0,
+          "y": 380,
+          "w": 576.0
+        },
+        {
+          "kind": "windowBridge",
+          "x": 665.6,
+          "y": 475
+        }
       ]
     },
     {
       "roomId": "R07",
       "regionId": "quarter",
-      "revision": 1,
+      "revision": 2,
       "name": "Двор смотрителя",
       "worldBounds": {
         "x": 0,
@@ -3567,7 +6103,8 @@
           "w": 1440.0,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R07.arena_gallery",
@@ -3576,7 +6113,8 @@
           "w": 230,
           "h": 18,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "stone"
         }
       ],
       "cameraZones": [
@@ -3823,12 +6361,191 @@
           "controlledExits": [],
           "vista": "Водонапорная башня"
         }
+      ],
+      "narrative": {
+        "past": "Двор распределения механизмов",
+        "change": "Доступ зависит от одного смотрителя",
+        "present": "Закрытый общий проход между дворами",
+        "mainClue": "Рукояти лестницы и моста связаны тягами",
+        "secondaryClue": "Свет кухни виден под лестницей",
+        "action": "Победить и освободить механизмы",
+        "reward": "Связный район и проход к башне",
+        "soundLandmark": "Тяжёлый ритм, затем тишина и металл",
+        "environmentEffect": "Сдержанные искры боя и ржавчина лестницы",
+        "afterVisit": "Лестница открыта для жителей, у кухни появляются вещи"
+      },
+      "atmosphere": {
+        "exposure": 0.4,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "R07.sound.pipe",
+          "sound": "pipe",
+          "x": 979.2,
+          "y": 650,
+          "radius": 420,
+          "gain": 0.5,
+          "interval": [
+            5,
+            11
+          ]
+        },
+        {
+          "id": "R07.sound.roofWind",
+          "sound": "wind",
+          "x": 864.0,
+          "y": 180,
+          "radius": 800,
+          "gain": 0.7,
+          "loop": true,
+          "filter": 900
+        },
+        {
+          "id": "R07.sound.keeperRhythm",
+          "sound": "hull",
+          "x": 960,
+          "y": 750,
+          "radius": 420,
+          "gain": 0.35,
+          "interval": [
+            2.5,
+            3.6
+          ],
+          "requires": {
+            "not": {
+              "flag": "boss.courtyard_keeper"
+            }
+          }
+        }
+      ],
+      "emitters": [
+        {
+          "id": "R07.fx.gutter",
+          "effect": "drip",
+          "x": 1007.9999999999999,
+          "y": 580,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.6,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            0,
+            5
+          ],
+          "spread": 0.1,
+          "floor": 800
+        },
+        {
+          "id": "R07.fx.ladderRust",
+          "effect": "rust",
+          "x": 202,
+          "y": 650,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 1,
+          "life": [
+            0.5,
+            1.2
+          ],
+          "layer": "back",
+          "mode": "burst",
+          "area": {
+            "w": 45,
+            "h": 30
+          },
+          "speed": [
+            30,
+            70
+          ]
+        }
+      ],
+      "storyEvents": [
+        {
+          "id": "scene.fire_ladder",
+          "trigger": {
+            "type": "flag",
+            "flag": "shortcut.fire_stairs"
+          },
+          "terminalFlag": "shortcut.fire_stairs",
+          "followRooms": [
+            "R02"
+          ],
+          "duration": 7,
+          "effects": [
+            {
+              "at": 0,
+              "type": "sound",
+              "name": "ladder",
+              "x": 202,
+              "y": 700,
+              "duck": 1.1
+            },
+            {
+              "at": 0.15,
+              "type": "particles",
+              "emitter": "R07.fx.ladderRust",
+              "count": 22
+            },
+            {
+              "at": 1.8,
+              "type": "sound",
+              "name": "music.return"
+            }
+          ]
+        },
+        {
+          "id": "scene.keeper_silence",
+          "trigger": {
+            "type": "flag",
+            "flag": "boss.courtyard_keeper"
+          },
+          "terminalFlag": "boss.courtyard_keeper",
+          "duration": 8,
+          "effects": [
+            {
+              "at": 0,
+              "type": "sound",
+              "name": "silence",
+              "duration": 3
+            },
+            {
+              "at": 3,
+              "type": "sound",
+              "name": "music.victory"
+            }
+          ],
+          "followRooms": [
+            "R02",
+            "R06",
+            "R08",
+            "R09"
+          ]
+        }
+      ],
+      "storyProps": [
+        {
+          "kind": "sharedWire",
+          "x": 503.99999999999994,
+          "y": 560,
+          "w": 648.0
+        }
       ]
     },
     {
       "roomId": "R08",
       "regionId": "quarter",
-      "revision": 1,
+      "revision": 2,
       "name": "Первый свет",
       "worldBounds": {
         "x": 0,
@@ -3850,7 +6567,8 @@
           "w": 1560.0,
           "h": 140,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         },
         {
           "id": "R08.observation",
@@ -3859,7 +6577,8 @@
           "w": 731.25,
           "h": 90,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         }
       ],
       "cameraZones": [
@@ -3980,12 +6699,128 @@
       },
       "note": "Три горизонта. И столько путей, которыми ещё предстоит пройти.",
       "tutorialSigns": [],
-      "purpose": "Обзор трёх разных горизонтов с возможностью вернуться."
+      "purpose": "Обзор трёх разных горизонтов с возможностью вернуться.",
+      "narrative": {
+        "past": "Площадка водонапорной башни",
+        "change": "Видимые районы долго оставались разобщены",
+        "present": "Место понимания масштаба города",
+        "mainClue": "Вдали видны источники прежних звуков",
+        "secondaryClue": "Водовод уходит к литейным",
+        "action": "Подняться и выбрать интересное направление",
+        "reward": "Сдержанное полное проведение темы",
+        "soundLandmark": "Сады, литейные и архив имеют разные сигналы",
+        "environmentEffect": "Редкий сор на открытой площадке",
+        "afterVisit": "Путь остаётся открытым для возвращения"
+      },
+      "atmosphere": {
+        "exposure": 0.9,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "R08.sound.pipe",
+          "sound": "pipe",
+          "x": 1060.8000000000002,
+          "y": 610,
+          "radius": 420,
+          "gain": 0.5,
+          "interval": [
+            5,
+            11
+          ]
+        },
+        {
+          "id": "R08.sound.roofWind",
+          "sound": "wind",
+          "x": 936.0,
+          "y": 180,
+          "radius": 800,
+          "gain": 0.7,
+          "loop": true,
+          "filter": 900
+        }
+      ],
+      "emitters": [
+        {
+          "id": "R08.fx.gutter",
+          "effect": "drip",
+          "x": 1092.0,
+          "y": 540,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.6,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            0,
+            5
+          ],
+          "spread": 0.1,
+          "floor": 760
+        },
+        {
+          "id": "R08.fx.paper",
+          "effect": "fiber",
+          "x": 468.0,
+          "y": 180,
+          "direction": {
+            "x": 1,
+            "y": 0
+          },
+          "rate": 0.6,
+          "life": [
+            2,
+            4
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "area": {
+            "w": 200,
+            "h": 80
+          },
+          "speed": [
+            15,
+            35
+          ]
+        }
+      ],
+      "storyEvents": [
+        {
+          "id": "scene.panorama_theme",
+          "trigger": {
+            "type": "flag",
+            "flag": "slice.overlook_seen"
+          },
+          "duration": 8,
+          "effects": [
+            {
+              "at": 0,
+              "type": "sound",
+              "name": "music.panorama"
+            }
+          ]
+        }
+      ],
+      "storyProps": [
+        {
+          "kind": "sharedWire",
+          "x": 546.0,
+          "y": 520,
+          "w": 702.0
+        }
+      ]
     },
     {
       "roomId": "P09",
       "regionId": "pier",
-      "revision": 2,
+      "revision": 3,
       "name": "Галерея цепей",
       "worldBounds": {
         "x": 0,
@@ -4007,7 +6842,8 @@
           "w": 1040,
           "h": 60,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P09.launch",
@@ -4016,7 +6852,8 @@
           "w": 260,
           "h": 20,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "wetWood"
         },
         {
           "id": "P09.landing",
@@ -4025,7 +6862,8 @@
           "w": 420,
           "h": 160,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "wetWood"
         },
         {
           "id": "P09.step1",
@@ -4034,7 +6872,8 @@
           "w": 120,
           "h": 14,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "wetWood"
         },
         {
           "id": "P09.step2",
@@ -4043,7 +6882,8 @@
           "w": 110,
           "h": 14,
           "kind": "oneWay",
-          "grippable": false
+          "grippable": false,
+          "material": "wetWood"
         }
       ],
       "cameraZones": [
@@ -4185,12 +7025,160 @@
           "y": 380,
           "w": 230
         }
+      ],
+      "narrative": {
+        "past": "Галерея грузовых цепей",
+        "change": "Подъёмные цепи остались без груза",
+        "present": "Необязательная верхняя связь",
+        "mainClue": "Цепь уходит к исчезнувшему грузу",
+        "secondaryClue": "Уцелевший ящик закреплён высоко",
+        "action": "Отклониться, пересечь разрыв и вернуться другим путём",
+        "reward": "Осколок",
+        "soundLandmark": "Нерегулярный скрип натяжения",
+        "environmentEffect": "Волокна и капли с цепей",
+        "afterVisit": "Найденный ящик пуст, обратный путь ведёт к дому"
+      },
+      "atmosphere": {
+        "exposure": 0.9,
+        "reverb": 0.045,
+        "sheltered": false
+      },
+      "audioSources": [
+        {
+          "id": "P09.sound.water",
+          "sound": "water",
+          "x": 332.8,
+          "y": 512,
+          "radius": 700,
+          "gain": 0.8,
+          "loop": true,
+          "filter": 380
+        },
+        {
+          "id": "P09.sound.rope",
+          "sound": "rope",
+          "x": 728.0,
+          "y": 380,
+          "radius": 420,
+          "gain": 0.45,
+          "interval": [
+            6,
+            13
+          ]
+        },
+        {
+          "id": "P09.sound.bell",
+          "sound": "bell",
+          "x": 1010,
+          "y": 100,
+          "radius": 1400,
+          "gain": 0.12,
+          "interval": [
+            28,
+            48
+          ]
+        },
+        {
+          "id": "P09.sound.openWind",
+          "sound": "wind",
+          "x": 624.0,
+          "y": 260,
+          "radius": 800,
+          "gain": 0.65,
+          "loop": true,
+          "filter": 850
+        }
+      ],
+      "emitters": [
+        {
+          "id": "P09.fx.mooring",
+          "effect": "spray",
+          "x": 260.0,
+          "y": 508,
+          "direction": {
+            "x": -0.3,
+            "y": -1
+          },
+          "rate": 1.4,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "back",
+          "mode": "continuous",
+          "speed": [
+            20,
+            65
+          ],
+          "floor": 523
+        },
+        {
+          "id": "P09.fx.rope",
+          "effect": "drip",
+          "x": 738.4,
+          "y": 320,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.5,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "spread": 0.1,
+          "speed": [
+            2,
+            8
+          ],
+          "floor": 520
+        },
+        {
+          "id": "P09.fx.wind",
+          "effect": "fiber",
+          "x": 572.0,
+          "y": 180,
+          "direction": {
+            "x": 1,
+            "y": -0.1
+          },
+          "rate": 0.45,
+          "life": [
+            2,
+            3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            15,
+            30
+          ],
+          "area": {
+            "w": 100,
+            "h": 160
+          }
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "floodMarks",
+          "x": 90,
+          "y": 455
+        },
+        {
+          "kind": "patchedPlanks",
+          "x": 582.4000000000001,
+          "y": 516
+        }
       ]
     },
     {
       "roomId": "R09",
       "regionId": "quarter",
-      "revision": 2,
+      "revision": 3,
       "name": "Арка под башней",
       "worldBounds": {
         "x": 0,
@@ -4212,7 +7200,8 @@
           "w": 832,
           "h": 100,
           "kind": "solid",
-          "grippable": true
+          "grippable": true,
+          "material": "stone"
         }
       ],
       "cameraZones": [
@@ -4327,7 +7316,106 @@
       "purpose": "Спокойный нижний обход под крышами: проследить водовод башни и выйти к двору по другой лестнице.",
       "note": "Спокойный нижний обход под крышами: проследить водовод башни и выйти к двору по другой лестнице.",
       "mechanisms": [],
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "narrative": {
+        "past": "Арка под водоводом",
+        "change": "Верхние проходы стали опасны",
+        "present": "Тихий нижний обход к двору",
+        "mainClue": "Труба продолжается из соседнего дома",
+        "secondaryClue": "Сухая полоса отмечает привычный путь",
+        "action": "Пройти безопасным низом",
+        "reward": "Другой подход к арене",
+        "soundLandmark": "Капли и стук трубы",
+        "environmentEffect": "Редкие направленные капли",
+        "afterVisit": "Арка становится запасным обратным путём"
+      },
+      "atmosphere": {
+        "exposure": 0.12,
+        "reverb": 0.045,
+        "sheltered": true
+      },
+      "audioSources": [
+        {
+          "id": "R09.sound.pipe",
+          "sound": "pipe",
+          "x": 565.76,
+          "y": 350,
+          "radius": 420,
+          "gain": 0.5,
+          "interval": [
+            5,
+            11
+          ]
+        },
+        {
+          "id": "R09.sound.neighbors",
+          "sound": "murmur",
+          "x": 291.2,
+          "y": 290,
+          "radius": 420,
+          "gain": 0.22,
+          "loop": true,
+          "filter": 280
+        },
+        {
+          "id": "R09.sound.dishes",
+          "sound": "crockery",
+          "x": 399.36,
+          "y": 330,
+          "radius": 290,
+          "gain": 0.35,
+          "interval": [
+            9,
+            19
+          ]
+        },
+        {
+          "id": "R09.sound.shutter",
+          "sound": "shutter",
+          "x": 665.6,
+          "y": 220,
+          "radius": 400,
+          "gain": 0.35,
+          "interval": [
+            17,
+            32
+          ]
+        }
+      ],
+      "emitters": [
+        {
+          "id": "R09.fx.gutter",
+          "effect": "drip",
+          "x": 582.4,
+          "y": 280,
+          "direction": {
+            "x": 0,
+            "y": 1
+          },
+          "rate": 0.6,
+          "life": [
+            0.6,
+            1.3
+          ],
+          "layer": "middle",
+          "mode": "continuous",
+          "speed": [
+            0,
+            5
+          ],
+          "spread": 0.1,
+          "floor": 500
+        }
+      ],
+      "storyEvents": [],
+      "storyProps": [
+        {
+          "kind": "sharedWire",
+          "x": 291.2,
+          "y": 260,
+          "w": 374.40000000000003
+        }
+      ]
     }
   ],
   "testRoom": {
@@ -4457,5 +7545,6 @@
       0,
       0
     ]
-  }
+  },
+  "atmosphereVersion": 1
 }

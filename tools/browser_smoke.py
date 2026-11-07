@@ -239,11 +239,10 @@ try:
         touch.goto(URL)
         touch.locator('#play').click()
         assert touch.locator('#touch-controls').is_visible()
-        box=touch.locator('#swipe-zone').bounding_box()
+        box=touch.locator('[data-action=right]').bounding_box()
         finger={'x':box['x']+box['width']/2,'y':box['y']+box['height']/2,'id':2}
         session=mobile.new_cdp_session(touch)
         session.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[finger]})
-        session.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{**finger,'x':finger['x']+40}]})
         touch.wait_for_timeout(180)
         session.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
         touch.screenshot(path=str(ARTIFACTS / 'mobile.png'))
