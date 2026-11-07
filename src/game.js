@@ -1,13 +1,21 @@
-import { conditionMet, distance, overlaps, clamp } from "./core.js";
+import { conditionMet, distance, overlaps, clamp, approach } from "./core.js";
 import {
   createPlayer,
   activeSurfaces,
   updatePlayer,
   attackBox,
   lineBlocked,
+  safeStandingPoint,
 } from "./physics.js";
+import {
+  accessibleInteraction,
+  lockReason,
+  safeReturnPoint,
+} from "./safety.js";
+import { updateCamera } from "./camera.js";
+import { record, newStats } from "./telemetry.js";
 import { createEnemy, updateEnemy } from "./enemies.js";
-import { setFlag, maxHealth, newProgress } from "./save.js";
+import { setFlag, maxHealth, newProgress, fragmentCount } from "./save.js";
 
 export class Game {
   constructor(world, config, store, events = {}) {
@@ -28,32 +36,52 @@ export class Game {
     this.frameTimes = [];
     this.debug = { enabled: false, god: false, fly: false, collisions: false };
     this.viewport = { w: 1280, h: 720 };
+    this.requestedViewport = { w: 1280, h: 720 };
     this.camera = { x: 0, y: 0 };
     this.shake = 0;
     this.transition = null;
+    this.defeatedOrdinary = new Set();
+    this.mechanisms = new Map();
+    this.safeHistory = [];
     this.loadRoom("P01", "start", false);
   }
   get flags() {
     return this.progress.flags;
   }
   setViewport(w, h) {
-    this.viewport = { w, h };
+    this.requestedViewport = { w, h };
+    this.viewport = {
+      w: Math.min(w, this.room.worldBounds.w),
+      h: Math.min(h, this.room.worldBounds.h),
+    };
     if (this.player) this.snapCamera();
   }
   snapCamera() {
-    const { w, h } = this.viewport;
-    this.camera = {
-      x: clamp(
-        this.player.x - w / 2,
-        0,
-        Math.max(0, this.room.worldBounds.w - w),
-      ),
-      y: clamp(
-        this.player.y - h * 0.61,
-        0,
-        Math.max(0, this.room.worldBounds.h - h),
-      ),
-    };
+    updateCamera(this, 0, null, true);
+  }
+  currentSurfaces() {
+    const surfaces = activeSurfaces(
+      this.room,
+      this.flags,
+      conditionMet,
+      this.time,
+    ).filter(
+      (s) =>
+        !s.mechanismId ||
+        (this.mechanisms.get(s.mechanismId)?.value || 0) >= 0.98,
+    );
+    for (const m of this.mechanisms.values())
+      if (m.kind === "gate" && m.value < 0.98)
+        surfaces.push({
+          id: m.id + ".collider",
+          x: m.x - m.w / 2,
+          y: m.y - m.h - m.value * m.h,
+          w: m.w,
+          h: m.h,
+          kind: "solid",
+          grippable: false,
+        });
+    return surfaces;
   }
   get abilities() {
     return {
@@ -78,13 +106,18 @@ export class Game {
       this.progress = newProgress();
       this.save();
     }
-    let { roomId, spawnPointId } = this.progress.lastRest;
+    let { roomId, spawnPointId } =
+      this.progress.retryCheckpoint &&
+      !this.flags.includes("boss.courtyard_keeper")
+        ? this.progress.retryCheckpoint
+        : this.progress.lastRest;
     if (!this.rooms.get(roomId)?.spawnPoints[spawnPointId]) {
       roomId = "P01";
       spawnPointId = "start";
       this.progress.lastRest = { roomId, spawnPointId };
       this.emit("toast", "Точка отдыха недоступна. Возвращаемся на пристань.");
     }
+    this.defeatedOrdinary.clear();
     this.health = maxHealth(this.progress);
     this.loadRoom(roomId, spawnPointId);
     this.mode = "playing";
@@ -101,19 +134,45 @@ export class Game {
       return false;
     }
     this.room = room;
+    const desired = this.requestedViewport || this.viewport;
+    this.viewport = {
+      w: Math.min(desired.w, room.worldBounds.w),
+      h: Math.min(desired.h, room.worldBounds.h),
+    };
     this.player = createPlayer(spawn, this.config);
     this.player.invulnerable = 0.6;
     this.enemies = room.entities
-      .filter((e) => e.type === "enemy" && !this.flags.includes(e.defeatedFlag))
+      .filter(
+        (e) =>
+          e.type === "enemy" &&
+          !this.flags.includes(e.defeatedFlag) &&
+          !this.defeatedOrdinary.has(e.id),
+      )
       .map(createEnemy);
     this.projectiles = [];
+    this.ambientSeen = new Set();
+    this.demonstration = null;
     this.particles = [];
     this.arenaActive = false;
     this.hitStop = 0;
     this.safePoint = { x: spawn.x, y: spawn.y };
+    this.safeHistory = [this.safePoint];
+    this.transitionCooldown = 0.45;
     this.nearby = null;
     this.surfaces = activeSurfaces(room, this.flags, conditionMet, this.time);
     this.snapCamera();
+    this.mechanisms = new Map(
+      (room.mechanisms || []).map((m) => [
+        m.id,
+        { ...m, value: this.flags.includes(m.flag) ? 1 : 0 },
+      ]),
+    );
+    this.surfaces = this.currentSurfaces();
+    if (record && room.arena && !this.flags.includes("boss.courtyard_keeper"))
+      this.progress.retryCheckpoint = {
+        roomId: room.roomId,
+        spawnPointId: room.arena.retrySpawn,
+      };
     if (record) {
       if (id !== "LAB" && !this.progress.visited.includes(id))
         this.progress.visited.push(id);
@@ -132,9 +191,27 @@ export class Game {
       return false;
     }
     if (!conditionMet(exit.condition, this.flags)) {
-      this.emit("toast", exit.lockedReason);
+      if (this.blockedExitLatch !== exit.exitId)
+        record(this, "blocked_exit", {
+          exit: exit.exitId,
+          reason: lockReason(exit),
+        });
+      this.blockedExitLatch = exit.exitId;
+      this.emit("toast", lockReason(exit));
       return false;
     }
+    if (
+      [...this.mechanisms.values()].some(
+        (m) => m.controlledExits?.includes(exit.exitId) && m.value < 0.98,
+      )
+    ) {
+      this.emit("toast", "Дождитесь открытия прохода.");
+      return false;
+    }
+    if (exit.condition && JSON.stringify(exit.condition).includes("shortcut."))
+      record(this, "shortcut", { exit: exit.exitId });
+    if (!this.progress.seenExits.includes(exit.exitId))
+      this.progress.seenExits.push(exit.exitId);
     if (!this.rooms.get(exit.targetRoomId)?.spawnPoints[exit.spawnPointId]) {
       this.emit(
         "toast",
@@ -142,6 +219,10 @@ export class Game {
       );
       return false;
     }
+    const velocity =
+      exit.type === "passage"
+        ? clamp(this.player.vx, -this.config.maxSpeed, this.config.maxSpeed)
+        : 0;
     this.player.vx = 0;
     this.player.vy = 0;
     this.player.attackTime = 0;
@@ -149,7 +230,9 @@ export class Game {
     this.transition = {
       exit,
       elapsed: 0,
-      duration: exit.type === "lift" ? 1.8 : 0.65,
+      duration:
+        exit.type === "lift" ? 2.4 : exit.type === "passage" ? 0.24 : 0.55,
+      velocity,
       loaded: false,
     };
     if (exit.type === "lift") this.emit("toast", "Подъёмник в пути…");
@@ -157,23 +240,31 @@ export class Game {
   }
   interact() {
     const target = this.nearby;
-    if (!target) return;
+    if (!target || !accessibleInteraction(this.player, target, this.surfaces))
+      return;
     if (target.exitId) {
       this.tryExit(target);
       return;
     }
     if (target.requires && !conditionMet(target.requires, this.flags)) {
-      this.emit("toast", "Механизм удерживает смотритель двора.");
+      this.emit("toast", lockReason(target));
       return;
     }
     if (target.type === "ability") {
       if (this.flag(target.flag)) {
+        this.demonstration = {
+          type: target.reward,
+          x: target.x,
+          y: target.y,
+          t: 0,
+        };
         this.burst(target.x, target.y, 30, "#ddc58e");
         this.emit("sound", "ability");
         this.emit("toast", target.title + " · способность получена");
       }
     } else if (target.type === "pickup") {
       if (this.flag(target.flag)) {
+        if (target.flag === "pickup.p03_upper") record(this, "late_secret");
         if (target.reward === "health") this.health = maxHealth(this.progress);
         this.burst(target.x, target.y, 20, "#ddc58e");
         this.emit("sound", "pickup");
@@ -184,7 +275,18 @@ export class Game {
             : target.title + " · найден осколок памяти",
         );
       }
+    } else if (target.type === "retry") {
+      this.progress.retryCheckpoint = {
+        roomId: this.room.roomId,
+        spawnPointId: this.room.arena.retrySpawn,
+      };
+      this.health = maxHealth(this.progress);
+      this.save();
+      this.emit("sound", "rest");
+      this.emit("toast", "Лампа зажжена. После поражения вы вернётесь сюда.");
     } else if (target.type === "rest") {
+      this.defeatedOrdinary.clear();
+      this.progress.retryCheckpoint = null;
       const spawnId = "rest." + target.id;
       this.room.spawnPoints[spawnId] = {
         x: target.x - 12,
@@ -203,7 +305,7 @@ export class Game {
       this.emit("sound", "rest");
       this.emit("toast", "Здоровье восстановлено · место отдыха сохранено");
       this.burst(target.x, target.y - 20, 22, "#e0b36b");
-    } else if (target.type === "lever") {
+    } else if (target.type === "lever" || target.type === "repair") {
       if (this.flag(target.flag)) {
         this.emit("sound", "lever");
         this.emit("toast", target.text);
@@ -211,13 +313,27 @@ export class Game {
         this.burst(target.x, target.y - 40, 20, "#d4b47b");
       } else this.emit("toast", "Механизм уже работает.");
     } else if (target.type === "npc" || target.type === "barrier") {
-      if (target.giftFlag && this.flag(target.giftFlag))
+      if (
+        target.giftFlag &&
+        conditionMet(target.giftRequires, this.flags) &&
+        this.flag(target.giftFlag)
+      )
         this.emit("sound", "pickup");
       let text = target.text;
+      if (target.id === "npc.clockmaker") {
+        if (!this.flags.includes("mechanism.clockwork"))
+          text = "Поверни маховик на верстаке. Я попробую запустить часы.";
+        else if (fragmentCount(this.progress) >= 3) {
+          this.flag("story.clockmaker_memory");
+          text =
+            "Три осколка помнят утро. Прими золотую нить для шарфа. А сердце города ищи над соляным складом.";
+        }
+      }
       if (target.id === "npc.station_keeper" && this.abilities.wall_grip)
         text =
           "Ты вернулся с крыш. Значит, город ещё не забыл, как встречать рассвет. Верхняя ниша соляного склада теперь тебе по силам.";
       else if (
+        target.id !== "npc.clockmaker" &&
         target.giftFlag &&
         this.flags.includes(target.giftFlag) &&
         this.progress.hints.includes(target.id)
@@ -270,13 +386,17 @@ export class Game {
                 : 5;
     return (
       candidates
-        .filter((e) => Math.abs(e.x - p.x) < 78 && Math.abs(e.y - p.y) < 88)
+        .filter(
+          (e) =>
+            (e.type !== "passage" || !conditionMet(e.condition, this.flags)) &&
+            accessibleInteraction(this.player, e, this.surfaces),
+        )
         .sort(
           (a, b) => rank(a) - rank(b) || distance(p, a) - distance(p, b),
         )[0] || null
     );
   }
-  hurt(amount, direction = 1) {
+  hurt(amount, direction = 1, cause = "enemy") {
     const p = this.player;
     if (
       this.mode !== "playing" ||
@@ -287,6 +407,7 @@ export class Game {
     )
       return false;
     this.health -= this.progress.settings.assist ? amount * 0.5 : amount;
+    record(this,'damage',{cause,amount});
     p.invulnerable = this.config.hurtInvulnerability;
     p.hurtTime = 0.23;
     p.dashTime = 0;
@@ -295,41 +416,83 @@ export class Game {
     this.shake = 0.22;
     this.emit("sound", "hurt");
     this.burst(p.x + p.w / 2, p.y + 20, 15, "#cb927c");
-    if (this.health <= 0) this.die();
+    if (this.health <= 0) this.die(cause);
     return true;
   }
-  die() {
+  die(cause = "enemy") {
     if (this.mode === "death") return;
     this.mode = "death";
     this.player.state = "dead";
     this.player.vx = 0;
     this.player.vy = 0;
     this.progress.deaths++;
+    record(this, "death", { cause });
+    this.defeatedOrdinary.clear();
     this.save();
     this.emit("sound", "death");
     this.emit("mode", "death");
   }
-  respawn() {
+  respawn(forceRest = false) {
+    if (forceRest) this.progress.retryCheckpoint = null;
     this.health = maxHealth(this.progress);
-    const { roomId, spawnPointId } = this.progress.lastRest;
+    const { roomId, spawnPointId } =
+      !forceRest &&
+      this.progress.retryCheckpoint &&
+      !this.flags.includes("boss.courtyard_keeper")
+        ? this.progress.retryCheckpoint
+        : this.progress.lastRest;
+    this.defeatedOrdinary.clear();
     this.loadRoom(roomId, spawnPointId);
     this.player.invulnerable = 1.5;
     this.mode = "playing";
+    if (forceRest) this.save();
     this.emit("mode", "playing");
   }
   localReturn() {
     if (this.mode !== "playing") return;
-    this.hurt(1);
+    record(this, "fall");
+    this.hurt(1, 1, "fall");
     if (this.mode === "death") return;
+    const recoverySurfaces = [
+      ...this.surfaces,
+      ...this.enemies.filter((e) => e.hp > 0).map((e) => ({
+        id: e.id + ".avoid",
+        x: e.x - 20,
+        y: e.y - 10,
+        w: e.w + 40,
+        h: e.h + 10,
+        kind: "hazard",
+      })),
+    ];
+    const point = safeReturnPoint(
+      this.player,
+      recoverySurfaces,
+      this.room.worldBounds,
+      [
+        this.safePoint,
+        ...this.safeHistory.slice().reverse(),
+        ...Object.values(this.room.spawnPoints),
+      ],
+    );
+    if (!point) {
+      this.respawn();
+      return;
+    }
     Object.assign(this.player, {
-      x: this.safePoint.x,
-      y: this.safePoint.y,
+      x: point.x,
+      y: point.y,
       vx: 0,
       vy: 0,
       dashTime: 0,
       dashReady: true,
       invulnerable: 1,
+      support: null,
+      dropTime: 0,
+      dropSurfaces: [],
+      attackTime: 0,
     });
+    this.player.grounded = true;
+    this.snapCamera();
   }
   burst(x, y, count, color) {
     if (this.progress.settings.reducedFlash) count = Math.ceil(count * 0.4);
@@ -352,9 +515,22 @@ export class Game {
   }
   update(dt, input) {
     if (this.mode !== "playing") return;
+    if(!['left','right','up','down','interact'].some(k=>input.down(k)||input.pressed(k)))this.blockedExitLatch=null;
     this.time += dt;
     this.progress.playTime += dt;
+    this.progress.stats || (this.progress.stats = newStats());
+    this.progress.stats.roomTime[this.room.roomId] =
+      (this.progress.stats.roomTime[this.room.roomId] || 0) + dt;
+    this.transitionCooldown = Math.max(0, (this.transitionCooldown || 0) - dt);
+    for (const m of this.mechanisms.values()) {
+      const target = this.flags.includes(m.flag) ? 1 : 0;
+      m.value = approach(m.value, target, dt / (m.duration || 0.7));
+    }
     this.shake = Math.max(0, this.shake - dt);
+    if (this.demonstration) {
+      this.demonstration.t += dt;
+      if (this.demonstration.t > 1) this.demonstration = null;
+    }
     if (this.transition) {
       this.transition.elapsed += dt;
       if (
@@ -363,6 +539,7 @@ export class Game {
       ) {
         const { exit } = this.transition;
         this.loadRoom(exit.targetRoomId, exit.spawnPointId);
+        if (exit.type === "passage") this.player.vx = this.transition.velocity;
         this.transition.loaded = true;
       }
       if (this.transition.elapsed >= this.transition.duration)
@@ -373,12 +550,7 @@ export class Game {
       this.hitStop -= dt;
       return;
     }
-    this.surfaces = activeSurfaces(
-      this.room,
-      this.flags,
-      conditionMet,
-      this.time,
-    );
+    this.surfaces = this.currentSurfaces();
     const p = this.player;
     // A moving support carries its rider before player-controlled movement.
     if (p.grounded && p.support) {
@@ -415,6 +587,20 @@ export class Game {
         (event) => {
           if (event === "fallOut" || event === "hazard") this.localReturn();
           else {
+            const learned = {
+              dash: "dash",
+              wallJump: "wall",
+              jump: "jump",
+              wallGrip: "grip",
+              platformDrop: "drop",
+            }[event];
+            if (
+              learned &&
+              !this.progress.hints.includes("training." + learned)
+            ) {
+              this.progress.hints.push("training." + learned);
+              this.save();
+            }
             this.emit("sound", event);
             if (event === "dash")
               this.burst(p.x + p.w / 2, p.y + 24, 16, "#8ec3c2");
@@ -426,9 +612,17 @@ export class Game {
     p.support = support ? { id: support.id, x: support.x, y: support.y } : null;
     if (
       p.grounded &&
-      !this.surfaces.some((s) => s.kind === "hazard" && overlaps(p, s))
-    )
+      safeStandingPoint(p, this.surfaces, this.room.worldBounds)
+    ) {
+      if (
+        !this.safePoint ||
+        Math.hypot(p.x - this.safePoint.x, p.y - this.safePoint.y) > 32
+      ) {
+        this.safeHistory.push(this.safePoint);
+        if (this.safeHistory.length > 12) this.safeHistory.shift();
+      }
       this.safePoint = { x: p.x, y: p.y };
+    }
     if (p.state === "run" && p.grounded) {
       p.stepTimer += dt;
       if (p.stepTimer > 0.32) {
@@ -482,9 +676,11 @@ export class Game {
           this.hitStop = 0.035;
           this.shake = 0.08;
           if (e.hp <= 0) {
+            if (!e.defeatedFlag) this.defeatedOrdinary.add(e.id);
             this.projectiles = this.projectiles.filter((s) => s.owner !== e.id);
             this.burst(e.x + e.w / 2, e.y + e.h / 2, 25, "#b6a16d");
             if (e.defeatedFlag && this.flag(e.defeatedFlag)) {
+              this.progress.retryCheckpoint = null;
               this.arenaActive = false;
               this.emit(
                 "toast",
@@ -501,11 +697,13 @@ export class Game {
       shot.y += shot.vy * dt;
       shot.life -= dt;
       if (overlaps(p, shot)) {
-        if (this.hurt(1, shot.vx >= 0 ? 1 : -1)) shot.life = 0;
+        if (this.hurt(1, shot.vx >= 0 ? 1 : -1,shot.wave?'keeper_wave':'parasite_projectile')) shot.life = 0;
       }
       if (
-        !shot.wave &&
-        this.surfaces.some((s) => s.kind !== "oneWay" && overlaps(shot, s))
+        this.surfaces.some(
+          (s) =>
+            s.kind !== "oneWay" && s.kind !== "hazard" && overlaps(shot, s),
+        )
       )
         shot.life = 0;
     }
@@ -521,22 +719,63 @@ export class Game {
     this.particles = this.particles.filter((s) => s.life > 0);
     this.nearby = this.findNearby();
     if (input.pressed("interact")) this.interact();
-    const targetY = clamp(
-      p.y - this.viewport.h * (400 / 720) + (p.vy > 300 ? 90 : 0),
-      0,
-      Math.max(0, this.room.worldBounds.h - this.viewport.h),
-    );
-    const targetX = clamp(
-      p.x - this.viewport.w / 2 + p.facing * (this.viewport.w < 800 ? 160 : 80),
-      0,
-      Math.max(0, this.room.worldBounds.w - this.viewport.w),
-    );
-    this.camera.x += (targetX - this.camera.x) * (1 - Math.exp(-dt * 4));
-    if (
-      Math.abs(targetY - this.camera.y) > 70 ||
-      targetY === 0 ||
-      targetY === Math.max(0, this.room.worldBounds.h - this.viewport.h)
-    )
-      this.camera.y += (targetY - this.camera.y) * (1 - Math.exp(-dt * 5));
+    if (!this.transition && this.transitionCooldown <= 0)
+      for (const exit of this.room.exits) {
+        const moving =
+          exit.direction === "left"
+            ? input.down("left")
+            : exit.direction === "right"
+              ? input.down("right")
+              : false;
+        const activate =
+          exit.type === "passage"
+            ? moving && overlaps(p, exit.triggerZone)
+            : exit.type === "stairs" &&
+              input.pressed(exit.direction) &&
+              accessibleInteraction(p, exit, this.surfaces);
+        if (activate) {
+          this.tryExit(exit);
+          break;
+        }
+      }
+    updateCamera(this, dt, input);
+    const view = {
+      x: this.camera.x,
+      y: this.camera.y,
+      w: this.viewport.w,
+      h: this.viewport.h,
+    };
+    if (this.room.roomId === "R08")
+      for (const e of this.room.entities)
+        if (
+          e.id.startsWith("horizon.") &&
+          Math.abs(e.x - p.x) < 170 &&
+          !this.ambientSeen.has(e.id)
+        ) {
+          this.ambientSeen.add(e.id);
+          this.emit(
+            "sound",
+            e.title === "Висячие сады"
+              ? "horizonGardens"
+              : e.title === "Литейные"
+                ? "horizonForge"
+                : "horizonArchive",
+          );
+        }
+    for (const exit of this.room.exits) {
+      const point = { x: exit.x - 10, y: exit.y - 65, w: 20, h: 65 };
+      if (
+        !this.progress.seenExits.includes(exit.exitId) &&
+        overlaps(view, point) &&
+        (!exit.hidden || Math.abs(exit.x - p.x) < 60) &&
+        !lineBlocked(
+          { x: p.x + p.w / 2, y: p.y + p.h / 2 },
+          { x: exit.x, y: exit.y - 30 },
+          this.surfaces,
+          { ignoreId: exit.colliderId },
+        )
+      )
+        this.progress.seenExits.push(exit.exitId);
+    }
   }
 }

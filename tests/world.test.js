@@ -1,15 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { world, config, fixture, controls } from "./helpers.js";
+import { world, config, fixture, controls, positionAt } from "./helpers.js";
 import { validateWorld, conditionMet } from "../src/core.js";
 import { maxHealth, fragmentCount } from "../src/save.js";
 
-test("all 20 rooms conform to the contract; stable IDs, reciprocal exits and safe spawns", () => {
-  assert.equal(world.rooms.length, 20);
+test("all 22 rooms conform to the contract; stable IDs, reciprocal exits and safe spawns", () => {
+  assert.equal(world.rooms.length, 22);
   assert.deepEqual(validateWorld(world, config), []);
   assert.equal(
     world.rooms.reduce((n, r) => n + r.exits.length, 0),
-    42,
+    50,
   );
   assert.equal(
     world.rooms
@@ -70,7 +70,7 @@ test("entire graph can be completed without acquiring an ability behind its own 
         }
     }
   }
-  assert.equal(visited.size, 20);
+  assert.equal(visited.size, 22);
   assert.ok(flags.includes("slice.overlook_seen"));
   // With both shortcuts, the late secret is reachable from the tower and back.
   function reachable(start, end) {
@@ -111,6 +111,7 @@ test("ability is awarded once, persists through death and room reload", () => {
   const { game, store } = fixture();
   game.loadRoom("P04");
   const ability = game.room.entities.find((e) => e.type === "ability");
+  positionAt(game, ability);
   game.nearby = ability;
   game.interact();
   game.interact();
@@ -120,6 +121,10 @@ test("ability is awarded once, persists through death and room reload", () => {
   assert.equal(game.abilities.dash, true);
   assert.ok(store.load().flags.includes("ability.dash"));
   game.loadRoom("R04");
+  positionAt(
+    game,
+    game.room.entities.find((e) => e.type === "ability"),
+  );
   game.nearby = game.room.entities.find((e) => e.type === "ability");
   game.interact();
   game.die();
@@ -130,6 +135,10 @@ test("rest point is reusable across application restart and heals the player", (
   const { game, storage } = fixture();
   game.loadRoom("V02");
   game.health = 1;
+  positionAt(
+    game,
+    game.room.entities.find((e) => e.type === "rest"),
+  );
   game.nearby = game.room.entities.find((e) => e.type === "rest");
   game.interact();
   assert.equal(game.health, 5);
@@ -148,6 +157,7 @@ test("pickups and NPC gifts cannot duplicate rewards; heart updates max health",
   game.progress.flags.push("ability.wall_grip");
   game.loadRoom("P03");
   for (const target of game.room.entities.filter((e) => e.type === "pickup")) {
+    positionAt(game, target);
     game.nearby = target;
     game.interact();
     game.interact();
@@ -156,6 +166,11 @@ test("pickups and NPC gifts cannot duplicate rewards; heart updates max health",
   assert.equal(game.health, 6);
   assert.equal(fragmentCount(game.progress), 1);
   game.loadRoom("V03");
+  game.flag("mechanism.clockwork");
+  positionAt(
+    game,
+    game.room.entities.find((e) => e.type === "npc"),
+  );
   game.nearby = game.room.entities.find((e) => e.type === "npc");
   game.interact();
   game.interact();
@@ -172,11 +187,11 @@ test("room transitions are single, reversible and pause-safe, including the elev
   game.update(1, controls());
   assert.equal(game.transition.elapsed, 0);
   game.mode = "playing";
-  for (let i = 0; i < 240; i++) game.update(config.fixedStep, controls());
+  for (let i = 0; i < 360; i++) game.update(config.fixedStep, controls());
   assert.equal(game.room.roomId, "V01");
   assert.equal(game.transition, null);
   assert.ok(game.tryExit(game.room.exits.find((e) => e.type === "lift")));
-  for (let i = 0; i < 240; i++) game.update(config.fixedStep, controls());
+  for (let i = 0; i < 360; i++) game.update(config.fixedStep, controls());
   assert.equal(game.room.roomId, "P08");
 });
 test("each swing hits a target at most once; walls block damage", () => {
@@ -228,7 +243,7 @@ test("boss resets after a failed attempt; victory persists and clears active pro
   boss.hp = 1;
   Object.assign(game.player, {
     x: boss.x - 70,
-    y: 576,
+    y: boss.y + boss.h - 44,
     facing: 1,
     invulnerable: 10,
   });
@@ -266,7 +281,7 @@ test("hundreds of room reloads do not accumulate combat objects", () => {
 test("camera reaches the upper room bound without leaving the player above the viewport", () => {
   const { game } = fixture();
   game.loadRoom("R05");
-  Object.assign(game.player, { x: 550, y: 156, grounded: true });
+  Object.assign(game.player, { x: 720, y: 156, grounded: true });
   for (let i = 0; i < 120; i++) game.update(config.fixedStep, controls());
   assert.ok(game.camera.y < 5);
   assert.ok(game.player.y - game.camera.y > 100);

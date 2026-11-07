@@ -65,7 +65,7 @@ async function boot() {
     },
     complete: () => {
       $("completion-stats").textContent =
-        `Исследовано: ${game.progress.visited.length} / 20 · Осколки: ${fragmentCount(game.progress)} / 3 · Секрет сердца: ${game.flags.includes("pickup.p03_upper") ? "найден" : "ещё ждёт"}`;
+        `Исследовано: ${game.progress.visited.length} / ${game.world.rooms.length} · Осколки: ${fragmentCount(game.progress)} / 3 · Секрет сердца: ${game.flags.includes("pickup.p03_upper") ? "найден" : "ещё ждёт"}`;
       setMode("complete");
     },
     mode: (mode) => setMode(mode),
@@ -117,8 +117,10 @@ async function boot() {
     toastTimer = setTimeout(() => ($("toast").hidden = true), 4500);
   }
   function roomCaption(room) {
+    audio?.setRegion(room.regionId);
     $("caption-index").textContent =
-      world.regions[room.regionId].name.toUpperCase() + " / " + room.roomId;
+      world.regions[room.regionId].name.toUpperCase() +
+      (game.debug.enabled ? " / " + room.roomId : "");
     $("caption-name").textContent = room.name;
     const el = $("room-caption");
     el.hidden = true;
@@ -160,7 +162,7 @@ async function boot() {
       $("new-game").hidden = !store.hasSave;
     }
     if (mode === "map") {
-      map.center();
+      map.open();
     }
     if (mode === "playing") $("game").focus({ preventScroll: true });
     else if (screens[mode])
@@ -215,7 +217,13 @@ async function boot() {
         : nearby.title;
       el.querySelector("span").textContent = label;
       el.querySelector("kbd").textContent =
-        input.device === "gamepad" ? "Y" : "E";
+        nearby.type === "stairs"
+          ? nearby.direction === "up"
+            ? "↑"
+            : "↓"
+          : input.device === "gamepad"
+            ? "Y"
+            : "E";
       el.onclick = () => {
         game.interact();
       };
@@ -263,8 +271,10 @@ async function boot() {
   $("zoom-in").onclick = () => map.scale(0.2);
   $("zoom-out").onclick = () => map.scale(-0.2);
   $("map-center").onclick = () => map.center();
+  $("map-marker-type").onchange = () =>
+    (map.pinType = $("map-marker-type").value);
   $("return-rest").onclick = () => {
-    game.respawn();
+    game.respawn(true);
     toast("Возвращение к месту отдыха");
   };
   $("respawn").onclick = () => game.respawn();
@@ -315,6 +325,39 @@ async function boot() {
     new URLSearchParams(location.search).get("debug") === "1";
   if (debugAllowed) {
     game.debug.enabled = true;
+    const editorButton = document.createElement("button");
+    editorButton.textContent = "Редактор комнаты";
+    editorButton.id = "debug-editor";
+    editorButton.onclick = async () => {
+      if (!game.editor) {
+        const { RoomEditor } = await import("./editor.js");
+        game.editor = new RoomEditor(game, setMode);
+      }
+      game.editor.toggle();
+    };
+    $("debug").append(editorButton);
+    const reportButton = document.createElement("button");
+    reportButton.textContent = "Экспорт плейтеста";
+    reportButton.onclick = () => {
+      const a = document.createElement("a"),
+        url = URL.createObjectURL(
+          new Blob(
+            [
+              JSON.stringify(
+                { version: 2, stats: game.progress.stats, flags: game.flags },
+                null,
+                2,
+              ),
+            ],
+            { type: "application/json" },
+          ),
+        );
+      a.href = url;
+      a.download = "playtest.json";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    $("debug").append(reportButton);
     for (const room of game.rooms.values()) {
       const option = document.createElement("option");
       option.value = room.roomId;
@@ -437,6 +480,7 @@ async function boot() {
             velocity: [Math.round(game.player.vx), Math.round(game.player.vy)],
             contact: game.player.contact,
             flags: game.flags,
+            stats: game.progress.stats,
             objects:
               game.enemies.length +
               game.projectiles.length +

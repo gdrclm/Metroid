@@ -37,6 +37,30 @@ export function activeSurfaces(room, flags, conditionMet, time = 0) {
       return { ...s, [s.motion.axis]: s[s.motion.axis] + offset };
     });
 }
+export function supportsAt(body, surfaces, margin = 0) {
+  return surfaces.filter(
+    (s) =>
+      s.kind !== "hazard" &&
+      Math.abs(body.y + body.h - s.y) < 0.6 &&
+      (margin
+        ? body.x >= s.x + margin && body.x + body.w <= s.x + s.w - margin
+        : body.x + body.w > s.x + 0.01 && body.x < s.x + s.w - 0.01),
+  );
+}
+export function safeStandingPoint(body, surfaces, bounds, margin = 8) {
+  return (
+    body.x >= 0 &&
+    body.y >= 0 &&
+    body.x + body.w <= bounds.w &&
+    body.y + body.h <= bounds.h &&
+    !surfaces.some((s) =>
+      s.kind === "hazard"
+        ? overlaps({ ...body, x: body.x - 6, w: body.w + 12, h: body.h + 6 }, s)
+        : s.kind !== "oneWay" && overlaps(body, s),
+    ) &&
+    supportsAt(body, surfaces, margin).some((s) => !s.motion)
+  );
+}
 export function moveBody(p, dx, dy, surfaces) {
   p.contact = null;
   if (dx) {
@@ -60,7 +84,12 @@ export function moveBody(p, dx, dy, surfaces) {
   if (dy >= 0) {
     let allowed = dy;
     for (const s of surfaces) {
-      if (s.kind === "hazard" || (s.kind === "oneWay" && p.dropTime > 0))
+      if (
+        s.kind === "hazard" ||
+        (s.kind === "oneWay" &&
+          p.dropTime > 0 &&
+          p.dropSurfaces?.includes(s.id))
+      )
         continue;
       if (p.x + p.w <= s.x + 0.01 || p.x >= s.x + s.w - 0.01) continue;
       if (p.y + p.h <= s.y + 0.1 && p.y + p.h + allowed >= s.y - 0.01) {
@@ -125,10 +154,16 @@ export function updatePlayer(
     }
   }
   if (input.pressed("jump") && input.down("down") && p.grounded) {
-    p.dropTime = config.dropTime;
     p.jumpBuffer = 0;
-    p.y += 2;
-    p.grounded = false;
+    const supports = supportsAt(p, surfaces);
+    if (supports.length && supports.every((s) => s.kind === "oneWay")) {
+      p.dropTime = config.dropTime;
+      p.dropSurfaces = supports.map((s) => s.id);
+      p.grounded = false;
+      p.coyote = 0;
+      p.vy = Math.max(p.vy, 80);
+      emit("platformDrop");
+    }
   }
   if (p.jumpBuffer > 0 && p.dashTime <= 0 && p.hurtTime <= 0) {
     if (p.coyote > 0) {
@@ -233,14 +268,39 @@ export function attackBox(p, config) {
     h: p.h + 12,
   };
 }
-export function lineBlocked(a, b, surfaces) {
-  const ray = {
-    x: Math.min(a.x, b.x),
-    y: Math.min(a.y, b.y) - 1,
-    w: Math.max(1, Math.abs(a.x - b.x)),
-    h: 2,
-  };
-  return surfaces.some(
-    (s) => s.kind !== "oneWay" && s.kind !== "hazard" && overlaps(ray, s),
-  );
+export function lineBlocked(
+  a,
+  b,
+  surfaces,
+  { includeOneWay = false, ignoreId = null } = {},
+) {
+  return surfaces.some((s) => {
+    if (
+      s.id === ignoreId ||
+      s.kind === "hazard" ||
+      s.blocksSight === false ||
+      (!includeOneWay && s.kind === "oneWay")
+    )
+      return false;
+    const dx = b.x - a.x,
+      dy = b.y - a.y;
+    let lo = 0,
+      hi = 1;
+    for (const [p, q] of [
+      [-dx, a.x - s.x],
+      [dx, s.x + s.w - a.x],
+      [-dy, a.y - s.y],
+      [dy, s.y + s.h - a.y],
+    ]) {
+      if (Math.abs(p) < 1e-9) {
+        if (q < 0) return false;
+        continue;
+      }
+      const t = q / p;
+      if (p < 0) lo = Math.max(lo, t);
+      else hi = Math.min(hi, t);
+      if (lo > hi) return false;
+    }
+    return hi > 1e-5 && lo < 1 - 1e-5;
+  });
 }

@@ -103,7 +103,7 @@
         </div>
         <div class="title-bottom">
           <span>НИЖНИЙ ПРИЧАЛ · ВОКЗАЛ · РАБОЧИЕ КВАРТАЛЫ</span
-          ><span>01 — 20 <i> / </i> ИГРОВОЙ СРЕЗ</span>
+          ><span>01 — 22 <i> / </i> ИГРОВОЙ СРЕЗ</span>
         </div>
       </section>
 
@@ -147,15 +147,27 @@
             aria-label="Карта исследованных комнат"
           ></canvas>
         </div>
+        <label class="map-pin-picker"
+          >Отметка
+          <select id="map-marker-type">
+            <option value="">Перемещать карту</option>
+            <option value="return">↶ Вернуться</option>
+            <option value="secret">◇ Секрет</option>
+            <option value="danger">! Опасность</option>
+            <option value="unknown">? Непонятно</option>
+            <option value="erase">Убрать отметку</option>
+          </select></label
+        >
         <footer>
           <div class="map-legend">
-            <span>◎ Цель квеста</span><span>◆ Вы здесь</span><span>◉ Отдых</span
+            <span>◎ Цель квеста</span><span>◆ Вы здесь</span
+            ><span>○ Найденный отдых · ◉ Активный</span
             ><span>━ Открытый путь</span><span>┄ Закрытый проход</span
             ><span>◇ Неизведанное</span>
           </div>
           <div class="map-tools">
             <button id="zoom-out" aria-label="Уменьшить карту">−</button
-            ><button id="map-center">Центр</button
+            ><button id="map-center" title="Центрировать на герое">Герой</button
             ><button id="zoom-in" aria-label="Увеличить карту">+</button>
           </div>
         </footer>
@@ -250,7 +262,10 @@
             </div>
             <small>Свайп и удержание</small>
           </div>
-          <button data-action="down" aria-label="Вниз">↓</button>
+          <div class="vertical-steps">
+            <button data-action="up" aria-label="Вверх">↑</button
+            ><button data-action="down" aria-label="Вниз">↓</button>
+          </div>
         </div>
         <div class="touch-actions">
           <button data-action="interact" aria-label="Действие">

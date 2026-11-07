@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A vanilla JavaScript metroidvania — twenty rooms beneath a sleeping city.",
+  "description": "A vanilla JavaScript metroidvania — twenty-two rooms beneath a sleeping city.",
   "engines": {
     "node": ">=22"
   },
@@ -16,6 +16,11 @@
     "metrics": "node tools/metrics.mjs",
     "build": "node tools/build.mjs",
     "preview": "node tools/server.mjs --dist",
-    "test:mobile": "python tools/mobile_smoke.py"
+    "test:mobile": "python tools/mobile_smoke.py",
+    "test:editor": "python tools/editor_smoke.py",
+    "test:production": "python tools/production_smoke.py",
+    "test:continuous": "node tools/continuous.mjs",
+    "test:journey": "python tools/continuous_browser.py",
+    "metrics:shortcuts": "node tools/shortcut_metrics.mjs"
   }
 }

@@ -52,6 +52,27 @@ export function validateWorld(world, physics) {
     }
     if (!world.regions[room.regionId])
       errors.push(`${room.roomId}: unknown region`);
+    const finiteRect = (r) => r && [r.x, r.y, r.w, r.h].every(Number.isFinite) && r.w > 0 && r.h > 0;
+    if (!finiteRect(room.worldBounds) || room.worldBounds.w < physics.width || room.worldBounds.h < physics.height)
+      errors.push(`${room.roomId}: invalid physics dimensions`);
+    if (!finiteRect(room.mapShape)) errors.push(`${room.roomId}: invalid map dimensions`);
+    for (const zone of room.cameraZones)
+      if (!finiteRect(zone) || zone.x < 0 || zone.y < 0 || zone.x + zone.w > room.worldBounds.w || zone.y + zone.h > room.worldBounds.h)
+        errors.push(`${room.roomId}: camera zone outside bounds`);
+    for (const surface of room.collisionLayers)
+      if (!finiteRect(surface)) errors.push(`${surface.id}: invalid collider dimensions`);
+    if (world.geography?.kind === "schematic") {
+      if (room.worldBounds.x !== 0 || room.worldBounds.y !== 0)
+        errors.push(`${room.roomId}: physics bounds must use the local origin`);
+      if (room.mapShape.w <= 0 || room.mapShape.h <= 0)
+        errors.push(`${room.roomId}: invalid map dimensions`);
+      for (const other of world.rooms)
+        if (
+          other.roomId > room.roomId &&
+          overlaps(room.mapShape, other.mapShape)
+        )
+          errors.push(`${room.roomId}: schematic overlap with ${other.roomId}`);
+    }
     for (const item of [
       ...room.collisionLayers,
       ...room.entities,
@@ -70,7 +91,27 @@ export function validateWorld(world, physics) {
           !target.exits.some((e) => e.targetRoomId === room.roomId)
         )
           errors.push(`${exit.exitId}: missing reciprocal exit`);
+        if (world.geography?.kind === "schematic") {
+          const dx = target.mapShape.x - room.mapShape.x,
+            dy = target.mapShape.y - room.mapShape.y;
+          const expected =
+            dx > 0 ? "right" : dx < 0 ? "left" : dy > 0 ? "down" : "up";
+          if (!exit.indirect && exit.direction !== expected)
+            errors.push(`${exit.exitId}: direction disagrees with geography`);
+          if (!["passage", "door", "stairs", "lift"].includes(exit.type))
+            errors.push(`${exit.exitId}: unknown travel type`);
+          if (exit.type === "passage" && !exit.triggerZone)
+            errors.push(`${exit.exitId}: missing passage trigger`);
+        }
       }
+    }
+    for (const mechanism of room.mechanisms || []) {
+      unique(mechanism.id, room.roomId);
+      if (!['gate', 'ladder', 'bridge'].includes(mechanism.kind) || !mechanism.flag || !(mechanism.duration > 0))
+        errors.push(`${mechanism.id}: invalid mechanism state`);
+      for (const id of mechanism.controlledExits || [])
+        if (!room.exits.some((e) => e.exitId === id))
+          errors.push(`${mechanism.id}: missing controlled exit ${id}`);
     }
     for (const [id, point] of Object.entries(room.spawnPoints)) {
       const body = {
@@ -98,6 +139,10 @@ export function validateWorld(world, physics) {
         )
       )
         errors.push(`${room.roomId}/${id}: spawn in hazard`);
+      if (![point.x, point.y].every(Number.isFinite))
+        errors.push(`${room.roomId}/${id}: non-finite spawn`);
+      if (!room.collisionLayers.some((s) => s.kind !== 'hazard' && !s.motion && Math.abs(body.y + body.h - s.y) <= 2 && body.x + body.w > s.x && body.x < s.x + s.w))
+        errors.push(`${room.roomId}/${id}: spawn has no static support`);
     }
   }
   if (!rooms.has(world.startRoomId)) errors.push("Missing start room");
@@ -156,7 +201,7 @@ export function currentObjective(flags) {
     };
   for (const [flag, roomId, text] of [
     ["pickup.p03_upper", "P03", "Найдите сердце в верхней нише склада"],
-    ["pickup.p06_dash", "P06", "Найдите осколок на верхних мостках"],
+    ["pickup.p06_dash", "P09", "Найдите осколок в галерее цепей"],
     ["pickup.p03_lower", "P03", "Найдите осколок на соляном складе"],
     ["pickup.clockmaker", "V03", "Загляните в мастерскую часовщика"],
   ])

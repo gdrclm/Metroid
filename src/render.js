@@ -310,6 +310,10 @@ export class Renderer {
       t = game.time,
       menu = game.mode === "title";
     const { w: viewW, h: viewH } = game.viewport;
+    if (this.canvas.width !== viewW || this.canvas.height !== viewH) {
+      this.canvas.width = viewW;
+      this.canvas.height = viewH;
+    }
     c.clearRect(0, 0, viewW, viewH);
     c.drawImage(this.background(room), 0, 0, viewW, viewH);
     const camera = game.camera;
@@ -321,10 +325,14 @@ export class Renderer {
     }
     c.save();
     c.translate(-camera.x + sx, -camera.y + sy);
+    c.save();
+    c.scale(room.worldBounds.w / 1280, 1);
     this.roomDecor(c, room, t, game);
+    c.restore();
     for (const s of game.surfaces) this.surface(c, s, room, t);
     if (!menu)
       for (const sign of room.tutorialSigns || []) {
+        if (game.progress.hints.includes("training." + sign.action)) continue;
         c.save();
         c.globalAlpha = 0.78;
         c.fillStyle = "#d4c49c";
@@ -339,6 +347,8 @@ export class Renderer {
         c.restore();
       }
     for (const e of room.exits) this.exit(c, e, game, t);
+    this.mechanisms(c, game, t);
+    if (game.editor?.active) game.editor.draw(c);
     for (const e of room.entities) {
       if (e.type === "enemy") continue;
       if (
@@ -386,6 +396,22 @@ export class Renderer {
       c.restore();
     }
     this.hero(c, hero, t, game);
+    if (game.demonstration) {
+      const d = game.demonstration;
+      c.save();
+      c.globalAlpha = 0.35 * (1 - d.t);
+      const ghost = {
+        ...hero,
+        x: d.x + (d.type === "dash" ? d.t * 220 : Math.sin(d.t * 5) * 60),
+        y: d.y - 44 - (d.type === "dash" ? 30 : Math.sin(d.t * Math.PI) * 130),
+        facing: 1,
+        state: d.type === "dash" ? "dash" : "wall",
+        invulnerable: 0,
+        attackTime: 0,
+      };
+      this.hero(c, ghost, t, game);
+      c.restore();
+    }
     for (const p of game.particles) {
       c.globalAlpha = Math.min(1, p.life * 1.5);
       rect(c, p.x, p.y, p.size, p.size, p.color);
@@ -450,6 +476,38 @@ export class Renderer {
         c.fillText("П О Д Ъ Ё М Н И К", viewW / 2, viewH / 2);
         c.fillText("·  ·  ·", viewW / 2, viewH / 2 + 28);
         c.globalAlpha = 1;
+      }
+      if (exit.type === "lift") {
+        c.save();
+        c.globalAlpha = Math.min(1, a * 1.5);
+        const cx = viewW / 2,
+          floor = viewH * 0.83;
+        rect(c, cx - 160, 40, 320, floor - 20, "#173039");
+        for (let i = 0; i < 8; i++) {
+          const yy =
+            (((i * 95 + elapsed * 190 * (exit.direction === "up" ? 1 : -1)) %
+              (floor + 95)) +
+              floor +
+              95) %
+            (floor + 95);
+          rect(c, cx - 145, yy, 290, 7, "#44645b");
+        }
+        this.lift(c, cx, floor, t, true);
+        this.hero(
+          c,
+          {
+            ...game.player,
+            x: cx - 12,
+            y: floor - 44,
+            facing: 1,
+            state: "idle",
+            invulnerable: 0,
+            attackTime: 0,
+          },
+          t,
+          game,
+        );
+        c.restore();
       }
     }
     if (dt > 0) {
@@ -528,6 +586,138 @@ export class Renderer {
       }
     }
     if (s.h < 60) line(c, s.x, s.y + s.h, s.x + s.w, s.y + s.h, "#071821", 3);
+  }
+  mechanisms(c, game, t) {
+    for (const m of game.mechanisms.values()) {
+      const x = m.x,
+        y = m.y;
+      if (m.vista) {
+        rect(c, x - 70, y - 180, 140, 92, "#162f38");
+        rect(c, x - 65, y - 175, 130, 82, "#53695b33");
+        ellipse(c, x, y - 100, 30, 5, "#142c33");
+        glow(c, x, y - 120, 55, "#e6b477", 0.2);
+        c.fillStyle = "#c4bd96";
+        c.font = "11px Georgia";
+        c.textAlign = "center";
+        c.fillText(m.vista, x, y - 193);
+      }
+      if (m.kind === "gate") {
+        const top = y - m.h - m.value * m.h;
+        for (let a = x - m.w / 2; a < x + m.w / 2; a += 10)
+          line(c, a, top, a, top + m.h, "#81917b", 3);
+        rect(c, x - m.w / 2 - 4, top + 30, m.w + 8, 5, "#5d7365");
+        line(c, x - m.w / 2 - 7, y - m.h * 2, x - m.w / 2 - 7, y, "#3e5a54", 4);
+        line(c, x + m.w / 2 + 7, y - m.h * 2, x + m.w / 2 + 7, y, "#3e5a54", 4);
+      } else if (m.kind === "ladder") {
+        const top = y - m.h,
+          bottom = top + m.h * m.value;
+        line(c, x - 20, top, x - 20, bottom, "#889778", 4);
+        line(c, x + 20, top, x + 20, bottom, "#889778", 4);
+        for (let a = top; a < bottom; a += 15)
+          line(c, x - 20, a, x + 20, a, "#a1a684", 2);
+      } else if (m.kind === "bridge") {
+        rect(c, x, y, m.w * m.value, m.h, "#798b71");
+        for (let a = x; a < x + m.w * m.value; a += 32)
+          line(c, a, y, a + 20, y + m.h, "#233e43", 2);
+      }
+    }
+    if (game.room.roomId === "P05") {
+      const x = 500,
+        y = 440;
+      rect(c, x - 6, y - 95, 12, 95, "#52685c");
+      lamp(c, x, y - 90, 1.1, t);
+      c.fillStyle = "#d7c793";
+      c.font = "14px Georgia";
+      c.textAlign = "center";
+      c.fillText("Дальний настил", x, y - 115);
+    }
+    const event = game.room.decoration.event,
+      floor = game.room.decoration.groundY;
+    if (event === "clockwork") {
+      c.save();
+      c.translate(555, floor - 85);
+      c.rotate(
+        game.flags.includes("mechanism.clockwork")
+          ? t * 0.7
+          : Math.sin(t) * 0.02,
+      );
+      for (let i = 0; i < 8; i++) {
+        c.rotate(Math.PI / 4);
+        rect(c, 18, -3, 9, 6, "#a89f72");
+      }
+      c.beginPath();
+      c.arc(0, 0, 19, 0, TAU);
+      c.strokeStyle = "#b3ad7b";
+      c.lineWidth = 4;
+      c.stroke();
+      c.restore();
+    }
+    if (event === "kitchen_steam")
+      for (let i = 0; i < 4; i++)
+        ellipse(
+          c,
+          340 + Math.sin(t + i) * 7,
+          floor - 65 - ((t * 15 + i * 20) % 70),
+          5 + i,
+          12,
+          "#b8c5a718",
+        );
+    if (event === "train_shadow")
+      rect(
+        c,
+        ((t * 34) % game.room.worldBounds.w) - 250,
+        310,
+        160,
+        100,
+        "#0b202b1f",
+      );
+    if (event === "lift_sway" && game.room.roomId === "P01") {
+      c.save();
+      c.translate(1080 + Math.sin(t * 0.4) * 4, 350);
+      this.lift(c, 0, 0, t, true);
+      c.restore();
+    }
+    if (event === "chain_sway")
+      for (let x = 130; x < game.room.worldBounds.w; x += 170) {
+        const offset = Math.sin(t * 0.6 + x) * 5;
+        line(c, x, 0, x + offset, 250, "#728a7680", 2);
+        for (let y = 20; y < 250; y += 17) {
+          c.beginPath();
+          c.ellipse(x + (offset * y) / 250, y, 4, 7, 0, 0, TAU);
+          c.strokeStyle = "#88947a60";
+          c.lineWidth = 1;
+          c.stroke();
+        }
+      }
+    if (event === "water_pipe") {
+      line(
+        c,
+        0,
+        floor - 160,
+        game.room.worldBounds.w,
+        floor - 160,
+        "#456d6b",
+        18,
+      );
+      line(
+        c,
+        0,
+        floor - 163,
+        game.room.worldBounds.w,
+        floor - 163,
+        "#71917c60",
+        3,
+      );
+      for (let i = 0; i < 3; i++)
+        ellipse(
+          c,
+          230 + i * 180,
+          floor - 140 + ((t * 38 + i * 40) % 130),
+          1.5,
+          4,
+          "#a6c9b36a",
+        );
+    }
   }
   roomDecor(c, room, t, game) {
     const floor = room.decoration.groundY,
@@ -743,7 +933,13 @@ export class Renderer {
       y = e.y;
     if (e.type === "lift") return;
     c.save();
-    if (e.direction === "up" || e.direction === "down") {
+    if (e.type === "passage") {
+      line(c, x, y, x, y - 70, "#637d6c", 2);
+      c.fillStyle = "#c3bf97";
+      c.font = "13px Georgia";
+      c.textAlign = x < 100 ? "left" : "right";
+      c.fillText(e.label, x < 100 ? x + 18 : x - 18, y - 90);
+    } else if (e.type === "stairs") {
       if (e.direction === "down") {
         rect(c, x - 24, y - 5, 48, 5, "#061d29");
         for (let yy = y; yy < y + 65; yy += 12)
@@ -793,7 +989,7 @@ export class Renderer {
     );
     c.font = "8px Arial";
     c.fillStyle = "#bac6acb0";
-    c.fillText(e.targetRoomId, x, y - 128);
+    if (game.debug.enabled) c.fillText(e.targetRoomId, x, y - 128);
     if (game.nearby?.exitId === e.exitId) {
       c.fillStyle = "#dfd4b0";
       c.font = "12px Georgia";
@@ -803,7 +999,14 @@ export class Renderer {
   }
   entity(c, e, game, t) {
     const active = e.flag && game.flags.includes(e.flag);
-    if (e.type === "rest") {
+    if (e.type === "retry") {
+      lamp(c, e.x, e.y - 55, 1.2, t);
+      line(c, e.x, e.y - 65, e.x, e.y, "#536d60", 4);
+      c.fillStyle = "#c9b17c";
+      c.font = "10px Georgia";
+      c.textAlign = "center";
+      c.fillText("Повторная попытка", e.x, e.y - 95);
+    } else if (e.type === "rest") {
       rect(c, e.x - 43, e.y - 20, 86, 9, "#344a45");
       rect(c, e.x - 38, e.y - 11, 8, 11, "#253f3d");
       rect(c, e.x + 28, e.y - 11, 8, 11, "#253f3d");
@@ -843,7 +1046,45 @@ export class Renderer {
         rect(c, e.x - 17, e.y + 4, 34, 17, "#2a4443");
         c.save();
         c.translate(e.x, e.y - 19 + bob);
-        c.rotate(t * 0.15);
+        c.rotate(e.reward === "dash" ? t * 0.5 : Math.sin(t) * 0.08);
+        if (e.reward === "wall_grip") {
+          path(
+            c,
+            [
+              [-15, -8],
+              [-4, -16],
+              [12, -9],
+              [16, 4],
+              [7, 14],
+              [-5, 10],
+            ],
+            "#8b987d",
+            "#e3d6a6",
+            2,
+          );
+          for (let i = 0; i < 3; i++)
+            line(c, 4 + i * 5, -7, 10 + i * 5, -23, "#e4dac0", 3);
+        } else {
+          for (let i = 0; i < 3; i++) {
+            c.beginPath();
+            c.arc(0, i * 6 - 6, 18 + i * 4, 0.2, Math.PI * 1.6);
+            c.strokeStyle = "#a7d0c7";
+            c.lineWidth = 2;
+            c.stroke();
+          }
+          path(
+            c,
+            [
+              [-20, -4],
+              [12, -11],
+              [23, -5],
+              [2, 1],
+              [-10, 12],
+            ],
+            "#b7cab1",
+          );
+        }
+        c.globalAlpha = 0.2;
         path(
           c,
           [
@@ -892,7 +1133,7 @@ export class Renderer {
           1,
         );
       }
-    } else if (e.type === "lever") {
+    } else if (e.type === "lever" || e.type === "repair") {
       rect(c, e.x - 15, e.y - 42, 30, 42, "#2a4344");
       rect(c, e.x - 11, e.y - 38, 22, 24, "#152f37");
       line(c, e.x, e.y - 25, e.x + (active ? 16 : -15), e.y - 58, "#b6ae7f", 4);
@@ -945,6 +1186,50 @@ export class Renderer {
         line(c, e.x - 20, e.y - 45, e.x + 20, e.y - 45, "#718575", 5);
         return;
       }
+      if (e.id === "future.diving") {
+        rect(c, e.x - 45, e.y - 95, 90, 95, "#183943");
+        ellipse(c, e.x, e.y - 48, 31, 34, "#527e7e4d");
+        for (let i = 0; i < 6; i++) {
+          const yy = e.y - 87 + ((t * 12 + i * 14) % 83);
+          ellipse(c, e.x + Math.sin(i + t) * 20, yy, 2, 3, "#b7d5c570");
+        }
+        for (let i = 0; i < 3; i++) {
+          c.beginPath();
+          c.moveTo(e.x - 25, e.y - 15 - i * 13);
+          c.quadraticCurveTo(
+            e.x,
+            e.y - 22 - i * 13,
+            e.x + 25,
+            e.y - 15 - i * 13,
+          );
+          c.strokeStyle = "#95c3bb70";
+          c.stroke();
+        }
+        return;
+      }
+      if (e.id === "future.archive") {
+        rect(c, e.x - 50, e.y - 155, 100, 155, "#253539");
+        path(
+          c,
+          [
+            [e.x - 58, e.y - 155],
+            [e.x, e.y - 188],
+            [e.x + 58, e.y - 155],
+          ],
+          "#5a6858",
+        );
+        for (let i = 0; i < 3; i++) {
+          const a = t * 0.07 + (i * TAU) / 3;
+          c.save();
+          c.translate(e.x, e.y - 85);
+          c.rotate(a);
+          rect(c, -3, -36, 6, 72, "#a99d6f70");
+          c.restore();
+        }
+        glow(c, e.x, e.y - 85, 60, "#bdb179", 0.12);
+        ellipse(c, e.x, e.y - 85, 11, 11, "#ccbe84");
+        return;
+      }
       rect(c, e.x - 34, e.y - 105, 68, 105, "#1c353e");
       rect(c, e.x - 25, e.y - 95, 50, 86, "#3e666343");
       for (let y = e.y - 89; y < e.y - 10; y += 17)
@@ -988,7 +1273,7 @@ export class Renderer {
         [-22 - lean, -24],
         [-2, -27],
       ],
-      "#b98a5f",
+      game.flags.includes("story.clockmaker_memory") ? "#d9b85e" : "#b98a5f",
     );
     path(
       c,
@@ -1137,17 +1422,39 @@ export class Renderer {
         e.flash > 0 ? "#e4d1a2" : "#30494a",
       );
       rect(c, 2, -43, 9, 3, windup ? "#edd0a2" : "#d4b584");
-      line(c, 10, -31, windup ? 32 : 22, windup ? -48 : -20, "#5a6b5c", 6);
-      line(
-        c,
-        windup ? 32 : 22,
-        windup ? -48 : -20,
-        windup ? 47 : 28,
-        windup ? -71 : 5,
-        "#a9a17b",
-        3,
-      );
-      if (keeper) rect(c, windup ? 39 : 21, windup ? -78 : 0, 22, 9, "#7b8c74");
+      const wave = keeper && e.attackKind === "wave";
+      if (windup && wave) {
+        ellipse(c, 12, -5, 35, 5, "#d1a16f70");
+        path(
+          c,
+          [
+            [5, -40],
+            [18, -20],
+            [30, -7],
+          ],
+          null,
+          "#c6ac78",
+          5,
+        );
+      } else if (windup && keeper)
+        path(
+          c,
+          [
+            [-14, -42],
+            [-29, -27],
+            [-43, -26],
+          ],
+          null,
+          "#d9bd85",
+          5,
+        );
+      const armX = windup ? (wave ? 22 : -24) : 22,
+        armY = windup ? (wave ? -14 : -45) : -20,
+        tipX = windup ? (wave ? 30 : -43) : 28,
+        tipY = windup ? (wave ? -7 : -70) : 5;
+      line(c, 10, -31, armX, armY, "#5a6b5c", 6);
+      line(c, armX, armY, tipX, tipY, "#a9a17b", 3);
+      if (keeper) rect(c, tipX - 9, tipY - 5, 22, 9, "#7b8c74");
       if (windup) {
         c.fillStyle = "#e6bc83";
         c.font = "15px Georgia";

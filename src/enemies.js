@@ -1,5 +1,6 @@
 import { approach, clamp, overlaps } from "./core.js";
 import { moveBody, lineBlocked } from "./physics.js";
+import { record } from "./telemetry.js";
 export function createEnemy(entity) {
   const keeper = entity.enemyType === "keeper",
     parasite = entity.enemyType === "parasite";
@@ -18,6 +19,8 @@ export function createEnemy(entity) {
     state: "patrol",
     timer: 0,
     attackNumber: 0,
+    repeatedAttack: 0,
+    lastAttack: null,
     lastHit: 0,
     flash: 0,
     dropTime: 0,
@@ -36,11 +39,25 @@ export function updateEnemy(e, player, dt, surfaces, game) {
     Math.abs(dy) < 270 &&
     !lineBlocked(
       { x: cx, y: e.y + e.h / 2 },
-      { x: px, y: e.y + e.h / 2 },
+      { x: px, y: player.y + player.h / 2 },
       surfaces,
+      { includeOneWay: true },
     );
+  const onScreen =
+    !game.viewport ||
+    !game.camera ||
+    (e.x + e.w > game.camera.x - 20 &&
+      e.x < game.camera.x + game.viewport.w + 20 &&
+      e.y + e.h > game.camera.y &&
+      e.y < game.camera.y + game.viewport.h);
   if (e.enemyType === "parasite") {
-    if (e.state === "patrol" && visible && Math.abs(dx) < 250 && e.timer <= 0) {
+    if (
+      e.state === "patrol" &&
+      visible &&
+      onScreen &&
+      Math.abs(dx) < 250 &&
+      e.timer <= 0
+    ) {
       e.state = "windup";
       e.timer = 0.7;
     } else if (e.state === "windup" && e.timer <= 0) {
@@ -61,16 +78,25 @@ export function updateEnemy(e, player, dt, surfaces, game) {
     return;
   }
   const keeper = e.enemyType === "keeper",
-    range = keeper ? 155 : 68;
-  if (keeper && !game.arenaActive && player.x > 300) game.arenaActive = true;
+    range = keeper ? 430 : 68;
+  const arena = game.room?.arena || { x: 300, w: 900 };
+  if (
+    keeper &&
+    !game.arenaActive &&
+    player.x > arena.x &&
+    player.x + player.w < arena.x + arena.w
+  ) {
+    game.arenaActive = true;
+    if (game.progress) record(game, "boss_attempt");
+  }
   if (keeper && !game.arenaActive) return;
   if (e.state === "windup") {
     e.vx = approach(e.vx, 0, 1800 * dt);
     if (e.timer <= 0) {
       e.state = "attack";
       e.timer = keeper ? 0.34 : 0.18;
-      if (keeper && e.attackNumber % 2 === 0) {
-        e.attackKind = "wave";
+      if (keeper && e.attackKind === "wave") {
+        game.emit?.("sound", "keeperWave");
         game.projectiles.push({
           id: e.id + ".wave." + game.time,
           x: e.x + (e.facing > 0 ? e.w : 0),
@@ -85,6 +111,8 @@ export function updateEnemy(e, player, dt, surfaces, game) {
         });
       } else {
         e.attackKind = "lunge";
+        if (keeper && dy < -55) e.vy = -620;
+        if (keeper) game.emit?.("sound", "keeperLunge");
         e.vx = e.facing * (keeper ? 540 : 210);
       }
     }
@@ -100,10 +128,18 @@ export function updateEnemy(e, player, dt, surfaces, game) {
   } else if (visible) {
     e.facing = dx >= 0 ? 1 : -1;
     e.state = "chase";
-    if (Math.abs(dx) < range && Math.abs(dy) < 85) {
+    if (Math.abs(dx) < range && Math.abs(dy) < 85 && onScreen) {
       e.state = "windup";
       e.timer = keeper ? 0.7 : 0.48;
       e.attackNumber++;
+      let next = keeper && Math.abs(dx) > 145 ? "wave" : "lunge";
+      if (keeper && e.lastAttack === next && e.repeatedAttack >= 2)
+        next = next === "wave" ? "lunge" : "wave";
+      e.repeatedAttack = e.lastAttack === next ? e.repeatedAttack + 1 : 1;
+      e.lastAttack = next;
+      e.attackKind = next;
+      if (keeper)
+        game.emit?.("sound", next === "wave" ? "keeperWaveReady" : "keeperLungeReady");
       e.vx = 0;
     } else e.vx = e.facing * (keeper ? 95 : 70);
   } else {
@@ -127,11 +163,27 @@ export function updateEnemy(e, player, dt, surfaces, game) {
   }
   e.vy = Math.min(800, e.vy + 1900 * dt);
   moveBody(e, e.vx * dt, e.vy * dt, surfaces);
+  if (game.room?.worldBounds) {
+    const minX = keeper ? Math.max(0, e.patrol[0] - 100) : 0,
+      maxX = keeper
+        ? Math.min(game.room.worldBounds.w - e.w, e.patrol[1] + 100)
+        : game.room.worldBounds.w - e.w;
+    const limited = clamp(e.x, minX, maxX);
+    if (limited !== e.x) {
+      e.x = limited;
+      e.vx = 0;
+      if (e.state === "attack") {
+        e.state = "recovery";
+        e.timer = 0.8;
+      }
+    }
+  }
   if (
     overlaps(player, { x: e.x + 4, y: e.y + 5, w: e.w - 8, h: e.h - 5 }) &&
-    e.flash <= 0
+    e.flash <= 0 &&
+    e.state === "attack"
   )
-    game.hurt(keeper ? 2 : 1, dx >= 0 ? 1 : -1);
+    game.hurt(keeper ? 2 : 1, dx >= 0 ? 1 : -1, "contact:" + e.enemyType);
   if (e.state === "attack" && e.attackKind !== "wave") {
     const hit = {
       x: e.facing > 0 ? e.x + e.w - 5 : e.x - (keeper ? 92 : 42),
@@ -147,6 +199,6 @@ export function updateEnemy(e, player, dt, surfaces, game) {
         surfaces,
       )
     )
-      game.hurt(keeper ? 2 : 1, e.facing);
+      game.hurt(keeper ? 2 : 1, e.facing, "lunge:" + e.enemyType);
   }
 }

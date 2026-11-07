@@ -25,6 +25,7 @@ export class Audio {
         const filter = this.ctx.createBiquadFilter();
         filter.type = "lowpass";
         filter.frequency.value = 340;
+        this.ambientFilter = filter;
         const gain = this.ctx.createGain();
         gain.gain.value = 0.24;
         this.ambient.connect(filter);
@@ -32,7 +33,7 @@ export class Audio {
         gain.connect(this.master);
         this.ambient.start();
       }
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
       this.update();
     } catch {
       /* Audio is optional; all important cues are also visible. */
@@ -44,6 +45,14 @@ export class Audio {
         this.settings.sound ? (paused ? 0.12 : 0.32) * this.settings.volume : 0,
         this.ctx.currentTime,
         0.15,
+      );
+  }
+  setRegion(region) {
+    if (this.ambientFilter)
+      this.ambientFilter.frequency.setTargetAtTime(
+        { pier: 340, station: 180, quarter: 510 }[region] || 340,
+        this.ctx.currentTime,
+        0.8,
       );
   }
   play(name) {
@@ -65,6 +74,13 @@ export class Audio {
       dashRecharge: [700, 950, 0.07, "sine"],
       step: [80, 60, 0.025, "triangle"],
       death: [150, 30, 0.8, "sine"],
+      keeperWave: [72, 34, 0.45, "sawtooth"],
+      keeperLunge: [220, 90, 0.2, "triangle"],
+      keeperWaveReady: [95, 60, 0.6, "triangle"],
+      keeperLungeReady: [280, 380, 0.5, "sine"],
+      horizonGardens: [600, 820, 0.8, "sine"],
+      horizonForge: [60, 110, 0.8, "triangle"],
+      horizonArchive: [160, 95, 1.1, "sine"],
     };
     const [from, to, duration, type] = notes[name] || notes.pickup,
       now = this.ctx.currentTime;

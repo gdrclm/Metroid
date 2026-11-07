@@ -87,3 +87,33 @@ export function roomSurfaces(id, flags = []) {
     conditionMet,
   );
 }
+
+export function positionAt(game, target) {
+  const offsets = [-55, 55, -35, 35, 0];
+  for (const d of offsets) {
+    const feet =
+      target.y +
+      (target.type === "ability" ? 32 : target.type === "pickup" ? 32 : 0);
+    const body = { x: target.x + d - 12, y: feet - 44, w: 24, h: 44 };
+    if (
+      !game.surfaces.some(
+        (s) =>
+          s.kind !== "oneWay" &&
+          s.kind !== "hazard" &&
+          body.x < s.x + s.w &&
+          body.x + 24 > s.x &&
+          body.y < s.y + s.h &&
+          body.y + 44 > s.y,
+      )
+    ) {
+      Object.assign(game.player, body, { vx: 0, vy: 0 });
+      return;
+    }
+  }
+  Object.assign(game.player, {
+    x: target.x - 12,
+    y: target.y - 44,
+    vx: 0,
+    vy: 0,
+  });
+}

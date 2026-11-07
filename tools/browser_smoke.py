@@ -1,6 +1,6 @@
 """Browser integration checks. Requires Playwright Python and Chromium; no game dependencies.
 
-Room fixtures position the player near objects to cover all 20 rooms quickly.
+Room fixtures position the player near objects to cover all 22 rooms quickly.
 The dash tutorial and combat use real keyboard input. Wall-jump geometry is also
 tested through the actual fixed-step controller in tests/physics.test.js.
 """
@@ -65,7 +65,8 @@ try:
               const g=__game, e=kind==='exit'?g.room.exits.find(e=>e.targetRoomId===id):g.room.entities.find(e=>e.id===id);
               if(!e)throw Error('Missing '+id+' in '+g.room.roomId);
               const feet=['ability','pickup'].includes(e.type)?e.y+32:e.y;
-              Object.assign(g.player,{x:e.x-12,y:feet-44,vx:0,vy:0,grounded:true,invulnerable:2});
+              const px=e.interactionZone&&kind!=='exit'?e.interactionZone.x+e.interactionZone.w/2:e.x;
+              Object.assign(g.player,{x:px-12,y:feet-44,vx:0,vy:0,grounded:true,invulnerable:2});
             }""", {'kind':kind,'id':identifier})
             page.wait_for_timeout(100)
 
@@ -81,7 +82,14 @@ try:
         def go(target, lift_pause=False):
             print('transition', target, flush=True)
             position('exit',target)
-            page.keyboard.press('e')
+            spec=page.evaluate('(id)=>__game.room.exits.find(e=>e.targetRoomId===id)',target)
+            direction={'left':'a','right':'d','up':'w','down':'s'}[spec['direction']]
+            if spec['type']=='passage':page.keyboard.down(direction)
+            else:
+                for retry in range(12):
+                    page.keyboard.press(direction if spec['type']=='stairs' else 'e')
+                    page.wait_for_timeout(100)
+                    if page.evaluate('Boolean(__game.transition)'):break
             if lift_pause:
                 page.wait_for_timeout(160)
                 page.keyboard.press('Escape')
@@ -90,7 +98,8 @@ try:
                 assert page.evaluate('__game.transition.elapsed') == before
                 page.locator('#resume').click()
             try:
-                page.wait_for_function('(id)=>__game.room.roomId===id && !__game.transition', arg=target, timeout=5000)
+                page.wait_for_function('(id)=>__game.room.roomId===id && !__game.transition', arg=target, timeout=8000)
+                if spec['type']=='passage':page.keyboard.up(direction)
             except Exception:
                 print('Transition failed:', page.evaluate('({room:__game.room.roomId,mode:__game.mode,nearby:__game.nearby,player:__game.player})'))
                 page.screenshot(path=str(ARTIFACTS/'failure.png'))
@@ -107,19 +116,20 @@ try:
         assert page.evaluate("__game.flags.filter(f=>f==='ability.dash').length") == 1
         go('P05')
         # An ordinary running jump fails (unit test); actual keyboard jump + dash clears it here.
-        page.keyboard.down('d')
+        page.keyboard.down('a')
         page.wait_for_timeout(660)
         page.keyboard.down('Space')
         page.wait_for_timeout(240)
         page.keyboard.press('Shift')
         page.wait_for_timeout(530)
         page.keyboard.up('Space')
-        page.keyboard.up('d')
+        page.keyboard.up('a')
         page.wait_for_timeout(220)
-        assert page.evaluate('__game.player.x') > 760, page.evaluate('[__game.player.x,__game.player.y]')
+        assert page.evaluate('__game.player.x') < 520, page.evaluate('[__game.player.x,__game.player.y]')
         assert page.evaluate('__game.player.y') == 396
         page.screenshot(path=str(ARTIFACTS / 'dash-tutorial.png'))
         go('P06')
+        go('P09')
         interact('pickup.p06_dash')
         go('P07')
         interact('lever.pier_gate')
@@ -134,6 +144,7 @@ try:
         interact('npc.station_keeper')
         page.screenshot(path=str(ARTIFACTS / 'station.png'))
         go('V03')
+        interact('wheel.clockwork')
         interact('npc.clockmaker')
         interact('npc.clockmaker')
         assert page.evaluate("__game.flags.filter(f=>f==='pickup.clockmaker').length") == 1
@@ -150,12 +161,13 @@ try:
         go('R05')
         page.screenshot(path=str(ARTIFACTS / 'shaft.png'))
         go('R06')
+        go('R09')
         go('R07')
         page.evaluate('__game.debug.god=true')
         for attack in range(16):
             if page.evaluate("__game.flags.includes('boss.courtyard_keeper')"):
                 break
-            page.evaluate("""() => {const g=__game,e=g.enemies[0];Object.assign(g.player,{x:e.x-62,y:576,vx:0,vy:0,facing:1});}""")
+            page.evaluate("""() => {const g=__game,e=g.enemies[0];Object.assign(g.player,{x:e.x-62,y:e.y+e.h-44,vx:0,vy:0,facing:1});}""")
             page.keyboard.press('j')
             page.wait_for_timeout(460)
         assert page.evaluate("__game.flags.includes('boss.courtyard_keeper')")
@@ -169,7 +181,7 @@ try:
         go('R08')
         interact('slice.overlook', close=False)
         assert page.locator('#complete-screen').is_visible()
-        assert page.evaluate('__game.progress.visited.length') == 20
+        assert page.evaluate('__game.progress.visited.length') == 22
         page.screenshot(path=str(ARTIFACTS / 'completion.png'))
         page.locator('#keep-exploring').click()
         page.keyboard.press('m')
@@ -236,7 +248,7 @@ try:
         session.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
         touch.screenshot(path=str(ARTIFACTS / 'mobile.png'))
         assert not errors, errors
-        result={'rooms':20,'journey':'complete and backtracked','physicalDashTutorial':'passed','boss':'12 keyboard hits','restart':'checkpoint, flags and settings restored','death':'progress retained','mobile':'touch UI rendered','performanceCloudChromium':performance_result,'pageErrors':errors,'screenshots':8}
+        result={'rooms':22,'journey':'complete and backtracked','physicalDashTutorial':'passed','boss':'12 keyboard hits','restart':'checkpoint, flags and settings restored','death':'progress retained','mobile':'touch UI rendered','performanceCloudChromium':performance_result,'pageErrors':errors,'screenshots':8}
         (ARTIFACTS/'browser-results.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
         print(json.dumps(result,ensure_ascii=False,indent=2))
         mobile.close()

@@ -8,6 +8,7 @@ const labels = {
     map: "M — карта",
     dash: "Прыжок → Shift",
     wall: "К стене + Пробел",
+    drop: "↓ + Пробел — нижний путь",
   },
   touch: {
     move: "Свайп ← / → — идти",
@@ -17,6 +18,7 @@ const labels = {
     map: "Карта — вверху",
     dash: "В прыжке → ➝",
     wall: "К стене + ↑",
+    drop: "↓ + ↑ — нижний путь",
   },
   gamepad: {
     move: "Стик — идти",
@@ -26,6 +28,7 @@ const labels = {
     map: "View — карта",
     dash: "В прыжке → B",
     wall: "К стене + A",
+    drop: "Вниз + A — нижний путь",
   },
 };
 export function signText(action, device = "keyboard") {

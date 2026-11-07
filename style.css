@@ -1469,3 +1469,97 @@ kbd {
     max-width: 52%;
   }
 }
+.vertical-steps {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+#touch-controls .vertical-steps button {
+  width: 42px;
+  height: 42px;
+  font-size: 20px;
+}
+.map-pin-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: #a8b9af;
+  padding: 8px 0;
+}
+.map-pin-picker select {
+  color: #d4c49b;
+  background: #142c35;
+  border: 1px solid #6c81745c;
+  padding: 8px;
+  min-height: 36px;
+}
+@media (pointer: coarse) {
+  .map-pin-picker select {
+    min-height: 44px;
+  }
+}
+#room-editor {
+  position: absolute;
+  right: 12px;
+  top: 95px;
+  width: 330px;
+  max-width: 92vw;
+  max-height: calc(100dvh - 115px);
+  overflow: auto;
+  z-index: 35;
+  background: #091b25f5;
+  border: 1px solid #bca66e80;
+  padding: 16px;
+  font-size: 11px;
+}
+#room-editor h3 {
+  margin: 0 0 12px;
+  color: #d7bf83;
+}
+#room-editor label {
+  display: block;
+  margin: 8px 0;
+}
+#room-editor select,
+#room-editor textarea,
+#room-editor input[type="number"] {
+  background: #19343d;
+  color: #d4dcc7;
+  border: 1px solid #5b7669;
+  padding: 5px;
+  max-width: 100%;
+  width: 100%;
+}
+#room-editor textarea {
+  font: 11px monospace;
+  resize: vertical;
+}
+.editor-numbers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+.editor-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.editor-buttons button {
+  border: 1px solid #7c8b69;
+  padding: 8px;
+  font-size: 11px;
+}
+.editor-buttons label {
+  width: 100%;
+}
+#room-editor p {
+  line-height: 1.6;
+  color: #90a99f;
+}
+#room-editor pre {
+  white-space: pre-wrap;
+  line-height: 1.5;
+  color: #c6b985;
+  font-size: 10px;
+}

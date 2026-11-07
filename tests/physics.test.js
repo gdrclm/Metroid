@@ -229,9 +229,9 @@ test("R04 and P03 wall shafts reach their upper platforms using actual wall jump
   }
 });
 test("R05 can be climbed, exited and walked back through without a one-way trap", () => {
-  const p = player(570, 956),
+  const p = player(686, 956),
     surfaces = roomSurfaces("R05", ["ability.wall_grip"]);
-  let dir = 1,
+  let dir = -1,
     phase = "climb",
     finished = false;
   for (let i = 0; i < 1400; i++) {
@@ -248,12 +248,12 @@ test("R05 can be climbed, exited and walked back through without a one-way trap"
         assert.equal(p.y, 156);
         phase = "cross";
         pressed = ["jump"];
-        keys = ["jump", "right"];
+        keys = ["jump", "left"];
       }
     } else {
-      keys = ["jump", "right"];
-      if (p.x > 620 && p.y < 120 && p.dashReady) pressed = ["dash"];
-      if (p.grounded && p.x > 1000) {
+      keys = ["jump", "left"];
+      if (p.x < 660 && p.y < 120 && p.dashReady) pressed = ["dash"];
+      if (p.grounded && p.x < 280) {
         assert.equal(p.y, 256);
         finished = true;
         break;
@@ -283,21 +283,21 @@ test("R05 can be climbed, exited and walked back through without a one-way trap"
   assert.equal(p.y, 956);
 });
 test("R06 combines a wall jump with a dash and has a safe lower return route", () => {
-  const p = player(126, 396),
+  const p = player(1150, 396),
     surfaces = roomSurfaces("R06", ["ability.wall_grip"]);
   let phase = "climb",
     finished = false;
   for (let i = 0; i < 900; i++) {
     let pressed = [];
     if (phase === "climb") {
-      if (p.grounded || (p.wall === 1 && p.wallLock <= 0)) pressed = ["jump"];
+      if (p.grounded || (p.wall === -1 && p.wallLock <= 0)) pressed = ["jump"];
       if (p.grounded && p.y === 236) {
         phase = "cross";
         pressed = ["jump"];
       }
     } else {
-      if (p.x > 420 && p.y < 200 && p.dashReady) pressed = ["dash"];
-      if (p.grounded && p.x > 700) {
+      if (p.x < 850 && p.y < 200 && p.dashReady) pressed = ["dash"];
+      if (p.grounded && p.x < 580) {
         assert.equal(p.y, 256);
         finished = true;
         break;
@@ -305,7 +305,7 @@ test("R06 combines a wall jump with a dash and has a safe lower return route", (
     }
     tick(
       p,
-      controls(["right", "jump"], pressed),
+      controls(["left", "jump"], pressed),
       surfaces,
       { dash: true, wall_grip: true },
       { w: 1280, h: 720 },

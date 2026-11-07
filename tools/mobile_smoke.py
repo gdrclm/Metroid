@@ -22,7 +22,7 @@ with sync_playwright() as p:
         page.locator('#play').click()
         page.wait_for_timeout(300)
         assert page.locator('[data-action=left], [data-action=right]').count() == 0
-        for selector in ['#swipe-zone'] + ['[data-action=' + a + ']' for a in ['down', 'jump', 'attack', 'dash', 'interact']]:
+        for selector in ['#swipe-zone'] + ['[data-action=' + a + ']' for a in ['up', 'down', 'jump', 'attack', 'dash', 'interact']]:
             box = page.locator(selector).bounding_box()
             assert box['x'] >= 0 and box['y'] >= 0 and box['x'] + box['width'] <= width + 1 and box['y'] + box['height'] <= height + 1, (selector, box)
         zone = page.locator('#swipe-zone').bounding_box()

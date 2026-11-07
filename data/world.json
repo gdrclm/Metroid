@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "title": "Последний причал",
   "startRoomId": "P01",
   "regions": {
@@ -36,40 +36,40 @@
       "name": "Тихая пристань",
       "worldBounds": {
         "x": 0,
-        "y": 3600,
+        "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
         "x": 0,
-        "y": 5,
-        "w": 1,
-        "h": 1
+        "y": 10,
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "P01.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "P01.first_step",
-          "x": 520,
+          "x": 520.0,
           "y": 560,
-          "w": 145,
+          "w": 145.0,
           "h": 60,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "P01.landing",
-          "x": 750,
+          "x": 750.0,
           "y": 530,
-          "w": 140,
+          "w": 140.0,
           "h": 18,
           "kind": "oneWay",
           "grippable": true
@@ -81,33 +81,48 @@
           "y": 0,
           "w": 1280,
           "h": 720,
-          "profile": "room"
+          "profile": "street"
         }
       ],
       "exits": [
         {
           "exitId": "P01.to.P02",
-          "x": 1200,
+          "x": 1256,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "right",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "P02",
           "spawnPointId": "from.P01",
           "condition": null,
           "lockedReason": "",
-          "label": "Дом смотрителя"
+          "label": "Дом смотрителя",
+          "interactionZone": {
+            "x": 1202,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1240,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
-          "x": 160,
+          "x": 150,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.P02": {
-          "x": 1130,
+          "x": 1164,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
@@ -117,7 +132,7 @@
         {
           "id": "future.diving",
           "type": "barrier",
-          "x": 930,
+          "x": 930.0,
           "y": 590,
           "title": "Затопленный тоннель",
           "text": "За стеклом — нижние доки. Чтобы войти в воду, потребуется водолазное снаряжение."
@@ -126,7 +141,7 @@
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -138,23 +153,25 @@
       "decoration": {
         "style": "arrival",
         "seed": 177,
-        "groundY": 620
+        "groundY": 620,
+        "event": "lift_sway"
       },
       "note": "Начало пути. Вдалеке слышен последний поезд.",
       "tutorialSigns": [
         {
           "action": "move",
-          "x": 35,
+          "x": 35.0,
           "y": 658,
-          "w": 235
+          "w": 235.0
         },
         {
           "action": "jump",
-          "x": 310,
+          "x": 310.0,
           "y": 658,
-          "w": 275
+          "w": 275.0
         }
-      ]
+      ],
+      "purpose": "Первый прыжок; впереди видны подъёмник и затопленный тоннель."
     },
     {
       "roomId": "P02",
@@ -162,23 +179,23 @@
       "revision": 1,
       "name": "Дом смотрителя",
       "worldBounds": {
-        "x": 1280,
-        "y": 3600,
+        "x": 0,
+        "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
-        "x": 1,
-        "y": 5,
-        "w": 1,
-        "h": 1
+        "x": 2,
+        "y": 10,
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "P02.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
@@ -196,84 +213,128 @@
       "exits": [
         {
           "exitId": "P02.to.P01",
-          "x": 80,
+          "x": 24,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "left",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "P01",
           "spawnPointId": "from.P02",
           "condition": null,
           "lockedReason": "",
-          "label": "Тихая пристань"
+          "label": "Тихая пристань",
+          "interactionZone": {
+            "x": -30,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "P02.to.P03",
-          "x": 1200,
+          "x": 1256,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "right",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "P03",
           "spawnPointId": "from.P02",
           "condition": null,
           "lockedReason": "",
-          "label": "Соляной склад"
+          "label": "Соляной склад",
+          "interactionZone": {
+            "x": 1202,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1240,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "P02.to.P07",
-          "x": 800,
+          "x": 800.0,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "up",
-          "type": "door",
+          "type": "stairs",
           "targetRoomId": "P07",
           "spawnPointId": "from.P02",
           "condition": {
             "flag": "shortcut.pier_gate"
           },
           "lockedReason": "Решётка открывается с верхних мостков",
-          "label": "Обратная сторона"
+          "label": "Обратная сторона",
+          "interactionZone": {
+            "x": 746.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 746.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "other_side",
+          "hidden": false,
+          "colliderId": "mechanism.pier_grate.collider"
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.P01": {
-          "x": 126,
+          "x": 92,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
+        "rest.rest.pier": {
+          "x": 418.0,
+          "y": 576,
+          "safeRadius": 28
+        },
         "from.P03": {
-          "x": 1130,
+          "x": 1164,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
         },
         "from.P07": {
-          "x": 730,
+          "x": 743.0,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
-        },
-        "rest.rest.pier": {
-          "x": 418,
-          "y": 576,
-          "safeRadius": 28
         }
       },
       "entities": [
         {
           "id": "rest.pier",
           "type": "rest",
-          "x": 430,
+          "x": 430.0,
           "y": 620,
           "title": "Отдохнуть у огня"
         }
@@ -281,7 +342,7 @@
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -293,21 +354,38 @@
       "decoration": {
         "style": "shelter",
         "seed": 178,
-        "groundY": 620
+        "groundY": 620,
+        "event": "gate_chain"
       },
       "note": "У огня можно перевести дух. Решётка ведёт на верхние мостки.",
       "tutorialSigns": [
         {
           "action": "interact",
-          "x": 295,
+          "x": 295.0,
           "y": 658,
-          "w": 255
+          "w": 255.0
         },
         {
           "action": "map",
-          "x": 650,
+          "x": 650.0,
           "y": 658,
-          "w": 250
+          "w": 250.0
+        }
+      ],
+      "purpose": "Узнаваемый дом, огонь и закрытая решётка верхних мостков.",
+      "mechanisms": [
+        {
+          "id": "mechanism.pier_grate",
+          "kind": "gate",
+          "flag": "shortcut.pier_gate",
+          "x": 800,
+          "y": 620,
+          "w": 46,
+          "h": 110,
+          "duration": 0.8,
+          "controlledExits": [
+            "P02.to.P07"
+          ]
         }
       ]
     },
@@ -317,62 +395,80 @@
       "revision": 1,
       "name": "Соляной склад",
       "worldBounds": {
-        "x": 2560,
-        "y": 3600,
+        "x": 0,
+        "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
-        "x": 2,
-        "y": 5,
-        "w": 1,
-        "h": 1
+        "x": 4,
+        "y": 10,
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "P03.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "P03.crate",
-          "x": 520,
+          "x": 520.0,
           "y": 548,
-          "w": 85,
+          "w": 85.0,
           "h": 72,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "P03.wall_left",
-          "x": 850,
+          "x": 850.0,
           "y": 265,
-          "w": 28,
+          "w": 28.0,
           "h": 240,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "P03.wall_right",
-          "x": 1030,
+          "x": 1030.0,
           "y": 135,
-          "w": 28,
+          "w": 28.0,
           "h": 370,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "P03.high_niche",
-          "x": 878,
+          "x": 878.0,
           "y": 250,
-          "w": 152,
+          "w": 152.0,
           "h": 14,
           "kind": "oneWay",
           "grippable": true
+        },
+        {
+          "id": "P03.bypass_one",
+          "x": 610,
+          "y": 520,
+          "w": 150,
+          "h": 16,
+          "kind": "oneWay",
+          "grippable": false
+        },
+        {
+          "id": "P03.bypass_two",
+          "x": 760,
+          "y": 450,
+          "w": 84,
+          "h": 16,
+          "kind": "oneWay",
+          "grippable": false
         }
       ],
       "cameraZones": [
@@ -381,53 +477,82 @@
           "y": 0,
           "w": 1280,
           "h": 720,
-          "profile": "room"
+          "profile": "street"
         }
       ],
       "exits": [
         {
           "exitId": "P03.to.P02",
-          "x": 80,
+          "x": 24,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "left",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "P02",
           "spawnPointId": "from.P03",
           "condition": null,
           "lockedReason": "",
-          "label": "Дом смотрителя"
+          "label": "Дом смотрителя",
+          "interactionZone": {
+            "x": -30,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "P03.to.P04",
-          "x": 1200,
+          "x": 1256,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "right",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "P04",
           "spawnPointId": "from.P03",
           "condition": null,
           "lockedReason": "",
-          "label": "Крановая площадка"
+          "label": "Крановая площадка",
+          "interactionZone": {
+            "x": 1202,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1240,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.P02": {
-          "x": 126,
+          "x": 92,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
         "from.P04": {
-          "x": 1130,
+          "x": 1164,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
@@ -437,7 +562,7 @@
         {
           "id": "pickup.p03_lower",
           "type": "pickup",
-          "x": 350,
+          "x": 350.0,
           "y": 574,
           "flag": "pickup.p03_lower",
           "title": "Осколок памяти",
@@ -446,25 +571,26 @@
         {
           "id": "pickup.p03_upper",
           "type": "pickup",
-          "x": 950,
+          "x": 950.0,
           "y": 218,
           "flag": "pickup.p03_upper",
           "title": "Сердце старого города",
           "reward": "health",
           "requires": {
             "flag": "ability.wall_grip"
-          }
+          },
+          "lockedReason": "Нужны медные когти: вернитесь с зацепом."
         },
         {
           "id": "P03.watchman",
           "type": "enemy",
-          "x": 700,
+          "x": 700.0,
           "y": 620,
           "enemyType": "watchman",
           "hp": 2,
           "patrol": [
-            585,
-            810
+            585.0,
+            810.0
           ]
         }
       ],
@@ -474,7 +600,7 @@
         "pickup.p03_upper"
       ],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -486,17 +612,19 @@
       "decoration": {
         "style": "warehouse",
         "seed": 179,
-        "groundY": 620
+        "groundY": 620,
+        "event": "hanging_light"
       },
       "note": "В старых складах всегда что-нибудь остаётся.",
       "tutorialSigns": [
         {
           "action": "attack",
-          "x": 395,
+          "x": 395.0,
           "y": 658,
-          "w": 230
+          "w": 230.0
         }
-      ]
+      ],
+      "purpose": "Выбор между дозорным на полу и безопасными балками; нижний секрет и высокая ниша."
     },
     {
       "roomId": "P04",
@@ -504,32 +632,32 @@
       "revision": 1,
       "name": "Крановая площадка",
       "worldBounds": {
-        "x": 3840,
-        "y": 3600,
+        "x": 0,
+        "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
-        "x": 3,
-        "y": 5,
-        "w": 1,
-        "h": 1
+        "x": 6,
+        "y": 10,
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "P04.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "P04.machine",
-          "x": 700,
+          "x": 700.0,
           "y": 545,
-          "w": 100,
+          "w": 100.0,
           "h": 75,
           "kind": "solid",
           "grippable": true
@@ -547,49 +675,78 @@
       "exits": [
         {
           "exitId": "P04.to.P03",
-          "x": 80,
+          "x": 24,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "left",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "P03",
           "spawnPointId": "from.P04",
           "condition": null,
           "lockedReason": "",
-          "label": "Соляной склад"
+          "label": "Соляной склад",
+          "interactionZone": {
+            "x": -30,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "P04.to.P05",
-          "x": 1200,
+          "x": 1200.0,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "up",
-          "type": "door",
+          "type": "stairs",
           "targetRoomId": "P05",
           "spawnPointId": "from.P04",
           "condition": {
             "flag": "ability.dash"
           },
           "lockedReason": "Нужен воздушный рывок",
-          "label": "Разорванный мост"
+          "label": "Разорванный мост",
+          "interactionZone": {
+            "x": 1146.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1146.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "ability",
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.P03": {
-          "x": 126,
+          "x": 92,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
         "from.P05": {
-          "x": 1130,
+          "x": 1143.0,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
@@ -599,7 +756,7 @@
         {
           "id": "gift.dash",
           "type": "ability",
-          "x": 470,
+          "x": 470.0,
           "y": 568,
           "flag": "ability.dash",
           "title": "Порыв ветра",
@@ -612,7 +769,7 @@
         "ability.dash"
       ],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -624,17 +781,19 @@
       "decoration": {
         "style": "crane",
         "seed": 180,
-        "groundY": 620
+        "groundY": 620,
+        "event": "hanging_light"
       },
       "note": "Внутри старого привода ещё теплится свет.",
       "tutorialSigns": [
         {
           "action": "dash",
-          "x": 825,
+          "x": 825.0,
           "y": 658,
-          "w": 300
+          "w": 300.0
         }
-      ]
+      ],
+      "purpose": "Освободить привод крана и забрать порыв ветра."
     },
     {
       "roomId": "P05",
@@ -642,59 +801,59 @@
       "revision": 1,
       "name": "Разорванный мост",
       "worldBounds": {
-        "x": 3840,
-        "y": 2880,
+        "x": 0,
+        "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
-        "x": 3,
-        "y": 4,
-        "w": 1,
-        "h": 1
+        "x": 6,
+        "y": 8,
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "P05.safety",
-          "x": 0,
+          "x": 0.0,
           "y": 640,
-          "w": 1280,
+          "w": 1280.0,
           "h": 80,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "P05.launch",
-          "x": 0,
+          "x": 870.0,
           "y": 440,
-          "w": 410,
+          "w": 410.0,
           "h": 30,
-          "kind": "solid",
+          "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "P05.landing",
-          "x": 760,
+          "x": 0.0,
           "y": 440,
-          "w": 520,
+          "w": 520.0,
           "h": 200,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "P05.step_one",
-          "x": 60,
+          "x": 1120.0,
           "y": 560,
-          "w": 100,
+          "w": 100.0,
           "h": 16,
           "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "P05.step_two",
-          "x": 180,
+          "x": 990.0,
           "y": 500,
-          "w": 110,
+          "w": 110.0,
           "h": 16,
           "kind": "oneWay",
           "grippable": true
@@ -706,65 +865,98 @@
           "y": 0,
           "w": 1280,
           "h": 720,
-          "profile": "room"
+          "profile": "room",
+          "composition": {
+            "minX": 430,
+            "maxX": 960
+          }
         }
       ],
       "exits": [
         {
           "exitId": "P05.to.P04",
-          "x": 80,
+          "x": 1200.0,
           "y": 440,
           "w": 42,
           "h": 76,
-          "direction": "left",
-          "type": "door",
+          "direction": "down",
+          "type": "stairs",
           "targetRoomId": "P04",
           "spawnPointId": "from.P05",
           "condition": {
             "flag": "ability.dash"
           },
           "lockedReason": "Нужен воздушный рывок",
-          "label": "Крановая площадка"
+          "label": "Крановая площадка",
+          "interactionZone": {
+            "x": 1146.0,
+            "y": 364,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1146.0,
+            "y": 364,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "ability",
+          "hidden": false
         },
         {
           "exitId": "P05.to.P06",
-          "x": 1200,
+          "x": 24,
           "y": 440,
           "w": 42,
           "h": 76,
-          "direction": "right",
-          "type": "door",
+          "direction": "left",
+          "type": "passage",
           "targetRoomId": "P06",
           "spawnPointId": "from.P05",
           "condition": null,
           "lockedReason": "",
-          "label": "Верхние мостки"
+          "label": "Верхние мостки",
+          "interactionZone": {
+            "x": -30,
+            "y": 364,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 350,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
-          "x": 160,
-          "y": 576,
-          "safeRadius": 28
+          "x": 1120,
+          "y": 396,
+          "safeRadius": 28,
+          "facing": -1
         },
         "from.P04": {
-          "x": 126,
-          "y": 396,
-          "safeRadius": 24,
-          "facing": 1
-        },
-        "from.P06": {
-          "x": 1130,
+          "x": 1143.0,
           "y": 396,
           "safeRadius": 24,
           "facing": -1
+        },
+        "from.P06": {
+          "x": 92,
+          "y": 396,
+          "safeRadius": 24,
+          "facing": 1
         }
       },
       "entities": [],
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -776,17 +968,19 @@
       "decoration": {
         "style": "dash",
         "seed": 181,
-        "groundY": 640
+        "groundY": 640,
+        "event": "hanging_light"
       },
       "note": "Прыжок, затем Shift в воздухе. Внизу безопасный настил.",
       "tutorialSigns": [
         {
           "action": "dash",
-          "x": 65,
+          "x": 915.0,
           "y": 462,
-          "w": 300
+          "w": 300.0
         }
-      ]
+      ],
+      "purpose": "Прыжок с рывком к освещённому причальному знаку; ошибка безопасна."
     },
     {
       "roomId": "P06",
@@ -794,59 +988,59 @@
       "revision": 1,
       "name": "Верхние мостки",
       "worldBounds": {
-        "x": 2560,
-        "y": 2880,
+        "x": 0,
+        "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
-        "x": 2,
-        "y": 4,
-        "w": 1,
-        "h": 1
+        "x": 4,
+        "y": 8,
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "P06.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "P06.step",
-          "x": 140,
+          "x": 990.0,
           "y": 530,
-          "w": 150,
+          "w": 150.0,
           "h": 16,
           "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "P06.upper_left",
-          "x": 350,
+          "x": 710.0,
           "y": 440,
-          "w": 220,
+          "w": 220.0,
           "h": 16,
           "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "P06.upper_right",
-          "x": 850,
+          "x": 130.0,
           "y": 440,
-          "w": 300,
+          "w": 300.0,
           "h": 16,
           "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "P06.secret_ledge",
-          "x": 970,
+          "x": 180.0,
           "y": 335,
-          "w": 130,
+          "w": 130.0,
           "h": 16,
           "kind": "oneWay",
           "grippable": true
@@ -858,101 +1052,168 @@
           "y": 0,
           "w": 1280,
           "h": 720,
-          "profile": "room"
+          "profile": "street"
         }
       ],
       "exits": [
         {
           "exitId": "P06.to.P05",
-          "x": 80,
-          "y": 620,
-          "w": 42,
-          "h": 76,
-          "direction": "left",
-          "type": "door",
-          "targetRoomId": "P05",
-          "spawnPointId": "from.P06",
-          "condition": null,
-          "lockedReason": "",
-          "label": "Разорванный мост"
-        },
-        {
-          "exitId": "P06.to.P07",
-          "x": 1200,
+          "x": 1256,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "right",
-          "type": "door",
+          "type": "passage",
+          "targetRoomId": "P05",
+          "spawnPointId": "from.P06",
+          "condition": null,
+          "lockedReason": "",
+          "label": "Разорванный мост",
+          "interactionZone": {
+            "x": 1202,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1240,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
+        },
+        {
+          "exitId": "P06.to.P07",
+          "x": 24,
+          "y": 620,
+          "w": 42,
+          "h": 76,
+          "direction": "left",
+          "type": "passage",
           "targetRoomId": "P07",
           "spawnPointId": "from.P06",
           "condition": null,
           "lockedReason": "",
-          "label": "Обратная сторона"
+          "label": "Обратная сторона",
+          "interactionZone": {
+            "x": -30,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "P06.to.P08",
-          "x": 480,
+          "x": 800.0,
           "y": 620,
           "w": 42,
           "h": 76,
-          "direction": "down",
-          "type": "door",
+          "direction": "up",
+          "type": "stairs",
           "targetRoomId": "P08",
           "spawnPointId": "from.P06",
           "condition": null,
           "lockedReason": "",
-          "label": "Старый подъёмник"
+          "label": "Старый подъёмник",
+          "interactionZone": {
+            "x": 746.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 746.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false
+        },
+        {
+          "exitId": "P06.to.P09",
+          "x": 1060,
+          "y": 530,
+          "w": 42,
+          "h": 76,
+          "direction": "up",
+          "type": "stairs",
+          "targetRoomId": "P09",
+          "spawnPointId": "from.P06",
+          "condition": {
+            "flag": "ability.dash"
+          },
+          "lockedReason": "Нужен воздушный рывок.",
+          "label": "Галерея цепей",
+          "interactionZone": {
+            "x": 1006,
+            "y": 454,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1006,
+            "y": 454,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "ability",
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
-          "x": 160,
+          "x": 1120,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": -1
         },
         "from.P05": {
-          "x": 126,
-          "y": 576,
-          "safeRadius": 24,
-          "facing": 1
-        },
-        "from.P07": {
-          "x": 1130,
+          "x": 1164,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
         },
-        "from.P08": {
-          "x": 526,
+        "from.P07": {
+          "x": 92,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
+        },
+        "from.P08": {
+          "x": 743.0,
+          "y": 576,
+          "safeRadius": 24,
+          "facing": -1
+        },
+        "from.P09": {
+          "x": 1003,
+          "y": 486,
+          "safeRadius": 24,
+          "facing": -1
         }
       },
       "entities": [
         {
-          "id": "pickup.p06_dash",
-          "type": "pickup",
-          "x": 1020,
-          "y": 303,
-          "flag": "pickup.p06_dash",
-          "title": "Осколок над водой",
-          "reward": "fragment",
-          "requires": {
-            "flag": "ability.dash"
-          }
-        },
-        {
           "id": "P06.watchman",
           "type": "enemy",
-          "x": 660,
+          "x": 620.0,
           "y": 620,
           "enemyType": "watchman",
           "hp": 2,
           "patrol": [
-            545,
-            770
+            510.0,
+            735.0
           ]
         }
       ],
@@ -961,7 +1222,7 @@
         "pickup.p06_dash"
       ],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -973,10 +1234,12 @@
       "decoration": {
         "style": "rooftop",
         "seed": 182,
-        "groundY": 620
+        "groundY": 620,
+        "event": "hanging_light"
       },
       "note": "Мостки ведут к решётке и к центральному подъёмнику.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Быстрый низ к подъёмнику или верхняя петля с осколком."
     },
     {
       "roomId": "P07",
@@ -984,23 +1247,23 @@
       "revision": 1,
       "name": "Обратная сторона",
       "worldBounds": {
-        "x": 1280,
-        "y": 2880,
-        "w": 1280,
+        "x": 0,
+        "y": 0,
+        "w": 720,
         "h": 720
       },
       "mapShape": {
-        "x": 1,
-        "y": 4,
-        "w": 1,
-        "h": 1
+        "x": 2,
+        "y": 8,
+        "w": 0.562,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "P07.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 720.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
@@ -1010,7 +1273,7 @@
         {
           "x": 0,
           "y": 0,
-          "w": 1280,
+          "w": 720,
           "h": 720,
           "profile": "room"
         }
@@ -1018,49 +1281,115 @@
       "exits": [
         {
           "exitId": "P07.to.P06",
-          "x": 80,
+          "x": 696,
           "y": 620,
           "w": 42,
           "h": 76,
-          "direction": "left",
-          "type": "door",
+          "direction": "right",
+          "type": "passage",
           "targetRoomId": "P06",
           "spawnPointId": "from.P07",
           "condition": null,
           "lockedReason": "",
-          "label": "Верхние мостки"
+          "label": "Верхние мостки",
+          "interactionZone": {
+            "x": 642,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 680,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "P07.to.P02",
-          "x": 1200,
+          "x": 45.0,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "down",
-          "type": "door",
+          "type": "stairs",
           "targetRoomId": "P02",
           "spawnPointId": "from.P07",
           "condition": {
             "flag": "shortcut.pier_gate"
           },
           "lockedReason": "Решётка открывается с верхних мостков",
-          "label": "Дом смотрителя"
+          "label": "Дом смотрителя",
+          "interactionZone": {
+            "x": -9.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": -9.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "other_side",
+          "hidden": false,
+          "colliderId": "mechanism.pier_grate.back.collider"
+        },
+        {
+          "exitId": "P07.to.P09",
+          "x": 440,
+          "y": 620,
+          "w": 42,
+          "h": 76,
+          "direction": "up",
+          "type": "stairs",
+          "targetRoomId": "P09",
+          "spawnPointId": "from.P07",
+          "condition": null,
+          "lockedReason": "",
+          "label": "Галерея цепей",
+          "interactionZone": {
+            "x": 386,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 386,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false,
+          "indirect": true,
+          "indirectReason": "Спуск по наклонной галерее к обратной стороне решётки"
         }
       ],
       "spawnPoints": {
         "start": {
-          "x": 160,
+          "x": 560,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": -1
         },
-        "from.P06": {
-          "x": 126,
+        "from.P02": {
+          "x": 78.0,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
-        "from.P02": {
-          "x": 1130,
+        "from.P06": {
+          "x": 604,
+          "y": 576,
+          "safeRadius": 24,
+          "facing": -1
+        },
+        "from.P09": {
+          "x": 383,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
@@ -1070,7 +1399,7 @@
         {
           "id": "lever.pier_gate",
           "type": "lever",
-          "x": 780,
+          "x": 281.25,
           "y": 620,
           "flag": "shortcut.pier_gate",
           "title": "Открыть решётку",
@@ -1082,7 +1411,7 @@
         "shortcut.pier_gate"
       ],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -1094,10 +1423,28 @@
       "decoration": {
         "style": "gate",
         "seed": 183,
-        "groundY": 620
+        "groundY": 620,
+        "event": "home_window"
       },
       "note": "Рычаг откроет знакомую решётку с другой стороны.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Короткий проход к обратной стороне знакомой решётки.",
+      "mechanisms": [
+        {
+          "id": "mechanism.pier_grate.back",
+          "kind": "gate",
+          "flag": "shortcut.pier_gate",
+          "x": 45,
+          "y": 620,
+          "w": 46,
+          "h": 110,
+          "duration": 0.8,
+          "controlledExits": [
+            "P07.to.P02"
+          ],
+          "vista": "Дом смотрителя"
+        }
+      ]
     },
     {
       "roomId": "P08",
@@ -1105,23 +1452,23 @@
       "revision": 1,
       "name": "Старый подъёмник",
       "worldBounds": {
-        "x": 2560,
-        "y": 2160,
-        "w": 1280,
+        "x": 0,
+        "y": 0,
+        "w": 900,
         "h": 720
       },
       "mapShape": {
-        "x": 2,
-        "y": 3,
-        "w": 1,
-        "h": 1
+        "x": 4,
+        "y": 6,
+        "w": 0.703,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "P08.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 900.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
@@ -1131,7 +1478,7 @@
         {
           "x": 0,
           "y": 0,
-          "w": 1280,
+          "w": 900,
           "h": 720,
           "profile": "room"
         }
@@ -1139,21 +1486,35 @@
       "exits": [
         {
           "exitId": "P08.to.P06",
-          "x": 80,
+          "x": 56.25,
           "y": 620,
           "w": 42,
           "h": 76,
-          "direction": "up",
-          "type": "door",
+          "direction": "down",
+          "type": "stairs",
           "targetRoomId": "P06",
           "spawnPointId": "from.P08",
           "condition": null,
           "lockedReason": "",
-          "label": "Верхние мостки"
+          "label": "Верхние мостки",
+          "interactionZone": {
+            "x": 2.25,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 2.25,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "P08.to.V01",
-          "x": 1030,
+          "x": 724.22,
           "y": 620,
           "w": 42,
           "h": 76,
@@ -1165,23 +1526,38 @@
             "flag": "mechanism.pier_lift"
           },
           "lockedReason": "Сначала запустите механизм подъёмника",
-          "label": "Платформа прибытия"
+          "label": "Платформа прибытия",
+          "interactionZone": {
+            "x": 670.22,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 670.22,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "mechanism",
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.P06": {
-          "x": 126,
+          "x": 89.25,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
         "from.V01": {
-          "x": 960,
+          "x": 667.22,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
@@ -1191,7 +1567,7 @@
         {
           "id": "lever.pier_lift",
           "type": "lever",
-          "x": 450,
+          "x": 316.41,
           "y": 620,
           "flag": "mechanism.pier_lift",
           "title": "Запустить подъёмник",
@@ -1203,7 +1579,7 @@
         "mechanism.pier_lift"
       ],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -1215,10 +1591,12 @@
       "decoration": {
         "style": "lift",
         "seed": 184,
-        "groundY": 620
+        "groundY": 620,
+        "event": "lift_sway"
       },
       "note": "Запустите механизм, чтобы подняться к вокзалу.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Запустить кабину и физически подняться в новый район."
     },
     {
       "roomId": "V01",
@@ -1226,32 +1604,32 @@
       "revision": 1,
       "name": "Платформа прибытия",
       "worldBounds": {
-        "x": 2560,
-        "y": 1440,
+        "x": 0,
+        "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
-        "x": 2,
-        "y": 2,
-        "w": 1,
-        "h": 1
+        "x": 4,
+        "y": 4,
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "V01.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "V01.platform",
-          "x": 450,
+          "x": 450.0,
           "y": 550,
-          "w": 230,
+          "w": 230.0,
           "h": 70,
           "kind": "solid",
           "grippable": true
@@ -1269,7 +1647,7 @@
       "exits": [
         {
           "exitId": "V01.to.P08",
-          "x": 180,
+          "x": 180.0,
           "y": 620,
           "w": 42,
           "h": 76,
@@ -1281,37 +1659,66 @@
             "flag": "mechanism.pier_lift"
           },
           "lockedReason": "Сначала запустите механизм подъёмника",
-          "label": "Старый подъёмник"
+          "label": "Старый подъёмник",
+          "interactionZone": {
+            "x": 126.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 126.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "mechanism",
+          "hidden": false
         },
         {
           "exitId": "V01.to.V02",
-          "x": 1200,
+          "x": 1200.0,
           "y": 620,
           "w": 42,
           "h": 76,
-          "direction": "right",
-          "type": "door",
+          "direction": "up",
+          "type": "stairs",
           "targetRoomId": "V02",
           "spawnPointId": "from.V01",
           "condition": null,
           "lockedReason": "",
-          "label": "Зал ожидания"
+          "label": "Зал ожидания",
+          "interactionZone": {
+            "x": 1146.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1146.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.P08": {
-          "x": 226,
+          "x": 213.0,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
         "from.V02": {
-          "x": 1130,
+          "x": 1143.0,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
@@ -1321,7 +1728,7 @@
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -1333,10 +1740,12 @@
       "decoration": {
         "style": "platform",
         "seed": 183,
-        "groundY": 620
+        "groundY": 620,
+        "event": "station_clock"
       },
       "note": "Рельсы остыли, но наверху ещё есть жизнь.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Первый вид большого зала и маршрут к свету."
     },
     {
       "roomId": "V02",
@@ -1344,24 +1753,24 @@
       "revision": 1,
       "name": "Зал ожидания",
       "worldBounds": {
-        "x": 2560,
-        "y": 720,
-        "w": 1280,
-        "h": 720
+        "x": 0,
+        "y": 0,
+        "w": 1600,
+        "h": 800
       },
       "mapShape": {
-        "x": 2,
-        "y": 1,
-        "w": 1,
-        "h": 1
+        "x": 4,
+        "y": 2,
+        "w": 1.25,
+        "h": 1.111
       },
       "collisionLayers": [
         {
           "id": "V02.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
-          "h": 100,
+          "w": 1600.0,
+          "h": 180,
           "kind": "solid",
           "grippable": true
         }
@@ -1370,29 +1779,43 @@
         {
           "x": 0,
           "y": 0,
-          "w": 1280,
-          "h": 720,
+          "w": 1600,
+          "h": 800,
           "profile": "room"
         }
       ],
       "exits": [
         {
           "exitId": "V02.to.V01",
-          "x": 80,
+          "x": 100.0,
           "y": 620,
           "w": 42,
           "h": 76,
-          "direction": "left",
-          "type": "door",
+          "direction": "down",
+          "type": "stairs",
           "targetRoomId": "V01",
           "spawnPointId": "from.V02",
           "condition": null,
           "lockedReason": "",
-          "label": "Платформа прибытия"
+          "label": "Платформа прибытия",
+          "interactionZone": {
+            "x": 46.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 46.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "V02.to.V03",
-          "x": 340,
+          "x": 425.0,
           "y": 620,
           "w": 42,
           "h": 76,
@@ -1402,65 +1825,96 @@
           "spawnPointId": "from.V02",
           "condition": null,
           "lockedReason": "",
-          "label": "Мастерская часовщика"
+          "label": "Мастерская часовщика",
+          "interactionZone": {
+            "x": 371.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 371.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false,
+          "indirect": true,
+          "indirectReason": "Внутренняя лестница мастерской"
         },
         {
           "exitId": "V02.to.V04",
-          "x": 1200,
+          "x": 1576,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "right",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "V04",
           "spawnPointId": "from.V02",
           "condition": null,
           "lockedReason": "",
-          "label": "Городские ворота"
+          "label": "Городские ворота",
+          "interactionZone": {
+            "x": 1522,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1560,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.V01": {
-          "x": 126,
+          "x": 133.0,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
+        "rest.rest.station": {
+          "x": 763.0,
+          "y": 576,
+          "safeRadius": 28
+        },
         "from.V03": {
-          "x": 386,
+          "x": 458.0,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
         "from.V04": {
-          "x": 1130,
+          "x": 1484,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
-        },
-        "rest.rest.station": {
-          "x": 608,
-          "y": 576,
-          "safeRadius": 28
         }
       },
       "entities": [
         {
           "id": "rest.station",
           "type": "rest",
-          "x": 620,
+          "x": 775.0,
           "y": 620,
           "title": "Отдохнуть в зале ожидания"
         },
         {
           "id": "npc.station_keeper",
           "type": "npc",
-          "x": 860,
+          "x": 1075.0,
           "y": 620,
           "title": "Станционная смотрительница",
           "text": "Поезда больше не ходят. Но город всё ещё дышит. За воротами есть кухня — там горит огонь. Если идёшь к башне, ищи дом без лестниц."
@@ -1469,7 +1923,7 @@
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -1481,10 +1935,12 @@
       "decoration": {
         "style": "hall",
         "seed": 184,
-        "groundY": 620
+        "groundY": 620,
+        "event": "train_shadow"
       },
       "note": "Тихое место между причалом и городом.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Главная ось к городу, отдельная мастерская и безопасный огонь."
     },
     {
       "roomId": "V03",
@@ -1492,32 +1948,32 @@
       "revision": 1,
       "name": "Мастерская часовщика",
       "worldBounds": {
-        "x": 2560,
+        "x": 0,
         "y": 0,
-        "w": 1280,
+        "w": 760,
         "h": 720
       },
       "mapShape": {
-        "x": 2,
+        "x": 4,
         "y": 0,
-        "w": 1,
-        "h": 1
+        "w": 0.594,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "V03.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 760.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "V03.workbench",
-          "x": 850,
+          "x": 504.69,
           "y": 555,
-          "w": 160,
+          "w": 95.0,
           "h": 65,
           "kind": "solid",
           "grippable": true
@@ -1527,7 +1983,7 @@
         {
           "x": 0,
           "y": 0,
-          "w": 1280,
+          "w": 760,
           "h": 720,
           "profile": "room"
         }
@@ -1535,7 +1991,7 @@
       "exits": [
         {
           "exitId": "V03.to.V02",
-          "x": 80,
+          "x": 47.5,
           "y": 620,
           "w": 42,
           "h": 76,
@@ -1545,17 +2001,34 @@
           "spawnPointId": "from.V03",
           "condition": null,
           "lockedReason": "",
-          "label": "Зал ожидания"
+          "label": "Зал ожидания",
+          "interactionZone": {
+            "x": -6.5,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": -6.5,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false,
+          "indirect": true,
+          "indirectReason": "Внутренняя лестница мастерской"
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.V02": {
-          "x": 126,
+          "x": 80.5,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
@@ -1565,19 +2038,39 @@
         {
           "id": "npc.clockmaker",
           "type": "npc",
-          "x": 600,
+          "x": 356.25,
           "y": 620,
           "title": "Часовщик",
           "text": "Часы остановились перед самым рассветом. Возьми этот осколок. Может быть, тебе удастся снова пустить время.",
-          "giftFlag": "pickup.clockmaker"
+          "giftFlag": "pickup.clockmaker",
+          "giftRequires": {
+            "flag": "mechanism.clockwork"
+          }
+        },
+        {
+          "id": "wheel.clockwork",
+          "type": "repair",
+          "x": 555,
+          "y": 620,
+          "title": "Повернуть маховик",
+          "flag": "mechanism.clockwork",
+          "text": "Часы пошли. Поговорите с часовщиком.",
+          "colliderId": "V03.workbench",
+          "interactionZone": {
+            "x": 430,
+            "y": 530,
+            "w": 80,
+            "h": 100
+          }
         }
       ],
       "triggers": [],
       "persistentFlags": [
-        "pickup.clockmaker"
+        "pickup.clockmaker",
+        "mechanism.clockwork"
       ],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -1589,10 +2082,12 @@
       "decoration": {
         "style": "workshop",
         "seed": 185,
-        "groundY": 620
+        "groundY": 620,
+        "event": "clockwork"
       },
       "note": "Некоторые вещи ещё можно починить.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Повернуть маховик часов и поговорить с часовщиком."
     },
     {
       "roomId": "V04",
@@ -1600,23 +2095,23 @@
       "revision": 1,
       "name": "Городские ворота",
       "worldBounds": {
-        "x": 3840,
-        "y": 720,
-        "w": 1280,
+        "x": 0,
+        "y": 0,
+        "w": 900,
         "h": 720
       },
       "mapShape": {
-        "x": 3,
-        "y": 1,
-        "w": 1,
-        "h": 1
+        "x": 6,
+        "y": 2,
+        "w": 0.703,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "V04.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 900.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
@@ -1626,7 +2121,7 @@
         {
           "x": 0,
           "y": 0,
-          "w": 1280,
+          "w": 900,
           "h": 720,
           "profile": "room"
         }
@@ -1634,47 +2129,76 @@
       "exits": [
         {
           "exitId": "V04.to.V02",
-          "x": 80,
+          "x": 24,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "left",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "V02",
           "spawnPointId": "from.V04",
           "condition": null,
           "lockedReason": "",
-          "label": "Зал ожидания"
+          "label": "Зал ожидания",
+          "interactionZone": {
+            "x": -30,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "V04.to.R01",
-          "x": 1200,
+          "x": 876,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "right",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "R01",
           "spawnPointId": "from.V04",
           "condition": null,
           "lockedReason": "",
-          "label": "Улица фонарей"
+          "label": "Улица фонарей",
+          "interactionZone": {
+            "x": 822,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 860,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.V02": {
-          "x": 126,
+          "x": 92,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
         "from.R01": {
-          "x": 1130,
+          "x": 784,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
@@ -1684,7 +2208,7 @@
         {
           "id": "future.archive",
           "type": "barrier",
-          "x": 680,
+          "x": 478.12,
           "y": 620,
           "title": "Дверь Архива",
           "text": "За печатью слышен гул. Два из трёх районных регуляторов откроют этот путь. Пока стоит идти к водонапорной башне."
@@ -1693,7 +2217,7 @@
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -1705,10 +2229,12 @@
       "decoration": {
         "style": "archive",
         "seed": 186,
-        "groundY": 620
+        "groundY": 620,
+        "event": "archive_pulse"
       },
       "note": "За воротами начинается город. Архив пока закрыт.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Узнать печать Архива и пройти в город."
     },
     {
       "roomId": "R01",
@@ -1716,99 +2242,146 @@
       "revision": 1,
       "name": "Улица фонарей",
       "worldBounds": {
-        "x": 5120,
-        "y": 720,
-        "w": 1280,
+        "x": 0,
+        "y": 0,
+        "w": 1800,
         "h": 720
       },
       "mapShape": {
-        "x": 4,
-        "y": 1,
-        "w": 1,
-        "h": 1
+        "x": 8,
+        "y": 2,
+        "w": 1.406,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "R01.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1800.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R01.curb",
-          "x": 470,
+          "x": 660.94,
           "y": 565,
-          "w": 120,
+          "w": 168.75,
           "h": 55,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R01.balcony",
-          "x": 780,
+          "x": 1096.88,
           "y": 500,
-          "w": 180,
+          "w": 253.12,
           "h": 16,
           "kind": "oneWay",
           "grippable": true
+        },
+        {
+          "id": "R01.alley_roof",
+          "x": 1100,
+          "y": 520,
+          "w": 240,
+          "h": 18,
+          "kind": "oneWay",
+          "grippable": false
+        },
+        {
+          "id": "R01.alley_step",
+          "x": 980,
+          "y": 570,
+          "w": 110,
+          "h": 16,
+          "kind": "oneWay",
+          "grippable": false
         }
       ],
       "cameraZones": [
         {
           "x": 0,
           "y": 0,
-          "w": 1280,
+          "w": 1800,
           "h": 720,
-          "profile": "room"
+          "profile": "street"
         }
       ],
       "exits": [
         {
           "exitId": "R01.to.V04",
-          "x": 80,
+          "x": 24,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "left",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "V04",
           "spawnPointId": "from.R01",
           "condition": null,
           "lockedReason": "",
-          "label": "Городские ворота"
+          "label": "Городские ворота",
+          "interactionZone": {
+            "x": -30,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "R01.to.R02",
-          "x": 1200,
+          "x": 1776,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "right",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "R02",
           "spawnPointId": "from.R01",
           "condition": null,
           "lockedReason": "",
-          "label": "Общественная кухня"
+          "label": "Общественная кухня",
+          "interactionZone": {
+            "x": 1722,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1760,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.V04": {
-          "x": 126,
+          "x": 92,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
         "from.R02": {
-          "x": 1130,
+          "x": 1684,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
@@ -1818,20 +2391,20 @@
         {
           "id": "R01.watchman",
           "type": "enemy",
-          "x": 900,
+          "x": 1265.62,
           "y": 620,
           "enemyType": "watchman",
           "hp": 2,
           "patrol": [
-            785,
-            1010
+            1103.91,
+            1420.31
           ]
         }
       ],
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -1843,10 +2416,12 @@
       "decoration": {
         "style": "street",
         "seed": 179,
-        "groundY": 620
+        "groundY": 620,
+        "event": "tower_pipe"
       },
       "note": "За крышами видна старая водонапорная башня.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Длинная улица с башней на горизонте, укрытием и патрулём."
     },
     {
       "roomId": "R02",
@@ -1854,23 +2429,23 @@
       "revision": 1,
       "name": "Общественная кухня",
       "worldBounds": {
-        "x": 6400,
-        "y": 720,
+        "x": 0,
+        "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
-        "x": 5,
-        "y": 1,
-        "w": 1,
-        "h": 1
+        "x": 10,
+        "y": 2,
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "R02.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
@@ -1888,84 +2463,127 @@
       "exits": [
         {
           "exitId": "R02.to.R01",
-          "x": 80,
+          "x": 24,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "left",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "R01",
           "spawnPointId": "from.R02",
           "condition": null,
           "lockedReason": "",
-          "label": "Улица фонарей"
+          "label": "Улица фонарей",
+          "interactionZone": {
+            "x": -30,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "R02.to.R03",
-          "x": 1200,
+          "x": 1256,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "right",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "R03",
           "spawnPointId": "from.R02",
           "condition": null,
           "lockedReason": "",
-          "label": "Прачечная"
+          "label": "Прачечная",
+          "interactionZone": {
+            "x": 1202,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1240,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "R02.to.R07",
-          "x": 900,
+          "x": 900.0,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "up",
-          "type": "door",
+          "type": "stairs",
           "targetRoomId": "R07",
           "spawnPointId": "from.R02",
           "condition": {
             "flag": "shortcut.fire_stairs"
           },
           "lockedReason": "Лестница опускается со двора смотрителя",
-          "label": "Двор смотрителя"
+          "label": "Двор смотрителя",
+          "interactionZone": {
+            "x": 846.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 846.0,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "other_side",
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.R01": {
-          "x": 126,
+          "x": 92,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
+        "rest.rest.kitchen": {
+          "x": 358.0,
+          "y": 576,
+          "safeRadius": 28
+        },
         "from.R03": {
-          "x": 1130,
+          "x": 1164,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
         },
         "from.R07": {
-          "x": 830,
+          "x": 843.0,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
-        },
-        "rest.rest.kitchen": {
-          "x": 358,
-          "y": 576,
-          "safeRadius": 28
         }
       },
       "entities": [
         {
           "id": "rest.kitchen",
           "type": "rest",
-          "x": 370,
+          "x": 370.0,
           "y": 620,
           "title": "Отдохнуть в общественной кухне"
         }
@@ -1973,7 +2591,7 @@
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -1985,10 +2603,27 @@
       "decoration": {
         "style": "kitchen",
         "seed": 180,
-        "groundY": 620
+        "groundY": 620,
+        "event": "kitchen_steam"
       },
       "note": "Огонь, тёплая еда и лестница, опущенная с крыши.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Кухня под пока сложенной пожарной лестницей.",
+      "mechanisms": [
+        {
+          "id": "mechanism.fire_ladder",
+          "kind": "ladder",
+          "flag": "shortcut.fire_stairs",
+          "x": 900,
+          "y": 620,
+          "w": 50,
+          "h": 150,
+          "duration": 0.9,
+          "controlledExits": [
+            "R02.to.R07"
+          ]
+        }
+      ]
     },
     {
       "roomId": "R03",
@@ -1996,44 +2631,53 @@
       "revision": 1,
       "name": "Прачечная",
       "worldBounds": {
-        "x": 7680,
-        "y": 720,
+        "x": 0,
+        "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
-        "x": 6,
-        "y": 1,
-        "w": 1,
-        "h": 1
+        "x": 12,
+        "y": 2,
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "R03.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R03.passage",
-          "x": 490,
+          "x": 490.0,
           "y": 495,
-          "w": 340,
+          "w": 340.0,
           "h": 22,
           "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "R03.crate",
-          "x": 330,
+          "x": 330.0,
           "y": 558,
-          "w": 75,
+          "w": 75.0,
           "h": 62,
           "kind": "solid",
           "grippable": true
+        },
+        {
+          "id": "R03.lower_beam",
+          "x": 870,
+          "y": 540,
+          "w": 190,
+          "h": 18,
+          "kind": "oneWay",
+          "grippable": false
         }
       ],
       "cameraZones": [
@@ -2042,53 +2686,82 @@
           "y": 0,
           "w": 1280,
           "h": 720,
-          "profile": "room"
+          "profile": "street"
         }
       ],
       "exits": [
         {
           "exitId": "R03.to.R02",
-          "x": 80,
+          "x": 24,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "left",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "R02",
           "spawnPointId": "from.R03",
           "condition": null,
           "lockedReason": "",
-          "label": "Общественная кухня"
+          "label": "Общественная кухня",
+          "interactionZone": {
+            "x": -30,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "R03.to.R04",
-          "x": 1200,
+          "x": 1256,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "right",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "R04",
           "spawnPointId": "from.R03",
           "condition": null,
           "lockedReason": "",
-          "label": "Дом без лестниц"
+          "label": "Дом без лестниц",
+          "interactionZone": {
+            "x": 1202,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1240,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.R02": {
-          "x": 126,
+          "x": 92,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
         "from.R04": {
-          "x": 1130,
+          "x": 1164,
           "y": 576,
           "safeRadius": 24,
           "facing": -1
@@ -2098,32 +2771,32 @@
         {
           "id": "R03.watchman",
           "type": "enemy",
-          "x": 970,
+          "x": 970.0,
           "y": 620,
           "enemyType": "watchman",
           "hp": 2,
           "patrol": [
-            855,
-            1080
+            855.0,
+            1080.0
           ]
         },
         {
           "id": "R03.parasite",
           "type": "enemy",
-          "x": 720,
+          "x": 720.0,
           "y": 450,
           "enemyType": "parasite",
           "hp": 2,
           "patrol": [
-            605,
-            830
+            605.0,
+            830.0
           ]
         }
       ],
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -2135,10 +2808,12 @@
       "decoration": {
         "style": "laundry",
         "seed": 181,
-        "groundY": 620
+        "groundY": 620,
+        "event": "hanging_light"
       },
       "note": "Промокшие простыни скрывают проход дальше.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Безопасный низ и балки прачечной под подвесным паразитом."
     },
     {
       "roomId": "R04",
@@ -2146,50 +2821,50 @@
       "revision": 1,
       "name": "Дом без лестниц",
       "worldBounds": {
-        "x": 8960,
-        "y": 720,
+        "x": 0,
+        "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
-        "x": 7,
-        "y": 1,
-        "w": 1,
-        "h": 1
+        "x": 14,
+        "y": 2,
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "R04.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R04.wall_left",
-          "x": 820,
+          "x": 820.0,
           "y": 260,
-          "w": 30,
+          "w": 30.0,
           "h": 250,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R04.wall_right",
-          "x": 1010,
+          "x": 1010.0,
           "y": 140,
-          "w": 30,
+          "w": 30.0,
           "h": 370,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R04.exit_ledge",
-          "x": 850,
+          "x": 850.0,
           "y": 220,
-          "w": 160,
+          "w": 160.0,
           "h": 16,
           "kind": "oneWay",
           "grippable": true
@@ -2207,49 +2882,78 @@
       "exits": [
         {
           "exitId": "R04.to.R03",
-          "x": 80,
+          "x": 24,
           "y": 620,
           "w": 42,
           "h": 76,
           "direction": "left",
-          "type": "door",
+          "type": "passage",
           "targetRoomId": "R03",
           "spawnPointId": "from.R04",
           "condition": null,
           "lockedReason": "",
-          "label": "Прачечная"
+          "label": "Прачечная",
+          "interactionZone": {
+            "x": -30,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 530,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "R04.to.R05",
-          "x": 930,
+          "x": 930.0,
           "y": 220,
           "w": 42,
           "h": 76,
           "direction": "up",
-          "type": "door",
+          "type": "stairs",
           "targetRoomId": "R05",
           "spawnPointId": "from.R04",
           "condition": {
             "flag": "ability.wall_grip"
           },
           "lockedReason": "Нужны медные когти",
-          "label": "Вентиляционная шахта"
+          "label": "Вентиляционная шахта",
+          "interactionZone": {
+            "x": 876.0,
+            "y": 144,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 876.0,
+            "y": 144,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "ability",
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
           "y": 576,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.R03": {
-          "x": 126,
+          "x": 92,
           "y": 576,
           "safeRadius": 24,
           "facing": 1
         },
         "from.R05": {
-          "x": 860,
+          "x": 873.0,
           "y": 176,
           "safeRadius": 24,
           "facing": -1
@@ -2259,7 +2963,7 @@
         {
           "id": "gift.wall_grip",
           "type": "ability",
-          "x": 460,
+          "x": 460.0,
           "y": 568,
           "flag": "ability.wall_grip",
           "title": "Медные когти",
@@ -2272,7 +2976,7 @@
         "ability.wall_grip"
       ],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -2284,17 +2988,19 @@
       "decoration": {
         "style": "grip",
         "seed": 182,
-        "groundY": 620
+        "groundY": 620,
+        "event": "hanging_light"
       },
       "note": "Кто-то оставил здесь перчатки с медными когтями.",
       "tutorialSigns": [
         {
           "action": "wall",
-          "x": 760,
+          "x": 760.0,
           "y": 658,
-          "w": 320
+          "w": 320.0
         }
-      ]
+      ],
+      "purpose": "Увидеть высокий выход и применить медные когти."
     },
     {
       "roomId": "R05",
@@ -2302,95 +3008,95 @@
       "revision": 1,
       "name": "Вентиляционная шахта",
       "worldBounds": {
-        "x": 8960,
+        "x": 0,
         "y": 0,
         "w": 1280,
         "h": 1100
       },
       "mapShape": {
-        "x": 7,
+        "x": 14,
         "y": 0,
-        "w": 1,
-        "h": 1
+        "w": 1.0,
+        "h": 1.528
       },
       "collisionLayers": [
         {
           "id": "R05.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 1000,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R05.left_wall",
-          "x": 480,
+          "x": 770.0,
           "y": 350,
-          "w": 30,
+          "w": 30.0,
           "h": 550,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R05.right_wall",
-          "x": 680,
+          "x": 570.0,
           "y": 170,
-          "w": 30,
+          "w": 30.0,
           "h": 730,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R05.rest_one",
-          "x": 510,
+          "x": 600.0,
           "y": 740,
-          "w": 170,
+          "w": 170.0,
           "h": 14,
           "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "R05.rest_two",
-          "x": 510,
+          "x": 600.0,
           "y": 560,
-          "w": 170,
+          "w": 170.0,
           "h": 14,
           "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "R05.rest_three",
-          "x": 510,
+          "x": 600.0,
           "y": 380,
-          "w": 170,
+          "w": 170.0,
           "h": 14,
           "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "R05.upper",
-          "x": 350,
+          "x": 600.0,
           "y": 200,
-          "w": 330,
+          "w": 330.0,
           "h": 14,
           "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "R05.step_out",
-          "x": 760,
+          "x": 360.0,
           "y": 250,
-          "w": 160,
+          "w": 160.0,
           "h": 16,
           "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "R05.exit_roof",
-          "x": 1000,
+          "x": 0.0,
           "y": 300,
-          "w": 280,
+          "w": 280.0,
           "h": 20,
           "kind": "oneWay",
           "grippable": true
@@ -2402,65 +3108,100 @@
           "y": 0,
           "w": 1280,
           "h": 1100,
-          "profile": "shaft"
+          "profile": "shaft",
+          "settings": {
+            "lead": 0.04,
+            "maxLead": 36,
+            "turnDelay": 0.22,
+            "follow": 5
+          }
         }
       ],
       "exits": [
         {
           "exitId": "R05.to.R04",
-          "x": 80,
+          "x": 1200.0,
           "y": 1000,
           "w": 42,
           "h": 76,
           "direction": "down",
-          "type": "door",
+          "type": "stairs",
           "targetRoomId": "R04",
           "spawnPointId": "from.R05",
           "condition": {
             "flag": "ability.wall_grip"
           },
           "lockedReason": "Нужны медные когти",
-          "label": "Дом без лестниц"
+          "label": "Дом без лестниц",
+          "interactionZone": {
+            "x": 1146.0,
+            "y": 924,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1146.0,
+            "y": 924,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "ability",
+          "hidden": false
         },
         {
           "exitId": "R05.to.R06",
-          "x": 1200,
+          "x": 24,
           "y": 300,
           "w": 42,
           "h": 76,
-          "direction": "right",
-          "type": "door",
+          "direction": "left",
+          "type": "passage",
           "targetRoomId": "R06",
           "spawnPointId": "from.R05",
           "condition": null,
           "lockedReason": "",
-          "label": "Над городом"
+          "label": "Над городом",
+          "interactionZone": {
+            "x": -30,
+            "y": 224,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 210,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
-          "x": 160,
+          "x": 1120,
           "y": 956,
-          "safeRadius": 28
+          "safeRadius": 28,
+          "facing": -1
         },
         "from.R04": {
-          "x": 126,
+          "x": 1143.0,
           "y": 956,
           "safeRadius": 24,
-          "facing": 1
+          "facing": -1
         },
         "from.R06": {
-          "x": 1130,
+          "x": 92,
           "y": 256,
           "safeRadius": 24,
-          "facing": -1
+          "facing": 1
         }
       },
       "entities": [],
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -2472,17 +3213,19 @@
       "decoration": {
         "style": "shaft",
         "seed": 183,
-        "groundY": 1000
+        "groundY": 1000,
+        "event": "hanging_light"
       },
       "note": "Держитесь к стене и нажмите прыжок. Чередуйте стороны.",
       "tutorialSigns": [
         {
           "action": "wall",
-          "x": 310,
+          "x": 630.0,
           "y": 1038,
-          "w": 340
+          "w": 340.0
         }
-      ]
+      ],
+      "purpose": "Скольжение, первый отскок и подъём в шахте с передышками."
     },
     {
       "roomId": "R06",
@@ -2490,80 +3233,99 @@
       "revision": 1,
       "name": "Над городом",
       "worldBounds": {
-        "x": 7680,
+        "x": 0,
         "y": 0,
         "w": 1280,
         "h": 720
       },
       "mapShape": {
-        "x": 6,
+        "x": 12,
         "y": 0,
-        "w": 1,
-        "h": 1
+        "w": 1.0,
+        "h": 1.0
       },
       "collisionLayers": [
         {
           "id": "R06.floor",
-          "x": 0,
+          "x": 0.0,
           "y": 620,
-          "w": 1280,
+          "w": 1280.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R06.entry_roof",
-          "x": 0,
+          "x": 960.0,
           "y": 440,
-          "w": 320,
+          "w": 320.0,
           "h": 20,
-          "kind": "solid",
+          "kind": "oneWay",
           "grippable": true
         },
         {
           "id": "R06.left_wall",
-          "x": 320,
+          "x": 932.0,
           "y": 280,
-          "w": 28,
-          "h": 340,
+          "w": 28.0,
+          "h": 220,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R06.right_roof",
-          "x": 700,
+          "x": 0.0,
           "y": 300,
-          "w": 580,
+          "w": 580.0,
           "h": 22,
           "kind": "solid",
           "grippable": true
         },
         {
-          "id": "R06.shaft_wall",
-          "x": 500,
-          "y": 450,
-          "w": 26,
-          "h": 170,
-          "kind": "solid",
-          "grippable": true
-        },
-        {
           "id": "R06.bridge",
-          "x": 940,
-          "y": 190,
-          "w": 310,
+          "x": 30.0,
+          "y": 200,
+          "w": 310.0,
           "h": 18,
           "kind": "oneWay",
           "grippable": true,
           "requires": {
             "flag": "mechanism.tower_bridge"
-          }
+          },
+          "mechanismId": "mechanism.tower_bridge.body"
         },
         {
           "id": "R06.wall_landing",
-          "x": 170,
+          "x": 840.0,
           "y": 280,
-          "w": 270,
+          "w": 270.0,
+          "h": 16,
+          "kind": "oneWay",
+          "grippable": false
+        },
+        {
+          "id": "R06.lower_step_one",
+          "x": 610,
+          "y": 540,
+          "w": 130,
+          "h": 16,
+          "kind": "oneWay",
+          "grippable": false
+        },
+        {
+          "id": "R06.lower_step_two",
+          "x": 610,
+          "y": 450,
+          "w": 130,
+          "h": 16,
+          "kind": "oneWay",
+          "grippable": false
+        },
+        {
+          "id": "R06.lower_step_three",
+          "x": 610,
+          "y": 360,
+          "w": 130,
           "h": 16,
           "kind": "oneWay",
           "grippable": false
@@ -2575,46 +3337,74 @@
           "y": 0,
           "w": 1280,
           "h": 720,
-          "profile": "room"
+          "profile": "street"
         }
       ],
       "exits": [
         {
           "exitId": "R06.to.R05",
-          "x": 80,
+          "x": 1256,
           "y": 440,
           "w": 42,
           "h": 76,
-          "direction": "left",
-          "type": "door",
+          "direction": "right",
+          "type": "passage",
           "targetRoomId": "R05",
           "spawnPointId": "from.R06",
           "condition": null,
           "lockedReason": "",
-          "label": "Вентиляционная шахта"
+          "label": "Вентиляционная шахта",
+          "interactionZone": {
+            "x": 1202,
+            "y": 364,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1240,
+            "y": 350,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "R06.to.R07",
-          "x": 1200,
+          "x": 24,
           "y": 300,
           "w": 42,
           "h": 76,
-          "direction": "right",
-          "type": "door",
+          "direction": "left",
+          "type": "passage",
           "targetRoomId": "R07",
           "spawnPointId": "from.R06",
           "condition": null,
           "lockedReason": "",
-          "label": "Двор смотрителя"
+          "label": "Двор смотрителя",
+          "interactionZone": {
+            "x": -30,
+            "y": 224,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 0,
+            "y": 210,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "R06.to.R08",
-          "x": 1100,
-          "y": 190,
+          "x": 180.0,
+          "y": 200,
           "w": 42,
           "h": 76,
           "direction": "up",
-          "type": "door",
+          "type": "stairs",
           "targetRoomId": "R08",
           "spawnPointId": "from.R06",
           "condition": {
@@ -2628,30 +3418,81 @@
             ]
           },
           "lockedReason": "Мост удерживает смотритель двора",
-          "label": "Первый свет"
+          "label": "Первый свет",
+          "interactionZone": {
+            "x": 126.0,
+            "y": 124,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 126.0,
+            "y": 124,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "mechanism",
+          "hidden": false
+        },
+        {
+          "exitId": "R06.to.R09",
+          "x": 650,
+          "y": 620,
+          "w": 42,
+          "h": 76,
+          "direction": "down",
+          "type": "stairs",
+          "targetRoomId": "R09",
+          "spawnPointId": "from.R06",
+          "condition": null,
+          "lockedReason": "",
+          "label": "Арка под башней",
+          "interactionZone": {
+            "x": 596,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 596,
+            "y": 544,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false,
+          "indirect": true,
+          "indirectReason": "Лестница под крышами вдоль водовода"
         }
       ],
       "spawnPoints": {
         "start": {
-          "x": 160,
-          "y": 576,
-          "safeRadius": 28
+          "x": 1120,
+          "y": 396,
+          "safeRadius": 28,
+          "facing": -1
         },
         "from.R05": {
-          "x": 126,
+          "x": 1164,
           "y": 396,
-          "safeRadius": 24,
-          "facing": 1
-        },
-        "from.R07": {
-          "x": 1130,
-          "y": 256,
           "safeRadius": 24,
           "facing": -1
         },
+        "from.R07": {
+          "x": 92,
+          "y": 256,
+          "safeRadius": 24,
+          "facing": 1
+        },
         "from.R08": {
-          "x": 1030,
-          "y": 146,
+          "x": 213.0,
+          "y": 156,
+          "safeRadius": 24,
+          "facing": 1
+        },
+        "from.R09": {
+          "x": 593,
+          "y": 576,
           "safeRadius": 24,
           "facing": -1
         }
@@ -2660,7 +3501,7 @@
       "triggers": [],
       "persistentFlags": [],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -2672,10 +3513,34 @@
       "decoration": {
         "style": "roofs",
         "seed": 184,
-        "groundY": 620
+        "groundY": 620,
+        "event": "hanging_light"
       },
       "note": "Путь к башне закрыт. Механизм моста у смотрителя.",
-      "tutorialSigns": []
+      "tutorialSigns": [
+        {
+          "action": "drop",
+          "x": 990,
+          "y": 460,
+          "w": 220
+        }
+      ],
+      "purpose": "Выбрать безопасный низ или короткий путь по крышам; увидеть мост.",
+      "mechanisms": [
+        {
+          "id": "mechanism.tower_bridge.body",
+          "kind": "bridge",
+          "flag": "mechanism.tower_bridge",
+          "x": 30.0,
+          "y": 200,
+          "w": 310.0,
+          "h": 18,
+          "duration": 1,
+          "controlledExits": [
+            "R06.to.R08"
+          ]
+        }
+      ]
     },
     {
       "roomId": "R07",
@@ -2683,84 +3548,170 @@
       "revision": 1,
       "name": "Двор смотрителя",
       "worldBounds": {
-        "x": 6400,
+        "x": 0,
         "y": 0,
-        "w": 1280,
-        "h": 720
+        "w": 1440,
+        "h": 900
       },
       "mapShape": {
-        "x": 5,
+        "x": 10,
         "y": 0,
-        "w": 1,
-        "h": 1
+        "w": 1.125,
+        "h": 1.25
       },
       "collisionLayers": [
         {
           "id": "R07.floor",
-          "x": 0,
-          "y": 620,
-          "w": 1280,
+          "x": 0.0,
+          "y": 800,
+          "w": 1440.0,
           "h": 100,
           "kind": "solid",
           "grippable": true
+        },
+        {
+          "id": "R07.arena_gallery",
+          "x": 680,
+          "y": 710,
+          "w": 230,
+          "h": 18,
+          "kind": "oneWay",
+          "grippable": false
         }
       ],
       "cameraZones": [
         {
           "x": 0,
           "y": 0,
-          "w": 1280,
-          "h": 720,
-          "profile": "room"
+          "w": 1440,
+          "h": 900,
+          "profile": "arena",
+          "composition": {
+            "minX": 400,
+            "maxX": 1180,
+            "minY": 620,
+            "maxY": 850
+          }
         }
       ],
       "exits": [
         {
           "exitId": "R07.to.R06",
-          "x": 80,
-          "y": 620,
+          "x": 1416,
+          "y": 800,
           "w": 42,
           "h": 76,
-          "direction": "left",
-          "type": "door",
+          "direction": "right",
+          "type": "passage",
           "targetRoomId": "R06",
           "spawnPointId": "from.R07",
           "condition": null,
           "lockedReason": "",
-          "label": "Над городом"
+          "label": "Над городом",
+          "interactionZone": {
+            "x": 1362,
+            "y": 724,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1400,
+            "y": 710,
+            "w": 40,
+            "h": 100
+          },
+          "lockKind": null,
+          "hidden": false
         },
         {
           "exitId": "R07.to.R02",
-          "x": 180,
-          "y": 620,
+          "x": 202.5,
+          "y": 800,
           "w": 42,
           "h": 76,
           "direction": "down",
-          "type": "door",
+          "type": "stairs",
           "targetRoomId": "R02",
           "spawnPointId": "from.R07",
           "condition": {
             "flag": "shortcut.fire_stairs"
           },
           "lockedReason": "Лестница опускается со двора смотрителя",
-          "label": "Общественная кухня"
+          "label": "Общественная кухня",
+          "interactionZone": {
+            "x": 148.5,
+            "y": 724,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 148.5,
+            "y": 724,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "other_side",
+          "hidden": false
+        },
+        {
+          "exitId": "R07.to.R09",
+          "x": 1300,
+          "y": 800,
+          "w": 42,
+          "h": 76,
+          "direction": "down",
+          "type": "stairs",
+          "targetRoomId": "R09",
+          "spawnPointId": "from.R07",
+          "condition": null,
+          "lockedReason": "",
+          "label": "Арка под башней",
+          "interactionZone": {
+            "x": 1246,
+            "y": 724,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 1246,
+            "y": 724,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false,
+          "indirect": true,
+          "indirectReason": "Подъём из подземной арки во двор"
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
-          "y": 576,
-          "safeRadius": 28
+          "y": 756,
+          "safeRadius": 28,
+          "facing": 1
         },
-        "from.R06": {
-          "x": 126,
-          "y": 576,
+        "arena_entry": {
+          "x": 1310,
+          "y": 756,
+          "safeRadius": 28,
+          "facing": -1
+        },
+        "from.R02": {
+          "x": 235.5,
+          "y": 756,
           "safeRadius": 24,
           "facing": 1
         },
-        "from.R02": {
-          "x": 226,
-          "y": 576,
+        "from.R06": {
+          "x": 1324,
+          "y": 756,
+          "safeRadius": 24,
+          "facing": -1
+        },
+        "from.R09": {
+          "x": 1243,
+          "y": 756,
           "safeRadius": 24,
           "facing": 1
         }
@@ -2769,39 +3720,48 @@
         {
           "id": "lever.fire_stairs",
           "type": "lever",
-          "x": 470,
-          "y": 620,
+          "x": 528.75,
+          "y": 800,
           "flag": "shortcut.fire_stairs",
           "requires": {
             "flag": "boss.courtyard_keeper"
           },
           "title": "Опустить пожарную лестницу",
-          "text": "Лестница опущена. Кухня теперь совсем рядом."
+          "text": "Лестница опущена. Кухня теперь совсем рядом.",
+          "lockedReason": "Механизм удерживает смотритель двора."
         },
         {
           "id": "lever.tower_bridge",
           "type": "lever",
-          "x": 1040,
-          "y": 620,
+          "x": 1170.0,
+          "y": 800,
           "flag": "mechanism.tower_bridge",
           "requires": {
             "flag": "boss.courtyard_keeper"
           },
           "title": "Запустить верхний мост",
-          "text": "Высоко над городом развернулся мост. Путь к башне открыт."
+          "text": "Высоко над городом развернулся мост. Путь к башне открыт.",
+          "lockedReason": "Механизм удерживает смотритель двора."
         },
         {
           "id": "boss.courtyard_keeper",
           "type": "enemy",
-          "x": 870,
-          "y": 620,
+          "x": 978.75,
+          "y": 800,
           "enemyType": "keeper",
           "hp": 12,
           "patrol": [
-            420,
-            1110
+            472.5,
+            1248.75
           ],
           "defeatedFlag": "boss.courtyard_keeper"
+        },
+        {
+          "id": "lamp.keeper_retry",
+          "type": "retry",
+          "x": 1335,
+          "y": 800,
+          "title": "Зажечь лампу повторной попытки"
         }
       ],
       "triggers": [],
@@ -2811,7 +3771,7 @@
         "boss.courtyard_keeper"
       ],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -2823,10 +3783,47 @@
       "decoration": {
         "style": "arena",
         "seed": 185,
-        "groundY": 620
+        "groundY": 800,
+        "event": "hanging_light"
       },
       "note": "Смотритель охраняет механизм верхнего моста.",
-      "tutorialSigns": []
+      "tutorialSigns": [],
+      "purpose": "Лампа повторной попытки, читаемый бой и два освобождённых механизма.",
+      "arena": {
+        "x": 260,
+        "y": 650,
+        "w": 980,
+        "h": 150,
+        "retrySpawn": "arena_entry"
+      },
+      "mechanisms": [
+        {
+          "id": "mechanism.fire_ladder.top",
+          "kind": "ladder",
+          "flag": "shortcut.fire_stairs",
+          "x": 202,
+          "y": 800,
+          "w": 50,
+          "h": 150,
+          "duration": 0.9,
+          "controlledExits": [
+            "R07.to.R02"
+          ],
+          "vista": "Общественная кухня"
+        },
+        {
+          "id": "mechanism.tower_drive",
+          "kind": "bridge",
+          "flag": "mechanism.tower_bridge",
+          "x": 800,
+          "y": 600,
+          "w": 250,
+          "h": 18,
+          "duration": 1,
+          "controlledExits": [],
+          "vista": "Водонапорная башня"
+        }
+      ]
     },
     {
       "roomId": "R08",
@@ -2834,32 +3831,32 @@
       "revision": 1,
       "name": "Первый свет",
       "worldBounds": {
-        "x": 7680,
-        "y": -720,
-        "w": 1280,
-        "h": 720
+        "x": 0,
+        "y": 0,
+        "w": 1560,
+        "h": 900
       },
       "mapShape": {
-        "x": 6,
-        "y": -1,
-        "w": 1,
-        "h": 1
+        "x": 12,
+        "y": -2,
+        "w": 1.219,
+        "h": 1.25
       },
       "collisionLayers": [
         {
           "id": "R08.floor",
-          "x": 0,
-          "y": 620,
-          "w": 1280,
-          "h": 100,
+          "x": 0.0,
+          "y": 760,
+          "w": 1560.0,
+          "h": 140,
           "kind": "solid",
           "grippable": true
         },
         {
           "id": "R08.observation",
-          "x": 340,
-          "y": 530,
-          "w": 600,
+          "x": 414.38,
+          "y": 670,
+          "w": 731.25,
           "h": 90,
           "kind": "solid",
           "grippable": true
@@ -2869,20 +3866,20 @@
         {
           "x": 0,
           "y": 0,
-          "w": 1280,
-          "h": 720,
-          "profile": "room"
+          "w": 1560,
+          "h": 900,
+          "profile": "overlook"
         }
       ],
       "exits": [
         {
           "exitId": "R08.to.R06",
-          "x": 80,
-          "y": 620,
+          "x": 97.5,
+          "y": 760,
           "w": 42,
           "h": 76,
           "direction": "down",
-          "type": "door",
+          "type": "stairs",
           "targetRoomId": "R06",
           "spawnPointId": "from.R08",
           "condition": {
@@ -2896,18 +3893,33 @@
             ]
           },
           "lockedReason": "Мост удерживает смотритель двора",
-          "label": "Над городом"
+          "label": "Над городом",
+          "interactionZone": {
+            "x": 43.5,
+            "y": 684,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 43.5,
+            "y": 684,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "mechanism",
+          "hidden": false
         }
       ],
       "spawnPoints": {
         "start": {
           "x": 160,
-          "y": 576,
-          "safeRadius": 28
+          "y": 716,
+          "safeRadius": 28,
+          "facing": 1
         },
         "from.R06": {
-          "x": 126,
-          "y": 576,
+          "x": 130.5,
+          "y": 716,
           "safeRadius": 24,
           "facing": 1
         }
@@ -2916,32 +3928,32 @@
         {
           "id": "slice.overlook",
           "type": "ending",
-          "x": 640,
-          "y": 530,
+          "x": 780.0,
+          "y": 670,
           "title": "Посмотреть на город",
           "flag": "slice.overlook_seen"
         },
         {
           "id": "horizon.400",
           "type": "barrier",
-          "x": 400,
-          "y": 530,
+          "x": 487.5,
+          "y": 670,
           "title": "Висячие сады",
           "text": "Север: зелень пробивается сквозь туман. Туда ведут тросы над городом."
         },
         {
           "id": "horizon.760",
           "type": "barrier",
-          "x": 760,
-          "y": 530,
+          "x": 926.25,
+          "y": 670,
           "title": "Литейные",
           "text": "Восток: рыжий свет в трубах. Старые машины ещё работают."
         },
         {
           "id": "horizon.1060",
           "type": "barrier",
-          "x": 1060,
-          "y": 620,
+          "x": 1291.88,
+          "y": 760,
           "title": "Затопленный архив",
           "text": "Внизу: под водой мерцают окна. Эта история ещё впереди."
         }
@@ -2951,7 +3963,7 @@
         "slice.overlook_seen"
       ],
       "resetRules": {
-        "enemies": "on_entry_or_rest",
+        "enemies": "on_rest_or_death",
         "unique": "persistent",
         "projectiles": "on_exit"
       },
@@ -2963,9 +3975,358 @@
       "decoration": {
         "style": "overlook",
         "seed": 186,
-        "groundY": 620
+        "groundY": 760,
+        "event": "three_horizons"
       },
       "note": "Три горизонта. И столько путей, которыми ещё предстоит пройти.",
+      "tutorialSigns": [],
+      "purpose": "Обзор трёх разных горизонтов с возможностью вернуться."
+    },
+    {
+      "roomId": "P09",
+      "regionId": "pier",
+      "revision": 2,
+      "name": "Галерея цепей",
+      "worldBounds": {
+        "x": 0,
+        "y": 0,
+        "w": 1040,
+        "h": 580
+      },
+      "mapShape": {
+        "x": 4,
+        "y": 7,
+        "w": 0.8125,
+        "h": 0.806
+      },
+      "collisionLayers": [
+        {
+          "id": "P09.safe",
+          "x": 0,
+          "y": 520,
+          "w": 1040,
+          "h": 60,
+          "kind": "solid",
+          "grippable": true
+        },
+        {
+          "id": "P09.launch",
+          "x": 0,
+          "y": 360,
+          "w": 260,
+          "h": 20,
+          "kind": "oneWay",
+          "grippable": false
+        },
+        {
+          "id": "P09.landing",
+          "x": 620,
+          "y": 360,
+          "w": 420,
+          "h": 160,
+          "kind": "solid",
+          "grippable": true
+        },
+        {
+          "id": "P09.step1",
+          "x": 40,
+          "y": 450,
+          "w": 120,
+          "h": 14,
+          "kind": "oneWay",
+          "grippable": false
+        },
+        {
+          "id": "P09.step2",
+          "x": 100,
+          "y": 400,
+          "w": 110,
+          "h": 14,
+          "kind": "oneWay",
+          "grippable": false
+        }
+      ],
+      "cameraZones": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 1040,
+          "h": 580,
+          "profile": "street",
+          "composition": {
+            "minX": 210,
+            "maxX": 730
+          }
+        }
+      ],
+      "spawnPoints": {
+        "start": {
+          "x": 120,
+          "y": 316,
+          "safeRadius": 28
+        },
+        "from.P06": {
+          "x": 113,
+          "y": 316,
+          "safeRadius": 24,
+          "facing": 1
+        },
+        "from.P07": {
+          "x": 843,
+          "y": 316,
+          "safeRadius": 24,
+          "facing": -1
+        }
+      },
+      "entities": [
+        {
+          "id": "pickup.p06_dash",
+          "type": "pickup",
+          "x": 820,
+          "y": 328,
+          "flag": "pickup.p06_dash",
+          "title": "Осколок в цепной галерее",
+          "reward": "fragment",
+          "requires": {
+            "flag": "ability.dash"
+          },
+          "lockedReason": "Механизм удерживает смотритель двора."
+        }
+      ],
+      "exits": [
+        {
+          "exitId": "P09.to.P06",
+          "x": 80,
+          "y": 360,
+          "w": 42,
+          "h": 76,
+          "direction": "down",
+          "type": "stairs",
+          "targetRoomId": "P06",
+          "spawnPointId": "from.P09",
+          "condition": {
+            "flag": "ability.dash"
+          },
+          "lockedReason": "Нужен воздушный рывок.",
+          "label": "Верхние мостки",
+          "interactionZone": {
+            "x": 26,
+            "y": 284,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 26,
+            "y": 284,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": "ability",
+          "hidden": false
+        },
+        {
+          "exitId": "P09.to.P07",
+          "x": 900,
+          "y": 360,
+          "w": 42,
+          "h": 76,
+          "direction": "down",
+          "type": "stairs",
+          "targetRoomId": "P07",
+          "spawnPointId": "from.P09",
+          "condition": null,
+          "lockedReason": "",
+          "label": "Обратная сторона",
+          "interactionZone": {
+            "x": 846,
+            "y": 284,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 846,
+            "y": 284,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false,
+          "indirect": true,
+          "indirectReason": "Спуск по наклонной галерее к обратной стороне решётки"
+        }
+      ],
+      "triggers": [],
+      "persistentFlags": [
+        "pickup.p06_dash"
+      ],
+      "resetRules": {
+        "enemies": "on_rest_or_death",
+        "unique": "persistent",
+        "projectiles": "on_exit"
+      },
+      "audioProfile": "pier",
+      "streamingGroup": "pier",
+      "debugTags": [
+        "gallery"
+      ],
+      "decoration": {
+        "style": "gallery",
+        "seed": 185,
+        "groundY": 520,
+        "event": "chain_sway"
+      },
+      "purpose": "Необязательная петля: заметить цепную галерею, пересечь разрыв рывком, забрать осколок и спуститься к решётке другим выходом.",
+      "note": "Необязательная петля: заметить цепную галерею, пересечь разрыв рывком, забрать осколок и спуститься к решётке другим выходом.",
+      "mechanisms": [],
+      "tutorialSigns": [
+        {
+          "action": "dash",
+          "x": 20,
+          "y": 380,
+          "w": 230
+        }
+      ]
+    },
+    {
+      "roomId": "R09",
+      "regionId": "quarter",
+      "revision": 2,
+      "name": "Арка под башней",
+      "worldBounds": {
+        "x": 0,
+        "y": 0,
+        "w": 832,
+        "h": 600
+      },
+      "mapShape": {
+        "x": 11.3,
+        "y": 1.2,
+        "w": 0.65,
+        "h": 0.833
+      },
+      "collisionLayers": [
+        {
+          "id": "R09.floor",
+          "x": 0,
+          "y": 500,
+          "w": 832,
+          "h": 100,
+          "kind": "solid",
+          "grippable": true
+        }
+      ],
+      "cameraZones": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 832,
+          "h": 600,
+          "profile": "street"
+        }
+      ],
+      "spawnPoints": {
+        "start": {
+          "x": 120,
+          "y": 456,
+          "safeRadius": 28
+        },
+        "from.R06": {
+          "x": 693,
+          "y": 456,
+          "safeRadius": 24,
+          "facing": -1
+        },
+        "from.R07": {
+          "x": 113,
+          "y": 456,
+          "safeRadius": 24,
+          "facing": 1
+        }
+      },
+      "entities": [],
+      "exits": [
+        {
+          "exitId": "R09.to.R06",
+          "x": 750,
+          "y": 500,
+          "w": 42,
+          "h": 76,
+          "direction": "up",
+          "type": "stairs",
+          "targetRoomId": "R06",
+          "spawnPointId": "from.R09",
+          "condition": null,
+          "lockedReason": "",
+          "label": "Над городом",
+          "interactionZone": {
+            "x": 696,
+            "y": 424,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 696,
+            "y": 424,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false,
+          "indirect": true,
+          "indirectReason": "Лестница под крышами вдоль водовода"
+        },
+        {
+          "exitId": "R09.to.R07",
+          "x": 80,
+          "y": 500,
+          "w": 42,
+          "h": 76,
+          "direction": "up",
+          "type": "stairs",
+          "targetRoomId": "R07",
+          "spawnPointId": "from.R09",
+          "condition": null,
+          "lockedReason": "",
+          "label": "Двор смотрителя",
+          "interactionZone": {
+            "x": 26,
+            "y": 424,
+            "w": 108,
+            "h": 84
+          },
+          "triggerZone": {
+            "x": 26,
+            "y": 424,
+            "w": 108,
+            "h": 84
+          },
+          "lockKind": null,
+          "hidden": false,
+          "indirect": true,
+          "indirectReason": "Подъём из подземной арки во двор"
+        }
+      ],
+      "triggers": [],
+      "persistentFlags": [],
+      "resetRules": {
+        "enemies": "on_rest_or_death",
+        "unique": "persistent",
+        "projectiles": "on_exit"
+      },
+      "audioProfile": "quarter",
+      "streamingGroup": "quarter",
+      "debugTags": [
+        "underpass"
+      ],
+      "decoration": {
+        "style": "underpass",
+        "seed": 187,
+        "groundY": 500,
+        "event": "water_pipe"
+      },
+      "purpose": "Спокойный нижний обход под крышами: проследить водовод башни и выйти к двору по другой лестнице.",
+      "note": "Спокойный нижний обход под крышами: проследить водовод башни и выйти к двору по другой лестнице.",
+      "mechanisms": [],
       "tutorialSigns": []
     }
   ],
@@ -3085,6 +4446,16 @@
     "streamingGroup": "test",
     "debugTags": [
       "measurement"
+    ]
+  },
+  "geography": {
+    "kind": "schematic",
+    "units": "room units",
+    "positionField": "mapShape",
+    "physicsField": "worldBounds",
+    "localOrigin": [
+      0,
+      0
     ]
   }
 }

@@ -15,6 +15,19 @@ export const newProgress = () => ({
   visited: ["P01"],
   rests: [],
   hints: [],
+  seenExits: [],
+  markers: [],
+  stats: {
+    roomTime: {},
+    falls: 0,
+    deaths: [],
+    blockedExits: {},
+    shortcuts: {},
+    bossAttempts: 0,
+    lateSecretReturns: 0,
+    events: [],
+  },
+  retryCheckpoint: null,
   lastRest: { roomId: "P01", spawnPointId: "start" },
   settings: defaultSettings(),
   playTime: 0,
@@ -57,6 +70,36 @@ export function decodeSave(text) {
       return null;
     p.flags = [...new Set(p.flags)];
     p.visited = [...new Set(p.visited)];
+    p.seenExits = Array.isArray(p.seenExits)
+      ? p.seenExits.filter((x) => typeof x === "string")
+      : [];
+    p.markers = Array.isArray(p.markers)
+      ? p.markers.filter(
+          (m) =>
+            typeof m?.roomId === "string" &&
+            ["return", "secret", "danger", "unknown"].includes(m.type),
+        )
+      : [];
+    const defaults = newProgress().stats;
+    p.stats = {
+      ...defaults,
+      ...(p.stats && typeof p.stats === "object" ? p.stats : {}),
+    };
+    for (const key of ["roomTime", "blockedExits", "shortcuts"])
+      if (
+        !p.stats[key] ||
+        typeof p.stats[key] !== "object" ||
+        Array.isArray(p.stats[key])
+      )
+        p.stats[key] = {};
+    for (const key of ["deaths", "events"])
+      if (!Array.isArray(p.stats[key])) p.stats[key] = [];
+    if (
+      !p.retryCheckpoint ||
+      typeof p.retryCheckpoint.roomId !== "string" ||
+      typeof p.retryCheckpoint.spawnPointId !== "string"
+    )
+      p.retryCheckpoint = null;
     p.settings = { ...defaultSettings(), ...p.settings };
     p.playTime = Number.isFinite(p.playTime) ? Math.max(0, p.playTime) : 0;
     p.deaths = Number.isFinite(p.deaths) ? Math.max(0, p.deaths) : 0;

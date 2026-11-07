@@ -1,291 +1,365 @@
 import { conditionMet, clamp } from "./core.js";
 import { questNavigation } from "./navigation.js";
-
+const pins = { return: "↶", secret: "◇", danger: "!", unknown: "?" };
+export function mapLayout(world, width = 1120, height = 540) {
+  const shapes = world.rooms.map((r) => r.mapShape),
+    minX = Math.min(...shapes.map((s) => s.x)),
+    minY = Math.min(...shapes.map((s) => s.y));
+  const maxX = Math.max(...shapes.map((s) => s.x + s.w)),
+    maxY = Math.max(...shapes.map((s) => s.y + s.h));
+  const sx = (width - 100) / (maxX - minX),
+    sy = (height - 85) / (maxY - minY);
+  const rect = (r) => ({
+    x: 45 + (r.mapShape.x - minX) * sx,
+    y: 40 + (r.mapShape.y - minY) * sy,
+    w: r.mapShape.w * sx,
+    h: r.mapShape.h * sy,
+  });
+  return { width, height, rect };
+}
+const center = (r) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
+function port(room, exit, layout) {
+  const r = layout.rect(room),
+    t = Math.max(0.12, Math.min(0.88, exit.x / room.worldBounds.w));
+  return exit.direction === "left"
+    ? { x: r.x, y: r.y + r.h / 2 }
+    : exit.direction === "right"
+      ? { x: r.x + r.w, y: r.y + r.h / 2 }
+      : exit.direction === "up"
+        ? { x: r.x + r.w * t, y: r.y }
+        : { x: r.x + r.w * t, y: r.y + r.h };
+}
 export class WorldMap {
   constructor(canvas, game) {
     this.canvas = canvas;
     this.game = game;
     this.zoom = 1;
     this.pan = { x: 0, y: 0 };
+    this.pointers = new Map();
     this.drag = null;
+    this.pinType = "";
     const logical = (e) => {
       const r = canvas.getBoundingClientRect(),
-        scale = Math.min(r.width / 1120, r.height / 540);
+        s = Math.min(r.width / 1120, r.height / 540);
       return {
-        x: (e.clientX - r.left - (r.width - 1120 * scale) / 2) / scale,
-        y: (e.clientY - r.top - (r.height - 540 * scale) / 2) / scale,
+        x: (e.clientX - r.left - (r.width - 1120 * s) / 2) / s,
+        y: (e.clientY - r.top - (r.height - 540 * s) / 2) / s,
       };
     };
     canvas.addEventListener(
       "wheel",
       (e) => {
         e.preventDefault();
-        this.scale(e.deltaY > 0 ? -0.12 : 0.12);
+        this.scale(e.deltaY > 0 ? -0.2 : 0.2);
       },
       { passive: false },
     );
     canvas.addEventListener("pointerdown", (e) => {
       canvas.setPointerCapture(e.pointerId);
-      this.drag = logical(e);
+      this.pointers.set(e.pointerId, logical(e));
+      this.drag = { start: logical(e), point: logical(e), moved: false };
+      if (this.pointers.size === 2) this.beginPinch();
     });
     canvas.addEventListener("pointermove", (e) => {
-      if (!this.drag) return;
-      const p = logical(e);
-      this.pan.x += p.x - this.drag.x;
-      this.pan.y += p.y - this.drag.y;
-      this.drag = p;
+      if (!this.pointers.has(e.pointerId)) return;
+      const p = logical(e),
+        old = this.pointers.get(e.pointerId);
+      this.pointers.set(e.pointerId, p);
+      if (this.pointers.size === 2) {
+        const [a, b] = [...this.pointers.values()];
+        this.zoom = clamp(
+          (this.pinch.zoom * Math.hypot(a.x - b.x, a.y - b.y)) /
+            this.pinch.distance,
+          0.65,
+          4,
+        );
+        this.drag.moved = true;
+      } else {
+        this.pan.x += p.x - old.x;
+        this.pan.y += p.y - old.y;
+        if (Math.hypot(p.x - this.drag.start.x, p.y - this.drag.start.y) > 5)
+          this.drag.moved = true;
+      }
       this.draw();
     });
-    canvas.addEventListener("pointerup", () => (this.drag = null));
-    canvas.addEventListener("pointercancel", () => (this.drag = null));
+    const end = (e) => {
+      if (
+        this.drag &&
+        !this.drag.moved &&
+        this.pointers.size === 1 &&
+        e.type === "pointerup" &&
+        this.pinType
+      )
+        this.placePin(logical(e));
+      this.pointers.delete(e.pointerId);
+      this.drag = null;
+      if (this.pointers.size === 1) {
+        const p = [...this.pointers.values()][0];
+        this.drag = { start: p, point: p, moved: true };
+      }
+    };
+    for (const t of ["pointerup", "pointercancel", "lostpointercapture"])
+      canvas.addEventListener(t, end);
+  }
+  beginPinch() {
+    const [a, b] = [...this.pointers.values()];
+    this.pinch = {
+      zoom: this.zoom,
+      distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)),
+    };
   }
   scale(amount) {
-    this.zoom = clamp(this.zoom + amount, 0.65, 2);
+    this.zoom = clamp(this.zoom + amount, 0.65, 4);
     this.draw();
   }
   center() {
-    this.zoom = 1;
-    this.pan = { x: 0, y: 0 };
+    const r = center(mapLayout(this.game.world).rect(this.game.room));
+    this.zoom = Math.max(1.5, this.zoom);
+    this.pan = { x: (560 - r.x) * this.zoom, y: (270 - r.y) * this.zoom };
+    this.draw();
+  }
+  open() {
+    const nav = questNavigation(
+        this.game.world,
+        this.game.room.roomId,
+        this.game.flags,
+      ),
+      layout = mapLayout(this.game.world),
+      a = layout.rect(this.game.room),
+      b = nav.target ? layout.rect(nav.target) : a;
+    const minX = Math.min(a.x, b.x) - 60,
+      maxX = Math.max(a.x + a.w, b.x + b.w) + 60,
+      minY = Math.min(a.y, b.y) - 50,
+      maxY = Math.max(a.y + a.h, b.y + b.h) + 50;
+    this.zoom = clamp(
+      Math.min(1000 / (maxX - minX), 440 / (maxY - minY)),
+      0.8,
+      2.2,
+    );
+    this.pan = {
+      x: (560 - (minX + maxX) / 2) * this.zoom,
+      y: (270 - (minY + maxY) / 2) * this.zoom,
+    };
+    this.draw();
+  }
+  placePin(p) {
+    const x = (p.x - 560 - this.pan.x) / this.zoom + 560,
+      y = (p.y - 270 - this.pan.y) / this.zoom + 270,
+      layout = mapLayout(this.game.world);
+    const room = this.game.world.rooms.find((r) => {
+      const q = layout.rect(r);
+      return x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h;
+    });
+    if (!room || !this.game.progress.visited.includes(room.roomId)) return;
+    const list = this.game.progress.markers;
+    const old = list.find((m) => m.roomId === room.roomId);
+    this.game.progress.markers = list.filter((m) => m.roomId !== room.roomId);
+    if (this.pinType !== "erase" && old?.type !== this.pinType)
+      this.game.progress.markers.push({
+        roomId: room.roomId,
+        type: this.pinType,
+      });
+    this.game.save();
     this.draw();
   }
   draw() {
-    const c = this.canvas.getContext("2d");
-    const box = this.canvas.getBoundingClientRect();
-    const pixelScale = Math.max(
-      0.1,
-      Math.min(box.width / 1120, box.height / 540),
-    );
+    const c = this.canvas.getContext("2d"),
+      box = this.canvas.getBoundingClientRect(),
+      scale = Math.max(0.1, Math.min(box.width / 1120, box.height / 540));
     c.clearRect(0, 0, 1120, 540);
     c.save();
     c.translate(560 + this.pan.x, 270 + this.pan.y);
     c.scale(this.zoom, this.zoom);
     c.translate(-560, -270);
-    drawMap(c, this.game, {
-      sx: 120,
-      sy: 70,
-      ox: 80,
-      oy: 110,
-      w: 96,
-      h: 44,
-      labels: true,
-      markerSize: 10 / (pixelScale * this.zoom),
-    });
+    drawMap(
+      c,
+      this.game,
+      mapLayout(this.game.world),
+      true,
+      10 / (scale * this.zoom),
+    );
     c.restore();
-    const navigation = questNavigation(
+    const nav = questNavigation(
       this.game.world,
       this.game.room.roomId,
       this.game.flags,
     );
-    this.canvas.dataset.questRoom = navigation.target?.roomId || "";
-    this.canvas.dataset.nextRoom = navigation.next?.roomId || "";
-    const title = document.getElementById("map-goal-title");
-    const route = document.getElementById("map-goal-route");
+    this.canvas.dataset.questRoom = nav.target?.roomId || "";
+    this.canvas.dataset.nextRoom = nav.next?.roomId || "";
+    const title = document.getElementById("map-goal-title"),
+      route = document.getElementById("map-goal-route");
     if (title)
-      title.textContent = navigation.target
-        ? `${navigation.target.name} · ${navigation.target.roomId}`
+      title.textContent = nav.target
+        ? nav.target.name +
+          (this.game.debug.enabled ? " · " + nav.target.roomId : "")
         : "Все цели выполнены";
     if (route)
-      route.textContent = !navigation.target
+      route.textContent = !nav.target
         ? "Можно продолжить исследование."
-        : navigation.next
-          ? `Следующий переход: ${navigation.next.name} → к цели`
-          : navigation.route.length === 1
-            ? "Вы в нужной комнате. Найдите отмеченную способность или механизм."
+        : nav.next
+          ? "Следующий переход: " + nav.next.name
+          : nav.route.length === 1
+            ? "Вы в нужной комнате. Найдите отмеченный объект."
             : "Проход к цели пока закрыт.";
     this.canvas.setAttribute(
       "aria-label",
-      `Исследовано ${this.game.progress.visited.length} из 20 комнат. Сейчас: ${this.game.room.name}. ${navigation.target ? "Цель: " + navigation.target.name + ". " + (navigation.next ? "Следующий переход: " + navigation.next.name : "") : ""}`,
+      `Сейчас: ${this.game.room.name}. Цель: ${nav.target?.name || "исследование"}. Отметки: ${this.game.progress.markers.length}.`,
     );
   }
   mini(canvas) {
     const c = canvas.getContext("2d");
     c.clearRect(0, 0, 148, 72);
-    drawMap(c, this.game, {
-      sx: 17,
-      sy: 9,
-      ox: 8,
-      oy: 17,
-      w: 12,
-      h: 5,
-      labels: false,
-    });
+    c.save();
+    c.scale(148 / 1120, 72 / 540);
+    drawMap(c, this.game, mapLayout(this.game.world), false, 15);
+    c.restore();
   }
 }
-function drawMap(c, game, layout) {
-  const { sx, sy, ox, oy, w, h, labels } = layout,
-    visited = new Set(game.progress.visited),
-    seen = new Set(visited);
-  const navigation = questNavigation(game.world, game.room.roomId, game.flags);
-  if (navigation.target) seen.add(navigation.target.roomId);
-  const point = (r) => ({
-    x: ox + r.mapShape.x * sx,
-    y: oy + r.mapShape.y * sy,
-  });
+function drawMap(c, game, layout, labels, radius) {
+  const visited = new Set(game.progress.visited),
+    seen = new Set(visited),
+    seenExits = new Set(game.progress.seenExits || []),
+    nav = questNavigation(game.world, game.room.roomId, game.flags),
+    rooms = game.rooms;
+  if (nav.target) seen.add(nav.target.roomId);
   for (const room of game.world.rooms)
-    if (visited.has(room.roomId))
-      for (const e of room.exits) seen.add(e.targetRoomId);
-  for (const room of game.world.rooms) {
-    if (!visited.has(room.roomId)) continue;
-    const a = point(room);
+    for (const e of room.exits)
+      if (seenExits.has(e.exitId)) seen.add(e.targetRoomId);
+  for (const room of game.world.rooms)
     for (const e of room.exits) {
-      if (
-        !e.oneWay &&
-        e.targetRoomId < room.roomId &&
-        visited.has(e.targetRoomId)
-      )
-        continue;
-      const target = game.rooms.get(e.targetRoomId);
+      if (!seenExits.has(e.exitId)) continue;
+      const target = rooms.get(e.targetRoomId);
       if (!target) continue;
-      const b = point(target),
+      const a = port(room, e, layout),
+        back = target.exits.find((x) => x.targetRoomId === room.roomId),
+        b = back ? port(target, back, layout) : center(layout.rect(target)),
         open = conditionMet(e.condition, game.flags);
       c.beginPath();
-      c.moveTo(a.x + w / 2, a.y + h / 2);
-      c.lineTo(b.x + w / 2, b.y + h / 2);
-      c.strokeStyle = open ? "#8eaa9180" : "#8b765d70";
-      c.lineWidth = labels ? 2 : 1;
-      c.setLineDash(open ? [] : [labels ? 5 : 2, labels ? 5 : 2]);
+      c.moveTo(a.x, a.y);
+      c.lineTo(b.x, b.y);
+      c.strokeStyle = open ? "#8eaa9170" : "#9d7f6d";
+      c.lineWidth = 2;
+      c.setLineDash(open ? [] : [5, 5]);
       c.stroke();
       c.setLineDash([]);
-      if (labels && e.oneWay) {
-        c.save();
-        c.translate((a.x + b.x + w) / 2, (a.y + b.y + h) / 2);
-        c.rotate(Math.atan2(b.y - a.y, b.x - a.x));
-        c.beginPath();
-        c.moveTo(5, 0);
-        c.lineTo(-4, -4);
-        c.lineTo(-4, 4);
-        c.closePath();
-        c.fillStyle = "#c7bc91";
-        c.fill();
-        c.restore();
-      }
       if (labels && !open) {
-        c.fillStyle = "#b99d70";
-        c.font = "12px Georgia";
+        const symbol =
+          e.lockKind === "ability"
+            ? JSON.stringify(e.condition).includes("wall_grip")
+              ? "⋮"
+              : "➝"
+            : e.lockKind === "other_side"
+              ? "↶"
+              : "⚙";
+        c.fillStyle = "#d8b17f";
+        c.font = "14px Arial";
         c.textAlign = "center";
-        c.fillText("×", (a.x + b.x + w) / 2, (a.y + b.y + h) / 2 + 4);
+        c.fillText(symbol, (a.x + b.x) / 2, (a.y + b.y) / 2 + 5);
       }
-      if (labels && e.type === "lift") {
-        c.fillStyle = "#819b90";
-        c.font = "8px Arial";
-        c.fillText("ЛИФТ", a.x + w / 2 + 26, (a.y + b.y + h) / 2);
+      if (e.oneWay && labels) {
+        c.fillStyle = "#c7bc91";
+        c.font = "14px Arial";
+        c.fillText("›", (a.x + b.x) / 2, (a.y + b.y) / 2);
       }
     }
-  }
-  if (navigation.next) {
-    const a = point(game.room),
-      b = point(navigation.next);
-    c.beginPath();
-    c.moveTo(a.x + w / 2, a.y + h / 2);
-    c.lineTo(b.x + w / 2, b.y + h / 2);
-    c.strokeStyle = "#e2c387";
-    c.lineWidth = labels ? 3 : 1;
-    c.stroke();
-    if (labels) {
-      c.save();
-      c.translate((a.x + b.x + w) / 2, (a.y + b.y + h) / 2);
-      c.rotate(Math.atan2(b.y - a.y, b.x - a.x));
+  if (nav.next) {
+    const exit = game.room.exits.find(
+      (e) => e.targetRoomId === nav.next.roomId,
+    );
+    if (exit && seenExits.has(exit.exitId)) {
+      const a = center(layout.rect(game.room)),
+        b = center(layout.rect(nav.next));
       c.beginPath();
-      c.moveTo(7, 0);
-      c.lineTo(-5, -5);
-      c.lineTo(-5, 5);
-      c.closePath();
-      c.fillStyle = "#f2d79a";
-      c.fill();
-      c.restore();
+      c.moveTo(a.x, a.y);
+      c.lineTo(b.x, b.y);
+      c.strokeStyle = "#e2c387";
+      c.lineWidth = 3;
+      c.stroke();
     }
   }
   for (const room of game.world.rooms) {
     if (!seen.has(room.roomId)) continue;
-    const p = point(room),
-      current = room.roomId === game.room.roomId,
-      isGoal = room.roomId === navigation.target?.roomId,
-      known = visited.has(room.roomId);
-    c.fillStyle = isGoal
-      ? "#56472d"
-      : known
-        ? current
-          ? "#bba37222"
-          : "#20373d"
-        : "#10222b";
-    c.fillRect(p.x, p.y, w, h);
-    c.strokeStyle = isGoal
+    const q = layout.rect(room),
+      known = visited.has(room.roomId),
+      goal = room === nav.target,
+      current = room === game.room;
+    c.fillStyle = goal ? "#56472d" : known ? "#20373d" : "#10222b";
+    c.fillRect(q.x, q.y, q.w, q.h);
+    c.strokeStyle = goal
       ? "#f1cf83"
       : current
         ? "#dcc28c"
         : known
-          ? game.world.regions[room.regionId].color + "aa"
-          : "#647c6b50";
-    c.lineWidth = current ? 1.5 : 1;
-    c.setLineDash(known || isGoal ? [] : [4, 4]);
-    c.strokeRect(p.x, p.y, w, h);
+          ? game.world.regions[room.regionId].color
+          : "#647c6b70";
+    c.lineWidth = current || goal ? 2 : 1;
+    c.setLineDash(known || goal ? [] : [4, 4]);
+    c.strokeRect(q.x, q.y, q.w, q.h);
     c.setLineDash([]);
     if (labels) {
       c.textAlign = "left";
-      c.fillStyle = isGoal ? "#ffe4ac" : known ? "#c1c8b4" : "#6c8277";
-      c.font = "9px Arial";
-      c.fillText(known || isGoal ? room.roomId : "◇", p.x + 9, p.y + 14);
+      c.fillStyle = goal ? "#ffe4ac" : "#c1c8b4";
       c.font = "10px Georgia";
       c.fillText(
-        known || isGoal ? room.name : "Неизведанное",
-        p.x + 9,
-        p.y + 31,
-        w - 15,
+        known || goal ? room.name : "Неизведанное",
+        q.x + 5,
+        q.y + 15,
+        q.w - 9,
       );
-      if (current) {
-        c.fillStyle = "#dfc68f";
-        c.textAlign = "right";
-        c.font = "11px Georgia";
-        c.fillText("◆", p.x + w - 8, p.y + 14);
+      if (game.debug.enabled) {
+        c.font = "8px Arial";
+        c.fillText(room.roomId, q.x + 5, q.y + 27);
       }
-      if (known && room.entities.some((e) => e.type === "rest")) {
-        c.fillStyle = "#d2ba83";
+      if (current) {
         c.textAlign = "right";
-        c.font = "10px Georgia";
-        c.fillText("◉", p.x + w - 8, p.y + 31);
+        c.font = "12px Georgia";
+        c.fillText("◆", q.x + q.w - 4, q.y + 15);
+      }
+      const rest = room.entities.find((e) => e.type === "rest");
+      if (known && rest) {
+        c.textAlign = "right";
+        c.fillStyle = game.progress.rests.includes(rest.id)
+          ? "#efd195"
+          : "#769c99";
+        c.font = "12px Georgia";
+        c.fillText(
+          game.progress.rests.includes(rest.id) ? "◉" : "○",
+          q.x + q.w - 4,
+          q.y + q.h - 5,
+        );
+      }
+      const pin = game.progress.markers.find((m) => m.roomId === room.roomId);
+      if (pin) {
+        c.fillStyle = "#edc6aa";
+        c.font = "14px Arial";
+        c.textAlign = "left";
+        c.fillText(pins[pin.type], q.x + 5, q.y + q.h - 4);
+      }
+      if (known && room.entities.some((e) => e.type === "barrier")) {
+        c.fillStyle = "#8caaa6";
+        c.font = "10px Arial";
+        c.textAlign = "center";
+        c.fillText("◇", q.x + q.w / 2, q.y + q.h - 4);
       }
     } else if (current) {
-      c.fillStyle = "#e0c38b";
-      c.fillRect(p.x + w / 2 - 1, p.y + h / 2 - 1, 3, 3);
+      c.fillStyle = "#f6dca1";
+      c.fillRect(q.x + q.w / 2 - 5, q.y + q.h / 2 - 5, 10, 10);
     }
   }
-  if (navigation.target) {
-    const p = point(navigation.target),
-      r = layout.markerSize || (labels ? 10 : 3),
-      x = p.x + w / 2,
-      y = p.y - (labels ? 8 : 2);
+  if (nav.target) {
+    const q = layout.rect(nav.target),
+      x = q.x + q.w / 2,
+      y = q.y - 8;
     c.beginPath();
-    c.arc(x, y, r, 0, Math.PI * 2);
-    c.fillStyle = "#17252bf0";
+    c.arc(x, y, radius, 0, Math.PI * 2);
+    c.fillStyle = "#17252b";
     c.fill();
     c.strokeStyle = "#ffe1a0";
-    c.lineWidth = labels ? r * 0.2 : 1;
+    c.lineWidth = Math.max(1, radius * 0.2);
     c.stroke();
     c.beginPath();
-    c.arc(x, y, r * 0.35, 0, Math.PI * 2);
+    c.arc(x, y, radius * 0.35, 0, Math.PI * 2);
     c.fillStyle = "#ffe1a0";
     c.fill();
-    if (labels) {
-      c.beginPath();
-      c.moveTo(x - r * 1.4, y);
-      c.lineTo(x - r * 0.7, y);
-      c.moveTo(x + r * 0.7, y);
-      c.lineTo(x + r * 1.4, y);
-      c.moveTo(x, y - r * 1.4);
-      c.lineTo(x, y - r * 0.7);
-      c.moveTo(x, y + r * 0.7);
-      c.lineTo(x, y + r * 1.4);
-      c.stroke();
-    }
-  }
-  if (labels) {
-    c.textAlign = "left";
-    c.font = "9px Arial";
-    c.fillStyle = "#789b95";
-    c.fillText("Н И Ж Н И Й   П Р И Ч А Л", 80, 535);
-    c.fillStyle = "#c3ad79";
-    c.fillText("В О К З А Л", 275, 220);
-    c.fillStyle = "#b6816d";
-    c.fillText("Р А Б О Ч И Е   К В А Р Т А Л Ы", 710, 30);
   }
 }
