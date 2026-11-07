@@ -104,20 +104,76 @@ export function validateWorld(world, physics) {
   return errors;
 }
 
-export function objectiveFor(flags) {
+export function currentObjective(flags) {
   if (!flags.includes("ability.dash"))
-    return "Найдите свет на крановой площадке";
+    return {
+      id: "dash",
+      roomId: "P04",
+      entityId: "gift.dash",
+      text: "Найдите свет на крановой площадке",
+    };
   if (!flags.includes("shortcut.pier_gate"))
-    return "Откройте решётку с верхних мостков";
+    return {
+      id: "pier_gate",
+      roomId: "P07",
+      entityId: "lever.pier_gate",
+      text: "Откройте решётку с верхних мостков",
+    };
   if (!flags.includes("mechanism.pier_lift"))
-    return "Запустите старый подъёмник";
+    return {
+      id: "lift",
+      roomId: "P08",
+      entityId: "lever.pier_lift",
+      text: "Запустите старый подъёмник",
+    };
   if (!flags.includes("ability.wall_grip"))
-    return "Найдите дом без лестниц в городе";
+    return {
+      id: "wall_grip",
+      roomId: "R04",
+      entityId: "gift.wall_grip",
+      text: "Найдите дом без лестниц в городе",
+    };
   if (!flags.includes("boss.courtyard_keeper"))
-    return "Поднимитесь на крыши к смотрителю";
+    return {
+      id: "keeper",
+      roomId: "R07",
+      entityId: "boss.courtyard_keeper",
+      text: "Поднимитесь на крыши к смотрителю",
+    };
   if (!flags.includes("mechanism.tower_bridge"))
-    return "Запустите мост во дворе смотрителя";
+    return {
+      id: "bridge",
+      roomId: "R07",
+      entityId: "lever.tower_bridge",
+      text: "Запустите мост во дворе смотрителя",
+    };
   if (!flags.includes("slice.overlook_seen"))
-    return "Поднимитесь к водонапорной башне";
-  return "Вернитесь по знакомым путям за секретами";
+    return {
+      id: "overlook",
+      roomId: "R08",
+      entityId: "slice.overlook",
+      text: "Поднимитесь к водонапорной башне",
+    };
+  for (const [flag, roomId, text] of [
+    ["pickup.p03_upper", "P03", "Найдите сердце в верхней нише склада"],
+    ["pickup.p06_dash", "P06", "Найдите осколок на верхних мостках"],
+    ["pickup.p03_lower", "P03", "Найдите осколок на соляном складе"],
+    ["pickup.clockmaker", "V03", "Загляните в мастерскую часовщика"],
+  ])
+    if (!flags.includes(flag))
+      return {
+        id: flag,
+        roomId,
+        entityId: flag === "pickup.clockmaker" ? "npc.clockmaker" : flag,
+        text,
+      };
+  return {
+    id: "explore",
+    roomId: null,
+    entityId: null,
+    text: "Все цели среза выполнены. Исследуйте город.",
+  };
+}
+export function objectiveFor(flags) {
+  return currentObjective(flags).text;
 }

@@ -227,9 +227,13 @@ try:
         touch.goto(URL)
         touch.locator('#play').click()
         assert touch.locator('#touch-controls').is_visible()
-        touch.locator('[data-action=right]').dispatch_event('pointerdown',{'pointerId':2,'pointerType':'touch','isPrimary':True})
+        box=touch.locator('#swipe-zone').bounding_box()
+        finger={'x':box['x']+box['width']/2,'y':box['y']+box['height']/2,'id':2}
+        session=mobile.new_cdp_session(touch)
+        session.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[finger]})
+        session.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{**finger,'x':finger['x']+40}]})
         touch.wait_for_timeout(180)
-        touch.locator('[data-action=right]').dispatch_event('pointerup',{'pointerId':2,'pointerType':'touch'})
+        session.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
         touch.screenshot(path=str(ARTIFACTS / 'mobile.png'))
         assert not errors, errors
         result={'rooms':20,'journey':'complete and backtracked','physicalDashTutorial':'passed','boss':'12 keyboard hits','restart':'checkpoint, flags and settings restored','death':'progress retained','mobile':'touch UI rendered','performanceCloudChromium':performance_result,'pageErrors':errors,'screenshots':8}

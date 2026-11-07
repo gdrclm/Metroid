@@ -1,4 +1,5 @@
 import { conditionMet, clamp } from "./core.js";
+import { questNavigation } from "./navigation.js";
 
 export class WorldMap {
   constructor(canvas, game) {
@@ -49,6 +50,11 @@ export class WorldMap {
   }
   draw() {
     const c = this.canvas.getContext("2d");
+    const box = this.canvas.getBoundingClientRect();
+    const pixelScale = Math.max(
+      0.1,
+      Math.min(box.width / 1120, box.height / 540),
+    );
     c.clearRect(0, 0, 1120, 540);
     c.save();
     c.translate(560 + this.pan.x, 270 + this.pan.y);
@@ -62,11 +68,33 @@ export class WorldMap {
       w: 96,
       h: 44,
       labels: true,
+      markerSize: 10 / (pixelScale * this.zoom),
     });
     c.restore();
+    const navigation = questNavigation(
+      this.game.world,
+      this.game.room.roomId,
+      this.game.flags,
+    );
+    this.canvas.dataset.questRoom = navigation.target?.roomId || "";
+    this.canvas.dataset.nextRoom = navigation.next?.roomId || "";
+    const title = document.getElementById("map-goal-title");
+    const route = document.getElementById("map-goal-route");
+    if (title)
+      title.textContent = navigation.target
+        ? `${navigation.target.name} · ${navigation.target.roomId}`
+        : "Все цели выполнены";
+    if (route)
+      route.textContent = !navigation.target
+        ? "Можно продолжить исследование."
+        : navigation.next
+          ? `Следующий переход: ${navigation.next.name} → к цели`
+          : navigation.route.length === 1
+            ? "Вы в нужной комнате. Найдите отмеченную способность или механизм."
+            : "Проход к цели пока закрыт.";
     this.canvas.setAttribute(
       "aria-label",
-      `Исследовано ${this.game.progress.visited.length} из 20 комнат. Сейчас: ${this.game.room.name}.`,
+      `Исследовано ${this.game.progress.visited.length} из 20 комнат. Сейчас: ${this.game.room.name}. ${navigation.target ? "Цель: " + navigation.target.name + ". " + (navigation.next ? "Следующий переход: " + navigation.next.name : "") : ""}`,
     );
   }
   mini(canvas) {
@@ -87,6 +115,8 @@ function drawMap(c, game, layout) {
   const { sx, sy, ox, oy, w, h, labels } = layout,
     visited = new Set(game.progress.visited),
     seen = new Set(visited);
+  const navigation = questNavigation(game.world, game.room.roomId, game.flags);
+  if (navigation.target) seen.add(navigation.target.roomId);
   const point = (r) => ({
     x: ox + r.mapShape.x * sx,
     y: oy + r.mapShape.y * sy,
@@ -98,7 +128,11 @@ function drawMap(c, game, layout) {
     if (!visited.has(room.roomId)) continue;
     const a = point(room);
     for (const e of room.exits) {
-      if (!e.oneWay && e.targetRoomId < room.roomId && visited.has(e.targetRoomId))
+      if (
+        !e.oneWay &&
+        e.targetRoomId < room.roomId &&
+        visited.has(e.targetRoomId)
+      )
         continue;
       const target = game.rooms.get(e.targetRoomId);
       if (!target) continue;
@@ -138,29 +172,66 @@ function drawMap(c, game, layout) {
       }
     }
   }
+  if (navigation.next) {
+    const a = point(game.room),
+      b = point(navigation.next);
+    c.beginPath();
+    c.moveTo(a.x + w / 2, a.y + h / 2);
+    c.lineTo(b.x + w / 2, b.y + h / 2);
+    c.strokeStyle = "#e2c387";
+    c.lineWidth = labels ? 3 : 1;
+    c.stroke();
+    if (labels) {
+      c.save();
+      c.translate((a.x + b.x + w) / 2, (a.y + b.y + h) / 2);
+      c.rotate(Math.atan2(b.y - a.y, b.x - a.x));
+      c.beginPath();
+      c.moveTo(7, 0);
+      c.lineTo(-5, -5);
+      c.lineTo(-5, 5);
+      c.closePath();
+      c.fillStyle = "#f2d79a";
+      c.fill();
+      c.restore();
+    }
+  }
   for (const room of game.world.rooms) {
     if (!seen.has(room.roomId)) continue;
     const p = point(room),
       current = room.roomId === game.room.roomId,
+      isGoal = room.roomId === navigation.target?.roomId,
       known = visited.has(room.roomId);
-    c.fillStyle = known ? (current ? "#bba37222" : "#20373d") : "#10222b";
-    c.fillRect(p.x, p.y, w, h);
-    c.strokeStyle = current
-      ? "#dcc28c"
+    c.fillStyle = isGoal
+      ? "#56472d"
       : known
-        ? game.world.regions[room.regionId].color + "aa"
-        : "#647c6b50";
+        ? current
+          ? "#bba37222"
+          : "#20373d"
+        : "#10222b";
+    c.fillRect(p.x, p.y, w, h);
+    c.strokeStyle = isGoal
+      ? "#f1cf83"
+      : current
+        ? "#dcc28c"
+        : known
+          ? game.world.regions[room.regionId].color + "aa"
+          : "#647c6b50";
     c.lineWidth = current ? 1.5 : 1;
-    c.setLineDash(known ? [] : [4, 4]);
+    c.setLineDash(known || isGoal ? [] : [4, 4]);
     c.strokeRect(p.x, p.y, w, h);
     c.setLineDash([]);
     if (labels) {
       c.textAlign = "left";
-      c.fillStyle = known ? "#c1c8b4" : "#6c8277";
+      c.fillStyle = isGoal ? "#ffe4ac" : known ? "#c1c8b4" : "#6c8277";
       c.font = "9px Arial";
-      c.fillText(known ? room.roomId : "◇", p.x + 9, p.y + 14);
+      c.fillText(known || isGoal ? room.roomId : "◇", p.x + 9, p.y + 14);
       c.font = "10px Georgia";
-      c.fillText(known ? room.name : "Неизведанное", p.x + 9, p.y + 31, w - 15);
+      c.fillText(
+        known || isGoal ? room.name : "Неизведанное",
+        p.x + 9,
+        p.y + 31,
+        w - 15,
+      );
       if (current) {
         c.fillStyle = "#dfc68f";
         c.textAlign = "right";
@@ -176,6 +247,35 @@ function drawMap(c, game, layout) {
     } else if (current) {
       c.fillStyle = "#e0c38b";
       c.fillRect(p.x + w / 2 - 1, p.y + h / 2 - 1, 3, 3);
+    }
+  }
+  if (navigation.target) {
+    const p = point(navigation.target),
+      r = layout.markerSize || (labels ? 10 : 3),
+      x = p.x + w / 2,
+      y = p.y - (labels ? 8 : 2);
+    c.beginPath();
+    c.arc(x, y, r, 0, Math.PI * 2);
+    c.fillStyle = "#17252bf0";
+    c.fill();
+    c.strokeStyle = "#ffe1a0";
+    c.lineWidth = labels ? r * 0.2 : 1;
+    c.stroke();
+    c.beginPath();
+    c.arc(x, y, r * 0.35, 0, Math.PI * 2);
+    c.fillStyle = "#ffe1a0";
+    c.fill();
+    if (labels) {
+      c.beginPath();
+      c.moveTo(x - r * 1.4, y);
+      c.lineTo(x - r * 0.7, y);
+      c.moveTo(x + r * 0.7, y);
+      c.lineTo(x + r * 1.4, y);
+      c.moveTo(x, y - r * 1.4);
+      c.lineTo(x, y - r * 0.7);
+      c.moveTo(x, y + r * 0.7);
+      c.lineTo(x, y + r * 1.4);
+      c.stroke();
     }
   }
   if (labels) {

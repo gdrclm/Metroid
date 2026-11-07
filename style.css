@@ -1352,3 +1352,120 @@ kbd {
   border-right: 3px solid currentColor;
   font-size: 0 !important;
 }
+
+/* The left thumb drags and holds; movement stops on release. */
+.touch-movement {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+#swipe-zone {
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  width: clamp(140px, 44vw, 190px);
+  height: 72px;
+  padding: 7px 12px;
+  border: 1px solid #92aaa24d;
+  border-radius: 24px;
+  background: #102b36d9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.swipe-track {
+  position: relative;
+  width: 100%;
+  height: 32px;
+  border-radius: 16px;
+  background: #79918716;
+  display: grid;
+  place-items: center;
+}
+.swipe-track::before,
+.swipe-track::after {
+  position: absolute;
+  color: #819b94;
+  font-size: 12px;
+}
+.swipe-track::before {
+  content: "‹";
+  left: 8px;
+}
+.swipe-track::after {
+  content: "›";
+  right: 8px;
+}
+#swipe-thumb {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 32px;
+  border: 1px solid #b4b68875;
+  background: #35504d;
+  border-radius: 50%;
+  font-size: 20px;
+  color: #e8d7a6;
+  pointer-events: none;
+}
+#swipe-zone small {
+  color: #acbbb0;
+  font-size: 10px;
+}
+#swipe-zone.active {
+  border-color: #d9c28a;
+}
+#swipe-zone.active #swipe-thumb {
+  background: #5d6649;
+  border-color: #e7cc8b;
+}
+.map-objective {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px 16px;
+  border: 1px solid #d3b87850;
+  background: #c2a56e10;
+}
+.map-objective > span {
+  font-size: 28px;
+  color: #f0cf8b;
+}
+#map-goal-title {
+  color: #e7ce98;
+  font-size: 14px;
+  font-weight: normal;
+}
+#map-goal-route {
+  margin: 5px 0 0;
+  color: #aebcb1;
+  font-size: 12px;
+  line-height: 1.4;
+}
+@media (pointer: coarse) and (orientation: portrait) {
+  .touch-movement {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  #swipe-zone {
+    height: 82px;
+  }
+  .map-objective {
+    padding: 9px 11px;
+    gap: 9px;
+  }
+  #map-goal-title {
+    font-size: 13px;
+  }
+  #map-goal-route {
+    font-size: 11px;
+  }
+  .map-legend {
+    max-width: 52%;
+  }
+}

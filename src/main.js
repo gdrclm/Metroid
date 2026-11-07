@@ -70,6 +70,7 @@ async function boot() {
     },
     mode: (mode) => setMode(mode),
   });
+  input.canSwipe = () => game.mode === "playing";
   audio = new Audio(game.progress.settings);
   const renderer = new Renderer($("game"));
   function resizeViewport() {
@@ -158,7 +159,9 @@ async function boot() {
         " <span>⟶</span>";
       $("new-game").hidden = !store.hasSave;
     }
-    if (mode === "map") map.draw();
+    if (mode === "map") {
+      map.center();
+    }
     if (mode === "playing") $("game").focus({ preventScroll: true });
     else if (screens[mode])
       $(screens[mode]).querySelector("button")?.focus({ preventScroll: true });
@@ -218,6 +221,7 @@ async function boot() {
       };
     }
     map?.mini($("mini-map"));
+    if (game.mode === "map") map.draw();
     $("app").classList.toggle("large-text", game.progress.settings.largeText);
     $("app").classList.toggle("touch-layout", touchScreen.matches);
     for (const action of ["dash", "interact"]) {

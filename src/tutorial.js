@@ -10,7 +10,7 @@ const labels = {
     wall: "К стене + Пробел",
   },
   touch: {
-    move: "◁ / ▷ — идти",
+    move: "Свайп ← / → — идти",
     jump: "↑ — прыжок",
     attack: "⚔ — удар",
     interact: "E — действие",

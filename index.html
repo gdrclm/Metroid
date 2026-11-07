@@ -132,6 +132,13 @@
             Закрыть <kbd>M / Esc</kbd>
           </button>
         </header>
+        <div class="map-objective">
+          <span aria-hidden="true">◎</span>
+          <div>
+            <strong id="map-goal-title"></strong>
+            <p id="map-goal-route"></p>
+          </div>
+        </div>
         <div class="map-stage">
           <canvas
             id="world-map"
@@ -142,7 +149,7 @@
         </div>
         <footer>
           <div class="map-legend">
-            <span>◆ Вы здесь</span><span>◉ Отдых</span
+            <span>◎ Цель квеста</span><span>◆ Вы здесь</span><span>◉ Отдых</span
             ><span>━ Открытый путь</span><span>┄ Закрытый проход</span
             ><span>◇ Неизведанное</span>
           </div>
@@ -232,9 +239,17 @@
         </div>
       </section>
       <div id="touch-controls" hidden>
-        <div class="touch-directions">
-          <button data-action="left" aria-label="Влево">◁</button
-          ><button data-action="right" aria-label="Вправо">▷</button>
+        <div class="touch-movement">
+          <div
+            id="swipe-zone"
+            role="group"
+            aria-label="Движение: проведите пальцем влево или вправо и удерживайте. Отпустите, чтобы остановиться."
+          >
+            <div class="swipe-track">
+              <span id="swipe-thumb" aria-hidden="true">↔</span>
+            </div>
+            <small>Свайп и удержание</small>
+          </div>
           <button data-action="down" aria-label="Вниз">↓</button>
         </div>
         <div class="touch-actions">

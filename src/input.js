@@ -32,6 +32,55 @@ export class Input {
     this.held = new Set();
     this.device = "keyboard";
     this.onBlur = () => {};
+    this.canSwipe = () => true;
+    this.swipe = null;
+    this.swipeDirection = 0;
+    this.swipeZone = document.getElementById?.("swipe-zone");
+    this.swipeThumb = document.getElementById?.("swipe-thumb");
+    const bindSwipe = (element, leftHalf = false) => {
+      if (!element) return;
+      element.addEventListener("pointerdown", (e) => {
+        if (!this.canSwipe() || this.swipe || e.pointerType === "mouse") return;
+        const box = element.getBoundingClientRect();
+        if (leftHalf && e.clientX > box.left + box.width / 2) return;
+        e.preventDefault();
+        element.setPointerCapture(e.pointerId);
+        this.swipe = {
+          id: e.pointerId,
+          x: e.clientX,
+          y: e.clientY,
+          active: false,
+        };
+        this.device = "touch";
+        this.swipeZone?.classList.add("active");
+      });
+      element.addEventListener("pointermove", (e) => {
+        if (!this.swipe || this.swipe.id !== e.pointerId) return;
+        if (!this.canSwipe()) {
+          this.resetSwipe();
+          return;
+        }
+        const dx = e.clientX - this.swipe.x,
+          dy = e.clientY - this.swipe.y;
+        if (
+          !this.swipe.active &&
+          Math.abs(dx) >= 12 &&
+          Math.abs(dx) > Math.abs(dy)
+        )
+          this.swipe.active = true;
+        this.swipeDirection =
+          this.swipe.active && Math.abs(dx) > 8 ? Math.sign(dx) : 0;
+        if (this.swipeThumb)
+          this.swipeThumb.style.transform = `translateX(${Math.max(-52, Math.min(52, dx))}px)`;
+      });
+      const end = (e) => {
+        if (this.swipe?.id === e.pointerId) this.resetSwipe();
+      };
+      for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
+        element.addEventListener(event, end);
+    };
+    bindSwipe(this.swipeZone);
+    bindSwipe(document.getElementById?.("game"), true);
     target.addEventListener("keydown", (e) => {
       if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
       if (keys[e.code]) {
@@ -112,6 +161,9 @@ export class Input {
         .map((k) => keys[k])
         .concat([
           ...this.touch,
+          ...(this.swipeDirection
+            ? [this.swipeDirection < 0 ? "left" : "right"]
+            : []),
           ...[...this.pad].filter((action) => !this.blockedPad.has(action)),
         ]),
     );
@@ -128,7 +180,14 @@ export class Input {
   consume() {
     this.edges.clear();
   }
+  resetSwipe() {
+    this.swipe = null;
+    this.swipeDirection = 0;
+    this.swipeZone?.classList.remove("active");
+    if (this.swipeThumb) this.swipeThumb.style.transform = "";
+  }
   clear() {
+    this.resetSwipe();
     for (const action of this.pad) this.blockedPad.add(action);
     this.keys.clear();
     this.touch.clear();
