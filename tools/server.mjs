@@ -13,6 +13,7 @@ const types = {
   ".json": "application/json; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
+  ".mp3": "audio/mpeg",
   ".md": "text/plain; charset=utf-8",
 };
 createServer(async (req, res) => {

@@ -1,6 +1,7 @@
 import { clamp } from "./core.js";
 import { lineBlocked } from "./physics.js";
-import { musicBar } from "./music.js";
+import { musicPhrase } from "./music.js";
+import { BOSS_SAMPLES, RECORDED_INSTRUMENTS } from "./audio-samples.js";
 
 export const VOICE_LIMIT = 24;
 export const CHANNELS = ["music", "ambience", "actions", "interface"];
@@ -98,6 +99,10 @@ export class Audio {
     this.musicBar = 0;
     this.waveforms = new Map();
     this.driveCurves = new Map();
+    this.samples = new Map();
+    this.sampleState = "idle";
+    this.sampleError = null;
+    this.soundEnabled = !!settings.sound;
     this.elapsed = 0;
     this.debugSources = [];
     this.dropped = 0;
@@ -126,10 +131,6 @@ export class Audio {
           data[i] = last;
         }
         this.noise = buffer;
-        this.percussionNoise = c.createBuffer(1, c.sampleRate, c.sampleRate);
-        const percussion = this.percussionNoise.getChannelData(0);
-        for (let i = 0; i < percussion.length; i++)
-          percussion[i] = Math.random() * 2 - 1;
         const impulse = c.createBuffer(1, c.sampleRate * 1.6, c.sampleRate),
           a = impulse.getChannelData(0);
         for (let i = 0; i < a.length; i++)
@@ -142,6 +143,7 @@ export class Audio {
         this.reverb.connect(this.reverbGain);
         this.reverbGain.connect(this.master);
       }
+      this.loadSamples();
       this.ctx.resume().catch(() => {});
       this.update(this.paused);
     } catch {
@@ -160,6 +162,18 @@ export class Audio {
       this.quietUntil += delta;
       this.duckUntil += delta;
     }
+    if (
+      this.musicTheme === "boss" &&
+      ((!paused && this.paused) || (this.settings.sound && !this.soundEnabled))
+    ) {
+      // Resume the slow arrangement on a fresh downbeat, without a stale tail
+      // or a multi-second wait for the next sustained chord.
+      this.queue = this.queue.filter((note) => !note.score);
+      this.musicCursor = now + 0.025;
+      for (const voice of this.voices)
+        if (voice.score) this.release(voice, 0.12);
+    }
+    this.soundEnabled = !!this.settings.sound;
     this.paused = paused;
     this.master.gain.setTargetAtTime(
       this.settings.sound ? (paused ? 0.12 : 0.45) * this.settings.volume : 0,
@@ -222,12 +236,10 @@ export class Audio {
   }
   instrumentWave(instrument) {
     if (!this.waveforms.has(instrument)) {
-      // Struck piano, bowed violin and picked strings remain procedural.
+      // Exploration retains the restrained procedural instruments.
       const partials = {
         piano: [0, 1, 0.48, 0.22, 0.12, 0.055, 0.025],
         violin: [0, 1, 0.6, 0.42, 0.3, 0.2, 0.14, 0.1, 0.07],
-        guitar: [0, 1, 0.65, 0.5, 0.32, 0.27, 0.2, 0.16, 0.12, 0.1],
-        bass: [0, 1, 0.6, 0.25, 0.12],
       }[instrument];
       this.waveforms.set(
         instrument,
@@ -239,9 +251,36 @@ export class Audio {
     }
     return this.waveforms.get(instrument);
   }
+  loadSamples() {
+    if (["loading", "ready"].includes(this.sampleState)) return this.samplePromise;
+    this.sampleState = "loading";
+    this.sampleError = null;
+    this.samplePromise = Promise.all(BOSS_SAMPLES.map(async (sample) => {
+      const url = new URL(`../assets/audio/boss/${sample.id}.mp3`, import.meta.url);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`${sample.id}: HTTP ${response.status}`);
+      const buffer = await this.ctx.decodeAudioData(await response.arrayBuffer());
+      return [sample.id, { ...sample, buffer }];
+    })).then((entries) => {
+      this.samples = new Map(entries);
+      this.sampleState = "ready";
+      return true;
+    }).catch((error) => {
+      this.sampleState = "error";
+      this.sampleError = error.message;
+      return false;
+    });
+    return this.samplePromise;
+  }
+  selectSample(instrument, frequency, pan) {
+    const midi = 69 + 12 * Math.log2(frequency / 440);
+    return [...this.samples.values()]
+      .filter((s) => s.instrument === instrument && (!s.side || s.side === Math.sign(pan)))
+      .sort((a, b) => Math.abs((a.midi ?? midi) - midi) - Math.abs((b.midi ?? midi) - midi))[0];
+  }
   driveCurve(instrument) {
     if (!this.driveCurves.has(instrument)) {
-      const drive = instrument === "guitar" ? 8 : 2.5,
+      const drive = instrument === "guitar" ? 3.8 : 1.6,
         curve = new Float32Array(1024);
       for (let i = 0; i < curve.length; i++)
         curve[i] =
@@ -270,6 +309,9 @@ export class Audio {
   }) {
     if (!this.ctx || !this.settings.sound || this.ctx.state !== "running")
       return null;
+    const recorded = RECORDED_INSTRUMENTS.has(instrument),
+      sample = recorded ? this.selectSample(instrument, frequency, pan) : null;
+    if (recorded && !sample) return null;
     if (this.voices.size >= VOICE_LIMIT) {
       const victim = [...this.voices].sort(
         (a, b) => a.priority - b.priority,
@@ -284,19 +326,20 @@ export class Audio {
       distorted = instrument === "guitar" || instrument === "bass",
       c = this.ctx,
       at = c.currentTime + when,
-      source = noise || pluck || percussion
+      source = noise || pluck || sample
         ? c.createBufferSource() : c.createOscillator(),
       volume = c.createGain(),
       lowpass = c.createBiquadFilter(),
       panner = c.createStereoPanner();
-    if (noise || pluck || percussion) {
-      source.buffer = pluck
-        ? this.pluckedString(frequency, duration)
-        : percussion
-          ? this.percussionNoise
-          : this.noise;
+    if (noise || pluck || sample) {
+      source.buffer = sample ? sample.buffer : pluck
+        ? this.pluckedString(frequency, duration) : this.noise;
       source.loop = loop;
-      source.playbackRate.value = pluck || percussion ? 1 : frequency / 120;
+      source.playbackRate.value = sample
+        ? sample.midi === undefined ? 1 : frequency / (440 * 2 ** ((sample.midi - 69) / 12))
+        : pluck ? 1 : frequency / 120;
+      if (sample)
+        duration = Math.min(duration, sample.buffer.duration / source.playbackRate.value - 0.03);
     } else {
       if (instrument) source.setPeriodicWave(this.instrumentWave(instrument));
       else source.type = type;
@@ -314,13 +357,18 @@ export class Audio {
     if (instrument === "piano")
       lowpass.frequency.exponentialRampToValueAtTime(700, at + duration);
     if (instrument === "guitar")
-      lowpass.frequency.exponentialRampToValueAtTime(850, at + duration);
+      lowpass.frequency.exponentialRampToValueAtTime(2100, at + duration);
     panner.pan.value = pan;
     volume.gain.setValueAtTime(0, at);
     const bowed = instrument === "violin",
       attack = bowed ? Math.min(0.12, duration * 0.25) : loop ? 0.25 : 0.008;
     volume.gain.linearRampToValueAtTime(gain, at + attack);
-    if (bowed) {
+    if (sample) {
+      volume.gain.setValueAtTime(
+        gain, at + Math.max(attack, duration - (percussion ? 0.2 : 0.35)),
+      );
+      volume.gain.linearRampToValueAtTime(0.0001, at + duration);
+    } else if (bowed) {
       volume.gain.setValueAtTime(gain * 0.85, at + duration * 0.65);
       volume.gain.linearRampToValueAtTime(0.0001, at + duration);
     } else if (!loop)
@@ -328,12 +376,12 @@ export class Audio {
         0.0001,
         at + Math.max(0.03, duration),
       );
-    let drive, highpass;
+    let drive, highpass, cabinet;
     if (distorted || percussion) {
       highpass = c.createBiquadFilter();
       highpass.type = "highpass";
       highpass.frequency.value = {
-        guitar: 70, bass: 25, snare: 600, hihat: 6500, cymbal: 3500,
+        guitar: 50, bass: 25, snare: 100, hihat: 1200, cymbal: 600,
       }[instrument];
       if (distorted) {
         drive = c.createWaveShaper();
@@ -342,7 +390,15 @@ export class Audio {
         source.connect(drive);
         drive.connect(highpass);
       } else source.connect(highpass);
-      highpass.connect(lowpass);
+      if (instrument === "guitar") {
+        cabinet = c.createBiquadFilter();
+        cabinet.type = "peaking";
+        cabinet.frequency.value = 180;
+        cabinet.Q.value = 0.7;
+        cabinet.gain.value = 4;
+        highpass.connect(cabinet);
+        cabinet.connect(lowpass);
+      } else highpass.connect(lowpass);
     } else source.connect(lowpass);
     lowpass.connect(volume);
     volume.connect(panner);
@@ -370,6 +426,7 @@ export class Audio {
       channel,
       owner,
       instrument,
+      sample: sample?.id || null,
       score,
       loop,
       released: false,
@@ -385,6 +442,7 @@ export class Audio {
         source.disconnect();
         drive?.disconnect();
         highpass?.disconnect();
+        cabinet?.disconnect();
         lowpass.disconnect();
         volume.disconnect();
         panner.disconnect();
@@ -409,7 +467,7 @@ export class Audio {
     this.queue = this.queue.filter((note) => note.score || motifs.includes(note));
     score.forEach((frequency, i) =>
       this.queue.push({
-        at: start + i * 0.43,
+        at: start + i * 1.15,
         frequency,
         warm: name === "warm" || name === "quarter",
         owner,
@@ -518,6 +576,10 @@ export class Audio {
     this.setScore(battle ? "boss" : game.room.regionId);
     if (!this.settings.sound || this.ctx.state !== "running") return;
     const now = this.ctx.currentTime;
+    if (battle && this.sampleState !== "ready") {
+      this.musicCursor = now + 0.025;
+      return;
+    }
     if (now < this.quietUntil && !battle) {
       this.musicCursor = this.quietUntil;
       return;
@@ -528,7 +590,7 @@ export class Audio {
       this.musicCursor = now + 0.025;
     }
     if (this.musicCursor <= now + 0.12) {
-      const bar = musicBar(this.musicTheme, this.musicBar++);
+      const bar = musicPhrase(this.musicTheme, this.musicBar++, game.room.roomId);
       for (const note of bar.notes)
         this.queue.push({
           ...note, at: this.musicCursor + note.offset, score: true,
@@ -716,7 +778,7 @@ export class Audio {
         duration: note.duration ?? (note.warm ? 1.8 : 2.4),
         type: note.type || "sine",
         instrument: note.score ? note.instrument : note.warm ? "piano" : "violin",
-        gain: note.gain ?? 0.06,
+        gain: note.gain ?? 0.025,
         pan: note.pan || 0,
         channel: "music",
         priority: this.musicTheme === "boss" ? 45 : 35,
@@ -739,6 +801,8 @@ export class Audio {
       ),
       queuedNotes: this.queue.length,
       musicTheme: this.musicTheme,
+      samples: this.sampleState,
+      sampleError: this.sampleError,
       dropped: this.dropped,
       sources: this.debugSources.map((s) => ({
         id: s.id,

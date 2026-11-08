@@ -8,7 +8,7 @@ const errors = validateWorld(world, physics);
 if (errors.length) throw new Error(errors.join("\n"));
 await rm(root + "dist", { force: true, recursive: true });
 await mkdir(root + "dist");
-for (const path of ["src", "data", "style.css"])
+for (const path of ["src", "data", "assets", "style.css"])
   await cp(root + path, root + "dist/" + path, { recursive: true });
 const html = (await readFile(root + "index.html", "utf8")).replace(
   'content="development"',
@@ -17,5 +17,5 @@ const html = (await readFile(root + "index.html", "utf8")).replace(
 await writeFile(root + "dist/index.html", html);
 await writeFile(root + "dist/.nojekyll", "");
 console.log(
-  "✓ Production build in dist/ · no external assets or runtime dependencies · debug access disabled",
+  "✓ Production build in dist/ · bundled instrument recordings · no external requests · debug access disabled",
 );

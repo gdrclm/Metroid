@@ -31,6 +31,8 @@ with tempfile.TemporaryDirectory(prefix='metroid-pages-', dir='/tmp') as directo
                 assert page.evaluate("typeof window.__game === 'undefined'")
                 assert page.locator('#debug-editor').count() == 0
                 page.locator('#play').click()
+                page.wait_for_function("""() => performance.getEntriesByType('resource')
+                  .filter(r => r.name.includes('/assets/audio/boss/')).length === 9""")
                 page.keyboard.down('d')
                 page.wait_for_timeout(400)
                 page.keyboard.up('d')

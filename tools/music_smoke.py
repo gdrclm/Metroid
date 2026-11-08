@@ -1,4 +1,4 @@
-"""Measure real music output across bars, boss entry, pause, mute, and victory.
+"""Verify sparse exploration phrases and slow, recorded boss instruments.
 
 Requires the dev server, Python Playwright, and Chromium, like atmosphere_smoke.
 The analyser connects to the music bus, so ambience cannot hide a silent score.
@@ -25,6 +25,7 @@ with sync_playwright() as p:
     page.wait_for_function('() => window.__game && window.__audio')
     page.locator('#play').click()
     page.wait_for_function("() => __audio.ctx.state === 'running'")
+    page.wait_for_function("() => __audio.sampleState === 'ready'", timeout=15000)
     page.evaluate("""() => {
       window.__musicLog = [];
       window.__instrumentMeters = {};
@@ -35,6 +36,8 @@ with sync_playwright() as p:
           __musicLog.push({
             theme: __audio.musicTheme, instrument: options.instrument,
             at: __audio.ctx.currentTime, score: options.score,
+            frequency: options.frequency, duration: options.duration,
+            sample: result.sample, sourceType: result.source.constructor.name,
           });
           if (options.instrument) {
             const meter = __instrumentMeters[options.instrument] ??= __audio.ctx.createAnalyser();
@@ -73,9 +76,14 @@ with sync_playwright() as p:
             peaks.push(peak);
           }
           return {minRms: Math.min(...peaks), maxRms: Math.max(...peaks),
+            silentWindows: peaks.filter(v => v < 0.00001).length,
             windows: peaks.length, maxVoices, maxQueue, instrumentRms};
         }""", {'seconds': seconds, 'master': master})
-        if audible:
+        if audible == 'sparse':
+            assert result['maxRms'] > 0.00001 and result['silentWindows'] >= 6, result
+        elif audible == 'some':
+            assert result['maxRms'] > 0.00001, result
+        elif audible:
             assert result['minRms'] > 0.00001, result
         else:
             assert result['maxRms'] < 0.00001, result
@@ -84,11 +92,15 @@ with sync_playwright() as p:
         print(json.dumps(result), flush=True)
         return result
 
-    # Multiple complete bars, well past the reported 4–5 second cutoff.
-    exploration = measure(18)
+    # Intentional silence must return between phrases, and music must recur.
+    page.evaluate("__game.loadRoom('P02'); __audio.setScore(null)")
+    exploration = measure(34, audible='sparse')
     instruments = page.evaluate("[...new Set(__musicLog.filter(n => n.score).map(n => n.instrument))]")
     assert set(instruments) == {'piano', 'violin'}, instruments
-    exploration_rate = page.evaluate("__musicLog.filter(n => n.score).length / 18")
+    exploration_notes = page.evaluate("__musicLog.filter(n => n.score)")
+    assert 4 <= len(exploration_notes) <= 5, exploration_notes
+    assert exploration_notes[-1]['at'] - exploration_notes[0]['at'] > 27
+    exploration_rate = len(exploration_notes) / 34
 
     # Use the real arena trigger; invulnerability only keeps this audio fixture alive.
     page.evaluate("""() => {
@@ -98,8 +110,8 @@ with sync_playwright() as p:
       g.snapCamera();
     }""")
     page.wait_for_function("() => __game.arenaActive && __audio.musicTheme === 'boss'")
-    boss = measure(10)
-    metal_instruments = ['guitar', 'bass', 'snare', 'hihat', 'cymbal']
+    boss = measure(12)
+    metal_instruments = ['guitar', 'bass', 'kick', 'snare', 'hihat', 'cymbal']
     for instrument in metal_instruments:
         assert boss['instrumentRms'].get(instrument, 0) > 0.0001, (instrument, boss)
     # The dense mix must still give attack warnings priority over music.
@@ -107,9 +119,16 @@ with sync_playwright() as p:
       __audio.play('keeperWaveReady');
       return __audio.voices.size <= 24 && [...__audio.voices].some(v => v.priority === 100);
     }""")
-    battle_rate = page.evaluate("__musicLog.filter(n => n.score && n.theme === 'boss').length / 10")
-    assert battle_rate > exploration_rate * 2, (exploration_rate, battle_rate)
-    assert page.evaluate("['piano', 'violin'].every(i => __musicLog.some(n => n.theme === 'boss' && n.instrument === i))")
+    battle_notes = page.evaluate("__musicLog.filter(n => n.score && n.theme === 'boss')")
+    assert all(n['sample'] and n['sourceType'] == 'AudioBufferSourceNode' for n in battle_notes), battle_notes
+    chord_times = []
+    for n in sorted((n for n in battle_notes if n['instrument'] == 'guitar'), key=lambda n: n['at']):
+        if not chord_times or n['at'] - chord_times[-1] > 0.12:
+            chord_times.append(n['at'])
+    assert 4 <= len(chord_times) <= 7, chord_times
+    chord_gaps = [b-a for a, b in zip(chord_times, chord_times[1:])]
+    assert min(chord_gaps) > 1.2, chord_gaps
+    assert max(n['duration'] for n in battle_notes if n['instrument'] == 'guitar') > 2.8
 
     page.keyboard.press('Escape')
     page.wait_for_function("() => __game.mode === 'pause'")
@@ -139,26 +158,26 @@ with sync_playwright() as p:
     page.wait_for_function(
         '() => __audio.ctx.currentTime > __audio.quietUntil + 0.2', timeout=5000,
     )
-    victory = measure(3)
+    victory = measure(6, audible='some')
     assert page.evaluate("""() => [...__audio.voices].every(v =>
-      !['guitar', 'bass', 'snare', 'hihat', 'cymbal'].includes(v.instrument))""")
+      !['guitar', 'bass', 'kick', 'snare', 'hihat', 'cymbal'].includes(v.instrument))""")
     page.evaluate("__game.loadRoom('V02')")
     page.wait_for_function("() => __audio.musicTheme === 'station'")
-    station = measure(3)
+    station = measure(4, audible='some')
     page.evaluate("__game.debug.god = false; __game.die()")
     page.wait_for_function('() => __audio.musicTheme === null')
     page.wait_for_timeout(400)
     assert page.evaluate("[...__audio.voices].every(v => v.channel !== 'music')")
     page.locator('#respawn').click()
-    retry = measure(3)
+    retry = measure(3, audible='some')
 
     assert not errors, errors
     result = dict(exploration=exploration, boss=boss, instruments=instruments,
                   metalInstruments=metal_instruments, attackWarning='passed',
                   explorationNotesPerSecond=exploration_rate,
-                  bossNotesPerSecond=battle_rate, pauseResume=resumed,
+                  slowChordGaps=chord_gaps, recordedBossVoices=True, pauseResume=resumed,
                   muted=muted, unmuted=unmuted, victory=victory,
                   station=station, respawn=retry, pageErrors=errors)
     (ARTIFACTS / 'music-results.json').write_text(json.dumps(result, indent=2) + '\n')
-    print('CONTINUOUS PIANO / VIOLIN AND HEAVY METAL BOSS MUSIC PASS')
+    print('SPARSE EXPLORATION / SLOW RECORDED BOSS MUSIC PASS')
     browser.close()
