@@ -36,33 +36,42 @@ export function musicBar(theme, bar) {
     });
   // Piano arpeggios connect the bars even while the violin changes bow.
   const arpeggio = [0, 1, 2, 1, 0, 2, 1, 2];
-  for (let i = 0; i < (battle ? 16 : 8); i++)
+  for (let i = 0; i < 8; i++)
     add(
-      i * (battle ? 0.25 : 0.5),
-      chord[arpeggio[i % 8]] + 12 + (battle && i % 4 === 3 ? 12 : 0),
-      battle ? 1.1 : 2.2,
+      i * 0.5,
+      chord[arpeggio[i]] + 12,
+      battle ? 0.8 : 2.2,
       "piano",
-      battle ? (i % 4 === 0 ? 0.12 : 0.075) : 0.07,
+      battle ? 0.028 : 0.07,
       -0.22,
     );
   if (battle) {
-    // Short, accented bow strokes and a low pulse keep the fight urgent.
-    for (let i = 0; i < 8; i++)
-      add(
-        i * 0.5, chord[(i + bar) % 3] + 24, 0.43,
-        "violin", i % 2 ? 0.06 : 0.09, 0.18,
-      );
+    // Low, palm-muted power chords lead the mix; piano and violin add tension.
+    const riff = [0, 0, null, 0, 0, null, 1, 0, 0, null, 0, 0, 3, 1, 0, null];
+    riff.forEach((semitones, i) => {
+      if (semitones === null) return;
+      const root = chord[0] + semitones,
+        length = i === 14 ? 0.9 : 0.38,
+        accent = i % 4 === 0;
+      add(i * 0.25, root, length, "guitar", accent ? 0.14 : 0.1, -0.45);
+      add(i * 0.25, root + 7, length, "guitar", accent ? 0.1 : 0.075, 0.45);
+    });
     for (let i = 0; i < 4; i++) {
-      add(i, chord[0], 0.9, "piano", 0.15, 0);
-      notes.push({
-        offset: i * beat,
-        frequency: i % 2 ? 135 : 85,
-        to: 36,
-        duration: 0.14,
-        type: "triangle",
-        gain: i % 2 ? 0.07 : 0.12,
-      });
+      add(
+        i, chord[(i + bar) % 3] + 24, 0.5, "violin", 0.03, 0.18,
+      );
+      add(i, chord[0] - 12, 0.96, "bass", 0.17, 0);
     }
+    for (const offset of [0, 0.5, 1.5, 2, 2.5, 3.5])
+      notes.push({
+        offset: offset * beat, frequency: 145, to: 38,
+        duration: 0.16, type: "sine", gain: 0.22,
+      });
+    for (const offset of [1, 3])
+      add(offset, 60, 0.42, "snare", 0.14, 0.05);
+    for (let i = 0; i < 8; i++)
+      add(i * 0.5, 60, 0.13, "hihat", i % 2 ? 0.035 : 0.05, 0.3);
+    if (bar % 2 === 0) add(0, 60, 1.8, "cymbal", 0.07, -0.25);
   } else {
     const melody = bar % 8 < 4 ? [2, 1, 0] : [1, 2, 1];
     add(0, chord[melody[0]] + 24, 2.15, "violin", 0.045, 0.2);

@@ -27,13 +27,20 @@ with sync_playwright() as p:
     page.wait_for_function("() => __audio.ctx.state === 'running'")
     page.evaluate("""() => {
       window.__musicLog = [];
+      window.__instrumentMeters = {};
       const voice = __audio.voice.bind(__audio);
       __audio.voice = options => {
         const result = voice(options);
-        if (result && options.channel === 'music') __musicLog.push({
-          theme: __audio.musicTheme, instrument: options.instrument,
-          at: __audio.ctx.currentTime, score: options.score,
-        });
+        if (result && options.channel === 'music') {
+          __musicLog.push({
+            theme: __audio.musicTheme, instrument: options.instrument,
+            at: __audio.ctx.currentTime, score: options.score,
+          });
+          if (options.instrument) {
+            const meter = __instrumentMeters[options.instrument] ??= __audio.ctx.createAnalyser();
+            result.gain.connect(meter);
+          }
+        }
         return result;
       };
       window.__musicMeter = __audio.ctx.createAnalyser();
@@ -48,6 +55,7 @@ with sync_playwright() as p:
           const meter = master ? __masterMeter : __musicMeter;
           const data = new Float32Array(meter.fftSize), peaks = [];
           let maxVoices = 0, maxQueue = 0;
+          const instrumentRms = {};
           for (let window = 0; window < seconds * 2; window++) {
             let peak = 0;
             for (let sample = 0; sample < 5; sample++) {
@@ -56,11 +64,16 @@ with sync_playwright() as p:
               peak = Math.max(peak, Math.sqrt(data.reduce((s, v) => s + v * v, 0) / data.length));
               maxVoices = Math.max(maxVoices, __audio.voices.size);
               maxQueue = Math.max(maxQueue, __audio.queue.length);
+              for (const [instrument, analyser] of Object.entries(__instrumentMeters)) {
+                analyser.getFloatTimeDomainData(data);
+                const rms = Math.sqrt(data.reduce((s, v) => s + v * v, 0) / data.length);
+                instrumentRms[instrument] = Math.max(instrumentRms[instrument] || 0, rms);
+              }
             }
             peaks.push(peak);
           }
           return {minRms: Math.min(...peaks), maxRms: Math.max(...peaks),
-            windows: peaks.length, maxVoices, maxQueue};
+            windows: peaks.length, maxVoices, maxQueue, instrumentRms};
         }""", {'seconds': seconds, 'master': master})
         if audible:
             assert result['minRms'] > 0.00001, result
@@ -86,6 +99,14 @@ with sync_playwright() as p:
     }""")
     page.wait_for_function("() => __game.arenaActive && __audio.musicTheme === 'boss'")
     boss = measure(10)
+    metal_instruments = ['guitar', 'bass', 'snare', 'hihat', 'cymbal']
+    for instrument in metal_instruments:
+        assert boss['instrumentRms'].get(instrument, 0) > 0.0001, (instrument, boss)
+    # The dense mix must still give attack warnings priority over music.
+    assert page.evaluate("""() => {
+      __audio.play('keeperWaveReady');
+      return __audio.voices.size <= 24 && [...__audio.voices].some(v => v.priority === 100);
+    }""")
     battle_rate = page.evaluate("__musicLog.filter(n => n.score && n.theme === 'boss').length / 10")
     assert battle_rate > exploration_rate * 2, (exploration_rate, battle_rate)
     assert page.evaluate("['piano', 'violin'].every(i => __musicLog.some(n => n.theme === 'boss' && n.instrument === i))")
@@ -119,6 +140,8 @@ with sync_playwright() as p:
         '() => __audio.ctx.currentTime > __audio.quietUntil + 0.2', timeout=5000,
     )
     victory = measure(3)
+    assert page.evaluate("""() => [...__audio.voices].every(v =>
+      !['guitar', 'bass', 'snare', 'hihat', 'cymbal'].includes(v.instrument))""")
     page.evaluate("__game.loadRoom('V02')")
     page.wait_for_function("() => __audio.musicTheme === 'station'")
     station = measure(3)
@@ -131,10 +154,11 @@ with sync_playwright() as p:
 
     assert not errors, errors
     result = dict(exploration=exploration, boss=boss, instruments=instruments,
+                  metalInstruments=metal_instruments, attackWarning='passed',
                   explorationNotesPerSecond=exploration_rate,
                   bossNotesPerSecond=battle_rate, pauseResume=resumed,
                   muted=muted, unmuted=unmuted, victory=victory,
                   station=station, respawn=retry, pageErrors=errors)
     (ARTIFACTS / 'music-results.json').write_text(json.dumps(result, indent=2) + '\n')
-    print('CONTINUOUS PIANO / VIOLIN AND BOSS MUSIC PASS')
+    print('CONTINUOUS PIANO / VIOLIN AND HEAVY METAL BOSS MUSIC PASS')
     browser.close()

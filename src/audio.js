@@ -97,6 +97,7 @@ export class Audio {
     this.musicCursor = 0;
     this.musicBar = 0;
     this.waveforms = new Map();
+    this.driveCurves = new Map();
     this.elapsed = 0;
     this.debugSources = [];
     this.dropped = 0;
@@ -125,6 +126,10 @@ export class Audio {
           data[i] = last;
         }
         this.noise = buffer;
+        this.percussionNoise = c.createBuffer(1, c.sampleRate, c.sampleRate);
+        const percussion = this.percussionNoise.getChannelData(0);
+        for (let i = 0; i < percussion.length; i++)
+          percussion[i] = Math.random() * 2 - 1;
         const impulse = c.createBuffer(1, c.sampleRate * 1.6, c.sampleRate),
           a = impulse.getChannelData(0);
         for (let i = 0; i < a.length; i++)
@@ -217,12 +222,13 @@ export class Audio {
   }
   instrumentWave(instrument) {
     if (!this.waveforms.has(instrument)) {
-      // A piano's struck, rounded overtones contrast with the violin's bowed
-      // harmonic spectrum. Both stay procedural: no downloads or sample files.
-      const partials =
-        instrument === "piano"
-          ? [0, 1, 0.48, 0.22, 0.12, 0.055, 0.025]
-          : [0, 1, 0.6, 0.42, 0.3, 0.2, 0.14, 0.1, 0.07];
+      // Struck piano, bowed violin and picked strings remain procedural.
+      const partials = {
+        piano: [0, 1, 0.48, 0.22, 0.12, 0.055, 0.025],
+        violin: [0, 1, 0.6, 0.42, 0.3, 0.2, 0.14, 0.1, 0.07],
+        guitar: [0, 1, 0.65, 0.5, 0.32, 0.27, 0.2, 0.16, 0.12, 0.1],
+        bass: [0, 1, 0.6, 0.25, 0.12],
+      }[instrument];
       this.waveforms.set(
         instrument,
         this.ctx.createPeriodicWave(
@@ -232,6 +238,17 @@ export class Audio {
       );
     }
     return this.waveforms.get(instrument);
+  }
+  driveCurve(instrument) {
+    if (!this.driveCurves.has(instrument)) {
+      const drive = instrument === "guitar" ? 8 : 2.5,
+        curve = new Float32Array(1024);
+      for (let i = 0; i < curve.length; i++)
+        curve[i] =
+          Math.tanh((i * 2 / (curve.length - 1) - 1) * drive) / Math.tanh(drive);
+      this.driveCurves.set(instrument, curve);
+    }
+    return this.driveCurves.get(instrument);
   }
   voice({
     frequency = 120,
@@ -263,18 +280,23 @@ export class Audio {
       }
       this.release(victim);
     }
-    const c = this.ctx,
+    const percussion = ["snare", "hihat", "cymbal"].includes(instrument),
+      distorted = instrument === "guitar" || instrument === "bass",
+      c = this.ctx,
       at = c.currentTime + when,
-      source = noise || pluck ? c.createBufferSource() : c.createOscillator(),
+      source = noise || pluck || percussion
+        ? c.createBufferSource() : c.createOscillator(),
       volume = c.createGain(),
       lowpass = c.createBiquadFilter(),
       panner = c.createStereoPanner();
-    if (noise || pluck) {
+    if (noise || pluck || percussion) {
       source.buffer = pluck
         ? this.pluckedString(frequency, duration)
-        : this.noise;
+        : percussion
+          ? this.percussionNoise
+          : this.noise;
       source.loop = loop;
-      source.playbackRate.value = pluck ? 1 : frequency / 120;
+      source.playbackRate.value = pluck || percussion ? 1 : frequency / 120;
     } else {
       if (instrument) source.setPeriodicWave(this.instrumentWave(instrument));
       else source.type = type;
@@ -285,9 +307,14 @@ export class Audio {
       );
     }
     lowpass.type = "lowpass";
-    lowpass.frequency.setValueAtTime(instrument === "piano" ? 4200 : filter, at);
+    const cutoff =
+      { piano: 4200, guitar: 3500, bass: 900, snare: 6500, hihat: 11000, cymbal: 10000 }[instrument]
+      ?? filter;
+    lowpass.frequency.setValueAtTime(cutoff, at);
     if (instrument === "piano")
       lowpass.frequency.exponentialRampToValueAtTime(700, at + duration);
+    if (instrument === "guitar")
+      lowpass.frequency.exponentialRampToValueAtTime(850, at + duration);
     panner.pan.value = pan;
     volume.gain.setValueAtTime(0, at);
     const bowed = instrument === "violin",
@@ -301,7 +328,22 @@ export class Audio {
         0.0001,
         at + Math.max(0.03, duration),
       );
-    source.connect(lowpass);
+    let drive, highpass;
+    if (distorted || percussion) {
+      highpass = c.createBiquadFilter();
+      highpass.type = "highpass";
+      highpass.frequency.value = {
+        guitar: 70, bass: 25, snare: 600, hihat: 6500, cymbal: 3500,
+      }[instrument];
+      if (distorted) {
+        drive = c.createWaveShaper();
+        drive.curve = this.driveCurve(instrument);
+        drive.oversample = "2x";
+        source.connect(drive);
+        drive.connect(highpass);
+      } else source.connect(highpass);
+      highpass.connect(lowpass);
+    } else source.connect(lowpass);
     lowpass.connect(volume);
     volume.connect(panner);
     panner.connect(this.buses[channel]);
@@ -341,6 +383,8 @@ export class Audio {
           vibratoDepth.disconnect();
         }
         source.disconnect();
+        drive?.disconnect();
+        highpass?.disconnect();
         lowpass.disconnect();
         volume.disconnect();
         panner.disconnect();
