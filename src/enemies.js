@@ -190,14 +190,17 @@ export function updateEnemy(e, player, dt, surfaces, game) {
   if (
     overlaps(player, { x: e.x + 4, y: e.y + 5, w: e.w - 8, h: e.h - 5 }) &&
     e.flash <= 0 &&
-    e.state === "attack"
+    e.state === "attack" &&
+    (!keeper || e.attackKind === "lunge")
   )
     game.hurt(keeper ? 2 : 1, dx >= 0 ? 1 : -1, "contact:" + e.enemyType);
-  if (e.state === "attack" && e.attackKind !== "wave") {
+  // The keeper's lunge is a body attack, not an invisible weapon swing.
+  // Wave damage is handled by the visible projectile in Game.update.
+  if (!keeper && e.state === "attack" && e.attackKind !== "wave") {
     const hit = {
-      x: e.facing > 0 ? e.x + e.w - 5 : e.x - (keeper ? 92 : 42),
+      x: e.facing > 0 ? e.x + e.w - 5 : e.x - 42,
       y: e.y + 18,
-      w: keeper ? 98 : 48,
+      w: 48,
       h: e.h - 10,
     };
     if (
@@ -208,6 +211,6 @@ export function updateEnemy(e, player, dt, surfaces, game) {
         surfaces,
       )
     )
-      game.hurt(keeper ? 2 : 1, e.facing, "lunge:" + e.enemyType);
+      game.hurt(1, e.facing, "lunge:" + e.enemyType);
   }
 }

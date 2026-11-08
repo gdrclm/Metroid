@@ -1456,10 +1456,11 @@ export class Renderer {
           "#d9bd85",
           5,
         );
-      const armX = windup ? (wave ? 22 : -24) : 22,
-        armY = windup ? (wave ? -14 : -45) : -20,
+      const lunging = keeper && e.state === "attack" && !wave,
+        armX = windup ? (wave ? 22 : -24) : 22,
+        armY = windup ? (wave ? -14 : -45) : lunging ? -36 : -20,
         tipX = windup ? (wave ? 30 : -43) : 28,
-        tipY = windup ? (wave ? -7 : -70) : 5;
+        tipY = windup ? (wave ? -7 : -70) : lunging ? -29 : 5;
       line(c, 10, -31, armX, armY, "#5a6b5c", 6);
       line(c, armX, armY, tipX, tipY, "#a9a17b", 3);
       if (keeper) rect(c, tipX - 9, tipY - 5, 22, 9, "#7b8c74");
