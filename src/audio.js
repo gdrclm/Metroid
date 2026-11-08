@@ -5,6 +5,8 @@ import { BOSS_SAMPLES, RECORDED_INSTRUMENTS } from "./audio-samples.js";
 
 export const VOICE_LIMIT = 24;
 export const CHANNELS = ["music", "ambience", "actions", "interface"];
+const MUSIC_FADE = 1.4;
+const MUSIC_GAP = 0.1;
 export function audibility(source, listener, surfaces) {
   const distance = Math.hypot(source.x - listener.x, source.y - listener.y);
   const radius = source.radius || 420;
@@ -95,6 +97,8 @@ export class Audio {
     this.quietUntil = 0;
     this.roomId = null;
     this.musicTheme = null;
+    this.musicKey = null;
+    this.musicReadyAt = 0;
     this.musicCursor = 0;
     this.musicBar = 0;
     this.waveforms = new Map();
@@ -163,15 +167,19 @@ export class Audio {
       this.duckUntil += delta;
     }
     if (
-      this.musicTheme === "boss" &&
+      this.musicTheme &&
       ((!paused && this.paused) || (this.settings.sound && !this.soundEnabled))
     ) {
-      // Resume the slow arrangement on a fresh downbeat, without a stale tail
-      // or a multi-second wait for the next sustained chord.
-      this.queue = this.queue.filter((note) => !note.score);
-      this.musicCursor = now + 0.025;
+      // Resume the held line without waiting for the next very distant note.
+      this.queue = [];
+      let ready = now + 0.2;
       for (const voice of this.voices)
-        if (voice.score) this.release(voice, 0.12);
+        if (voice.channel === "music") {
+          this.release(voice, 0.16);
+          ready = Math.max(ready, voice.endsAt + MUSIC_GAP);
+        }
+      this.musicReadyAt = ready;
+      this.musicCursor = ready;
     }
     this.soundEnabled = !!this.settings.sound;
     this.paused = paused;
@@ -200,9 +208,10 @@ export class Audio {
     v.released = true;
     if (fade && this.ctx) {
       v.gain.gain.cancelAndHoldAtTime(this.ctx.currentTime);
-      v.gain.gain.setTargetAtTime(0, this.ctx.currentTime, fade / 3);
+      v.endsAt = this.ctx.currentTime + fade;
+      v.gain.gain.linearRampToValueAtTime(0, v.endsAt);
       try {
-        v.source.stop(this.ctx.currentTime + fade);
+        v.source.stop(v.endsAt);
       } catch {}
     } else {
       this.voices.delete(v);
@@ -306,6 +315,8 @@ export class Audio {
     owner = null,
     instrument = null,
     score = false,
+    sustain = false,
+    compositionKey = null,
   }) {
     if (!this.ctx || !this.settings.sound || this.ctx.state !== "running")
       return null;
@@ -361,9 +372,13 @@ export class Audio {
     panner.pan.value = pan;
     volume.gain.setValueAtTime(0, at);
     const bowed = instrument === "violin",
-      attack = bowed ? Math.min(0.12, duration * 0.25) : loop ? 0.25 : 0.008;
+      attack = sustain ? (sample ? 0.8 : 1.8)
+        : bowed ? Math.min(0.12, duration * 0.25) : loop ? 0.25 : 0.008;
     volume.gain.linearRampToValueAtTime(gain, at + attack);
-    if (sample) {
+    if (sustain) {
+      volume.gain.linearRampToValueAtTime(gain * 0.9, at + duration - 2.8);
+      volume.gain.linearRampToValueAtTime(0.0001, at + duration);
+    } else if (sample) {
       volume.gain.setValueAtTime(
         gain, at + Math.max(attack, duration - (percussion ? 0.2 : 0.35)),
       );
@@ -407,10 +422,10 @@ export class Audio {
     if (bowed) {
       vibrato = c.createOscillator();
       vibratoDepth = c.createGain();
-      vibrato.frequency.value = 5.3;
+      vibrato.frequency.value = sustain ? 2.3 : 5.3;
       vibratoDepth.gain.setValueAtTime(0, at);
       vibratoDepth.gain.linearRampToValueAtTime(
-        9, at + Math.min(0.3, duration / 2),
+        sustain ? 3 : 9, at + Math.min(sustain ? 1.2 : 0.3, duration / 2),
       );
       vibrato.connect(vibratoDepth);
       vibratoDepth.connect(source.detune);
@@ -428,6 +443,9 @@ export class Audio {
       instrument,
       sample: sample?.id || null,
       score,
+      sustain,
+      compositionKey: compositionKey || (channel === "music" ? this.musicKey : null),
+      startsAt: at,
       loop,
       released: false,
       endsAt: loop ? Infinity : at + duration + 0.03,
@@ -458,10 +476,10 @@ export class Audio {
     if (!loop) source.stop(v.endsAt);
     return v;
   }
-  motif(name, delay = 0, owner = null) {
+  motif(name, delay = 0, owner = null, roomId = this.roomId) {
     const score = scores[name];
-    if (!score || !this.ctx || this.musicTheme === "boss") return;
-    const start = this.ctx.currentTime + delay;
+    if (!score || !this.ctx || ["boss", "lift"].includes(this.musicTheme)) return;
+    const start = Math.max(this.ctx.currentTime + delay, this.musicReadyAt);
     // Bound queued music when events follow each other rapidly.
     const motifs = this.queue.filter((note) => !note.score).slice(-24);
     this.queue = this.queue.filter((note) => note.score || motifs.includes(note));
@@ -471,6 +489,8 @@ export class Audio {
         frequency,
         warm: name === "warm" || name === "quarter",
         owner,
+        roomId,
+        compositionKey: this.musicKey,
       }),
     );
   }
@@ -479,7 +499,7 @@ export class Audio {
       return;
     if (name.startsWith("music.")) {
       const motif = name.slice(6);
-      this.motif(motif, options.delay || 0, options.sceneId);
+      this.motif(motif, options.delay || 0, options.sceneId, options.roomId || this.roomId);
       return;
     }
     if (name === "silence") {
@@ -549,51 +569,67 @@ export class Audio {
     this.deadlines.clear();
     this.roomId = null;
     this.musicTheme = null;
+    this.musicKey = null;
+    this.musicReadyAt = 0;
     this.musicCursor = 0;
     this.musicBar = 0;
     this.quietUntil = 0;
     this.duckUntil = 0;
   }
-  setScore(theme) {
-    if (theme === this.musicTheme) return;
+  setScore(theme, roomId = this.roomId) {
+    const key = theme ? `${theme}:${roomId}` : null;
+    if (key === this.musicKey) return;
+    const now = this.ctx.currentTime,
+      fade = !theme ? 0.2
+        : theme === "lift" || this.musicTheme === "lift" ? 0.28 : MUSIC_FADE,
+      freshCues = this.queue.filter((n) => !n.score && n.roomId === roomId),
+      oldVoices = [...this.voices].filter((v) => v.channel === "music");
     this.musicTheme = theme;
+    this.musicKey = key;
     this.musicBar = 0;
-    this.musicCursor = this.ctx.currentTime + 0.025;
-    this.queue = this.queue.filter(
-      (note) => !note.score && theme && theme !== "boss",
-    );
-    for (const voice of this.voices)
-      if (
-        voice.channel === "music" &&
-        (voice.score || !theme || theme === "boss")
-      )
-        this.release(voice, 0.25);
+    this.musicReadyAt = now + 0.025;
+    // Retire every part of the old composition, including scene motifs. Start
+    // the new one only after the old voices have reached zero and stopped.
+    for (const voice of oldVoices) {
+      this.release(voice, fade);
+      this.musicReadyAt = Math.max(this.musicReadyAt, voice.endsAt + MUSIC_GAP);
+    }
+    this.musicCursor = this.musicReadyAt;
+    this.queue = !theme || ["boss", "lift"].includes(theme) ? []
+      : freshCues.map((n) => ({
+        ...n, at: this.musicReadyAt + Math.max(0, n.at - now), compositionKey: key,
+      }));
   }
   scheduleScore(game) {
     const battle =
       game.arenaActive &&
       game.enemies.some((e) => e.enemyType === "keeper" && e.hp > 0);
-    this.setScore(battle ? "boss" : game.room.regionId);
+    const lift = game.transition?.exit.type === "lift";
+    this.setScore(
+      lift ? "lift" : battle ? "boss" : game.room.regionId,
+      lift ? game.transition.exit.exitId : game.room.roomId,
+    );
     if (!this.settings.sound || this.ctx.state !== "running") return;
     const now = this.ctx.currentTime;
     if (battle && this.sampleState !== "ready") {
-      this.musicCursor = now + 0.025;
+      this.musicCursor = Math.max(this.musicReadyAt, now + 0.025);
       return;
     }
-    if (now < this.quietUntil && !battle) {
+    if (now < this.quietUntil && !battle && !lift) {
       this.musicCursor = this.quietUntil;
       return;
     }
     // A backgrounded tab or muted context must not replay a backlog of notes.
     if (this.musicCursor < now - 0.15) {
       this.queue = this.queue.filter((note) => !note.score);
-      this.musicCursor = now + 0.025;
+      this.musicCursor = Math.max(this.musicReadyAt, now + 0.025);
     }
     if (this.musicCursor <= now + 0.12) {
       const bar = musicPhrase(this.musicTheme, this.musicBar++, game.room.roomId);
       for (const note of bar.notes)
         this.queue.push({
           ...note, at: this.musicCursor + note.offset, score: true,
+          compositionKey: this.musicKey,
         });
       this.musicCursor += bar.duration;
     }
@@ -771,6 +807,7 @@ export class Audio {
       return;
     }
     for (const note of this.queue.filter((n) => n.at <= now + 0.12)) {
+      if (note.compositionKey !== this.musicKey) continue;
       if (note.at < now - 0.15) continue;
       this.voice({
         frequency: note.frequency,
@@ -785,6 +822,8 @@ export class Audio {
         owner: note.owner,
         when: Math.max(0, note.at - now),
         score: !!note.score,
+        sustain: !!note.sustain,
+        compositionKey: note.compositionKey,
       });
     }
     this.queue = this.queue.filter((n) => n.at > now + 0.12);
@@ -801,6 +840,8 @@ export class Audio {
       ),
       queuedNotes: this.queue.length,
       musicTheme: this.musicTheme,
+      musicKey: this.musicKey,
+      musicStartsAt: this.musicReadyAt,
       samples: this.sampleState,
       sampleError: this.sampleError,
       dropped: this.dropped,

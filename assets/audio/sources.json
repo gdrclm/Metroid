@@ -9,8 +9,11 @@
       "bytes": 943712,
       "file": "boss/guitar-left-e.mp3",
       "original_sha256": "fc1e4da6de242d7197f8efac253cc3b0c49328a7075646f10c0a7a74dabcea7c",
-      "sha256": "dd8c1b3dbb2938e03cb1dd5ea64be036ee8e18ff84e5e7aa24303f98c1da70a5",
-      "processing": "atrim=duration=6.8,volume=5.400dB,afade=t=out:st=6.550:d=0.25"
+      "sha256": "1aa78caf01a1c9a7408674e0d4f6bfcf1a1885bce2ae747afdcc216253861af0",
+      "processing": "rubberband=tempo=0.125:pitch=1:transients=smooth:detector=soft:window=long:smoothing=on:pitchq=quality,acompressor=threshold=0.06:ratio=3:attack=80:release=1600:makeup=1.5,atrim=duration=36,afade=t=in:st=0:d=0.6,afade=t=out:st=35:d=1,volume=4.18576393",
+      "duration_seconds": 36.0,
+      "time_stretch": 8,
+      "pitch_preserved": true
     },
     "guitar-left-a.wav": {
       "repo": "karoryfer.black-and-green-guitars",
@@ -19,8 +22,11 @@
       "bytes": 857714,
       "file": "boss/guitar-left-a.mp3",
       "original_sha256": "7809d4f668c48d223b10c78333cd08fa8b9f895990bc77cf2c905d1b2041d7c9",
-      "sha256": "970b5310f07d4e73b91dc340f34a5e625f5ecd474911231dbdbe228f6fe9d9b8",
-      "processing": "atrim=duration=6.2,volume=7.100dB,afade=t=out:st=5.950:d=0.25"
+      "sha256": "add72b4f3746e0fab2c4d0dd40b970f87d384964c15f3ef4bfe82f4c803d543e",
+      "processing": "rubberband=tempo=0.125:pitch=1:transients=smooth:detector=soft:window=long:smoothing=on:pitchq=quality,acompressor=threshold=0.06:ratio=3:attack=80:release=1600:makeup=1.5,atrim=duration=36,afade=t=in:st=0:d=0.6,afade=t=out:st=35:d=1,volume=3.97745359",
+      "duration_seconds": 36.0,
+      "time_stretch": 8,
+      "pitch_preserved": true
     },
     "guitar-right-e.wav": {
       "repo": "karoryfer.black-and-green-guitars",
@@ -29,8 +35,11 @@
       "bytes": 739970,
       "file": "boss/guitar-right-e.mp3",
       "original_sha256": "8e9b19298e559a6c1644faf3551c461c3f90f5a47ae94f14ba348c7ec478ddf5",
-      "sha256": "1cf29f6c19545df2fc07508e130c809178924044a6426bc734fb2f3fb11fa143",
-      "processing": "atrim=duration=5.5,volume=-0.700dB,afade=t=out:st=5.250:d=0.25"
+      "sha256": "6501cca4e91452ae453cefc3141a4d6491e4c9bcc81d9c733fe9d9626b2d6c3a",
+      "processing": "rubberband=tempo=0.125:pitch=1:transients=smooth:detector=soft:window=long:smoothing=on:pitchq=quality,acompressor=threshold=0.06:ratio=3:attack=80:release=1600:makeup=1.5,atrim=duration=36,afade=t=in:st=0:d=0.6,afade=t=out:st=35:d=1,volume=3.90256810",
+      "duration_seconds": 36.0,
+      "time_stretch": 8,
+      "pitch_preserved": true
     },
     "guitar-right-a.wav": {
       "repo": "karoryfer.black-and-green-guitars",
@@ -39,8 +48,11 @@
       "bytes": 646448,
       "file": "boss/guitar-right-a.mp3",
       "original_sha256": "3fe4ac4c0c488480cf9bbd6ad07c328c7e82683e145998397678539ea4b95ee7",
-      "sha256": "6c6a6af8b36ea0676a3ace08936a752d5867b97e2d4cce1dbcb2294c3b889878",
-      "processing": "atrim=duration=4.8,volume=1.300dB,afade=t=out:st=4.550:d=0.25"
+      "sha256": "3608fe78c95ddf2c1f9aa280019d5fdb2be1a5fac96e932f95ab9f5ff8fd368b",
+      "processing": "rubberband=tempo=0.125:pitch=1:transients=smooth:detector=soft:window=long:smoothing=on:pitchq=quality,acompressor=threshold=0.06:ratio=3:attack=80:release=1600:makeup=1.5,atrim=duration=36,afade=t=in:st=0:d=0.6,afade=t=out:st=35:d=1,volume=3.82230800",
+      "duration_seconds": 36.0,
+      "time_stretch": 8,
+      "pitch_preserved": true
     },
     "bass-e.wav": {
       "repo": "karoryfer.black-and-blue-basses",
@@ -49,8 +61,11 @@
       "bytes": 661580,
       "file": "boss/bass-e.mp3",
       "original_sha256": "5546aeae5697f721422aae2a9badbd9a8ce2f2fb724003c4c2ff509a1c35e602",
-      "sha256": "2388841d307cfc573b4a4ab8a5d02176215a5e7dd5611d919b7fcd4c04ee6135",
-      "processing": "atrim=duration=5.0,volume=-1.100dB,afade=t=out:st=4.750:d=0.25"
+      "sha256": "4b8d004e728a9209131a34b7aae2a79f0e0b1bd5b8fa2f123d8fc2388053cb77",
+      "processing": "rubberband=tempo=0.125:pitch=1:transients=smooth:detector=soft:window=long:smoothing=on:pitchq=quality,acompressor=threshold=0.06:ratio=3:attack=80:release=1600:makeup=1.5,atrim=duration=36,afade=t=in:st=0:d=0.6,afade=t=out:st=35:d=1,volume=3.20710921",
+      "duration_seconds": 36.0,
+      "time_stretch": 8,
+      "pitch_preserved": true
     },
     "kick.flac": {
       "repo": "karoryfer.big-rusty-drums",
