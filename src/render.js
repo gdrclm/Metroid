@@ -3,6 +3,9 @@ import { drawAtmosphere, drawAtmosphereDebug } from "./atmosphere-render.js";
 import { clamp, conditionMet } from "./core.js";
 import { attackBox } from "./physics.js";
 import { signText } from "./tutorial.js";
+import { drawGuide } from "./guide/render.js";
+import { drawPierExpansion } from "./pier-expansion-render.js";
+import { drawStationExpansion } from "./station-expansion-render.js";
 
 const TAU = Math.PI * 2;
 function rng(seed) {
@@ -312,11 +315,40 @@ export class Renderer {
       t = game.time,
       menu = game.mode === "title";
     const { w: viewW, h: viewH } = game.viewport;
+    const d = game.guide;
+    const inspection =
+      game.mode === "tactical"
+        ? [
+            game.time,
+            viewW,
+            viewH,
+            game.camera.x,
+            game.camera.y,
+            d.generation,
+            d.worldRevision,
+            d.commands.revision,
+            d.pointer?.x,
+            d.pointer?.y,
+            d.selectedTool,
+            game.player.x,
+            game.player.y,
+            d.state.needs.energy,
+          ].join(":")
+        : null;
+    if (
+      inspection &&
+      inspection === this.inspectionKey &&
+      d.forecast === this.inspectionForecast
+    )
+      return;
+    this.inspectionKey = inspection;
+    this.inspectionForecast = d?.forecast;
     if (this.canvas.width !== viewW || this.canvas.height !== viewH) {
       this.canvas.width = viewW;
       this.canvas.height = viewH;
     }
     c.clearRect(0, 0, viewW, viewH);
+    c.filter = "none";
     c.drawImage(this.background(room), 0, 0, viewW, viewH);
     const camera = game.camera;
     let sx = 0,
@@ -332,6 +364,8 @@ export class Renderer {
     c.scale(room.worldBounds.w / 1280, 1);
     this.roomDecor(c, room, t, game);
     c.restore();
+    drawPierExpansion(c, game);
+    drawStationExpansion(c, game);
     for (const s of game.surfaces) {
       if (
         game.debug.atmospherePreview &&
@@ -341,7 +375,7 @@ export class Renderer {
         continue;
       this.surface(c, s, room, t);
     }
-    if (!menu)
+    if (!menu && !game.guide.enabled)
       for (const sign of room.tutorialSigns || []) {
         if (game.progress.hints.includes("training." + sign.action)) continue;
         c.save();
@@ -429,6 +463,17 @@ export class Renderer {
     drawParticles(c, game, "front");
     if (game.debug.collisions) this.debug(c, game);
     drawAtmosphereDebug(c, game);
+    c.restore();
+    // Desaturate the completed world once. Filtering every primitive makes
+    // tactical inspection needlessly expensive on software Canvas renderers.
+    if (game.mode === "tactical") {
+      c.filter = "saturate(0.2)";
+      c.drawImage(this.canvas, 0, 0);
+    }
+    c.filter = "none";
+    c.save();
+    c.translate(-camera.x + sx, -camera.y + sy);
+    drawGuide(c, game);
     c.restore();
     const vignette = c.createRadialGradient(
       viewW / 2,
@@ -840,20 +885,36 @@ export class Renderer {
         }
       }
       if (style === "overlook") {
-        // Three deliberately different horizons: hanging gardens, furnaces, drowned archive.
+        // Act I ends with a view of gardens, pumps and the bell district.
         for (let i = 0; i < 5; i++) {
           const x = 80 + i * 38;
           ellipse(c, x, 330 + Math.sin(i) * 15, 35, 23, "#638b6b80");
           line(c, x, 343, x - 12, 415 + i * 8, "#6b927660", 3);
         }
-        glow(c, 1170, 390, 160, "#dd9d65", 0.17);
+        glow(c, 1170, 390, 160, "#a7b6a2", 0.1);
         for (let i = 0; i < 3; i++) {
-          rect(c, 1080 + i * 54, 310 - i * 40, 24, 230, "#284047");
-          rect(c, 1084 + i * 54, 315 - i * 40, 16, 5, "#d69f6d80");
+          const x = 1060 + i * 65,
+            y = 300 - i * 40;
+          rect(c, x, y, 44, 240, "#284047");
+          path(
+            c,
+            [
+              [x - 7, y],
+              [x + 22, y - 38],
+              [x + 51, y],
+            ],
+            "#304b4d",
+          );
+          rect(c, x + 11, y + 18, 22, 34, "#102a34");
+          ellipse(c, x + 22, y + 44, 8, 7, "#8b987967");
         }
-        glow(c, 790, 570, 100, "#82bbc5", 0.17);
-        for (let i = 0; i < 4; i++)
-          rect(c, 730 + i * 38, 575, 8, 24, "#8bbac24d");
+        glow(c, 790, 570, 100, "#82bbc5", 0.12);
+        for (let i = 0; i < 4; i++) {
+          const x = 700 + i * 52;
+          line(c, x, 610, x, 500 + i * 10, "#4f747c80", 12);
+          line(c, x, 500 + i * 10, x + 42, 500 + i * 10, "#678d8e70", 10);
+          ellipse(c, x + 14, 556 + i * 4, 17, 17, "#345d66");
+        }
         for (let x = 300; x < 1000; x += 65) {
           rect(c, x, 470, 5, 60, "#2e4949");
           line(c, x, 470, x + 65, 470, "#71816c", 2);
@@ -1001,6 +1062,45 @@ export class Renderer {
   }
   entity(c, e, game, t) {
     const active = e.flag && game.flags.includes(e.flag);
+    if (e.type === "care") {
+      const coffee = e.action === "coffee",
+        basket = e.action === "donate";
+      rect(c, e.x - 24, e.y - 29, 48, 28, basket ? "#756849" : "#3c4b43");
+      if (coffee) {
+        ellipse(c, e.x, e.y - 34, 14, 9, "#baad82");
+        line(c, e.x + 12, e.y - 34, e.x + 23, e.y - 28, "#c1b185", 3);
+      } else if (basket) {
+        for (let i = 0; i < 4; i++)
+          line(
+            c,
+            e.x - 21,
+            e.y - 25 + i * 6,
+            e.x + 21,
+            e.y - 25 + i * 6,
+            "#b5a16b",
+            2,
+          );
+        if (active) ellipse(c, e.x, e.y - 30, 13, 5, "#cfbd85");
+      } else {
+        ellipse(c, e.x, e.y - 30, 23, 6, "#958a64");
+        glow(c, e.x, e.y - 8, 70, "#e0a35a", 0.16);
+      }
+      return;
+    }
+    if (e.type === "inspect") {
+      rect(c, e.x - 11, e.y - 30, 22, 27, "#b5ad88");
+      for (let i = 0; i < 3; i++)
+        line(
+          c,
+          e.x - 7,
+          e.y - 23 + i * 6,
+          e.x + 7,
+          e.y - 23 + i * 6,
+          "#56635b",
+          1,
+        );
+      return;
+    }
     if (e.type === "retry") {
       lamp(c, e.x, e.y - 55, 1.2, t);
       line(c, e.x, e.y - 65, e.x, e.y, "#536d60", 4);
@@ -1261,6 +1361,7 @@ export class Renderer {
     c.save();
     c.translate(p.x + p.w / 2, p.y + p.h);
     c.scale(p.facing, 1);
+    if (p.rollTime > 0) c.scale(1, 0.62);
     const run = p.state === "run" ? Math.sin(t * 18) : 0,
       air = ["rise", "fall", "dash", "wall"].includes(p.state),
       lean = p.state === "dash" ? 11 : p.state === "run" ? 3 : 0;
@@ -1380,6 +1481,7 @@ export class Renderer {
     c.save();
     c.translate(e.x + e.w / 2, e.y + e.h);
     c.scale(e.facing, 1);
+    if (e.kneelTime > 0) c.scale(1, e.h / e.standingHeight);
     const windup = e.state === "windup",
       keeper = e.enemyType === "keeper";
     if (windup) glow(c, 0, -30, 85, "#d59b69", 0.23);

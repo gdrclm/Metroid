@@ -2,6 +2,649 @@
   font-family: LocalSerif;
   src: local("Georgia");
 }
+#guide-condition {
+  position: absolute;
+  z-index: 4;
+  top: 104px;
+  left: 24px;
+  right: 180px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  pointer-events: none;
+}
+#guide-condition span {
+  padding: 5px 8px;
+  border: 1px solid #9dafa030;
+  border-radius: 2px;
+  background: #102027e6;
+  color: #b8c5b5;
+  font-size: 10px;
+}
+#guide-condition [data-severity="danger"] {
+  color: #e1aa90;
+  border-color: #c78d694a;
+}
+#guide-condition [data-severity="warning"] {
+  color: #dfc18b;
+}
+#guide-condition [data-severity="good"] {
+  color: #a7cbb2;
+}
+@media (pointer: coarse) and (orientation: portrait) {
+  #guide-condition {
+    top: 108px;
+    left: 16px;
+    right: 16px;
+  }
+  #guide-condition span {
+    font-size: 9px;
+    padding: 4px 6px;
+  }
+}
+@media (pointer: coarse) and (orientation: landscape) {
+  #guide-condition {
+    top: 58px;
+    left: 16px;
+    right: 150px;
+  }
+}
+
+.journal-screen {
+  background: #101d23f7;
+  padding: 32px clamp(18px, 5vw, 80px) 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.journal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.journal-header h2 {
+  margin: 8px 0 0;
+  font:
+    normal 36px Georgia,
+    serif;
+  color: #e5d3aa;
+}
+.journal-header .close-button {
+  position: static;
+  min-height: 44px;
+  white-space: nowrap;
+}
+.journal-goal {
+  border-left: 2px solid #b7a47b;
+  padding-left: 16px;
+}
+.journal-goal p {
+  font-size: 13px;
+  margin: 5px 0;
+  color: #c2c7ba;
+}
+.journal-tabs {
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid #c2ba9e30;
+  flex-shrink: 0;
+}
+.journal-tabs button {
+  padding: 12px 18px;
+  min-height: 44px;
+  color: #9daea8;
+  border-bottom: 2px solid transparent;
+}
+.journal-tabs [aria-pressed="true"] {
+  color: #e4c993;
+  border-color: #d1b980;
+}
+.journal-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 28%) minmax(0, 1fr);
+  gap: 32px;
+  min-height: 0;
+  flex: 1;
+}
+#journal-pages {
+  overflow-y: auto;
+  padding-right: 10px;
+}
+#journal-pages button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px 12px;
+  min-height: 58px;
+  border-bottom: 1px solid #a9b6a618;
+  border-left: 2px solid transparent;
+}
+#journal-pages button[aria-current="true"] {
+  background: #b8a77c13;
+  border-left-color: #d1b980;
+}
+#journal-pages span {
+  display: block;
+  font-size: 13px;
+  color: #d3cdb9;
+  line-height: 1.35;
+}
+#journal-pages small {
+  display: block;
+  margin-top: 6px;
+  font-size: 10px;
+  color: #94a398;
+}
+#journal-page {
+  overflow-y: auto;
+  padding: 16px min(4vw, 60px) 16px 0;
+  min-width: 0;
+}
+#journal-title {
+  font:
+    normal clamp(24px, 3vw, 40px) Georgia,
+    serif;
+  margin: 14px 0 24px;
+  color: #e8d6ad;
+}
+#journal-text p {
+  max-width: 670px;
+  color: #bec7bc;
+  font:
+    normal clamp(16px, 1.6vw, 20px)/1.85 Georgia,
+    serif;
+  margin: 0 0 22px;
+}
+#journal-note {
+  color: #99a493;
+  font-size: 11px;
+  margin-top: 32px;
+  border-top: 1px solid #c2ba9e30;
+  padding-top: 14px;
+}
+.journal-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: #93a397;
+  font-size: 10px;
+}
+.journal-entry {
+  min-height: 38px;
+}
+#safehouse-screen .panel,
+#complete-screen .panel {
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+#completion-title {
+  white-space: pre-line;
+}
+#completion-stats {
+  line-height: 1.7;
+}
+#dialogue-text {
+  white-space: pre-line;
+}
+@media (max-width: 600px) {
+  .journal-screen {
+    padding: max(16px, env(safe-area-inset-top)) 16px
+      max(12px, env(safe-area-inset-bottom));
+    gap: 12px;
+  }
+  .journal-header {
+    gap: 12px;
+  }
+  .journal-header h2 {
+    font-size: 25px;
+  }
+  .journal-header .eyebrow {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .journal-header .close-button {
+    font-size: 11px;
+    padding: 4px;
+  }
+  .journal-header kbd {
+    display: none;
+  }
+  .journal-goal p {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .journal-tabs {
+    gap: 0;
+    justify-content: space-between;
+  }
+  .journal-tabs button {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+  .journal-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 90px minmax(0, 1fr);
+    gap: 12px;
+  }
+  #journal-pages {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 0 5px;
+    gap: 5px;
+  }
+  #journal-pages button {
+    width: 150px;
+    flex-shrink: 0;
+    padding: 8px;
+  }
+  #journal-pages span {
+    font-size: 12px;
+  }
+  #journal-page {
+    padding: 8px 8px 8px 2px;
+  }
+  #journal-title {
+    margin: 12px 0 18px;
+  }
+  #journal-text p {
+    font-size: 17px;
+    line-height: 1.75;
+  }
+  .journal-footer {
+    font-size: 9px;
+    gap: 10px;
+  }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .journal-screen {
+    padding: 10px 20px;
+    gap: 8px;
+  }
+  .journal-header h2 {
+    font-size: 24px;
+    margin-top: 2px;
+  }
+  .journal-header .eyebrow {
+    font-size: 8px;
+  }
+  .journal-goal {
+    display: none;
+  }
+  .journal-tabs button {
+    padding: 8px 16px;
+    min-height: 34px;
+  }
+  .journal-layout {
+    gap: 20px;
+  }
+  #journal-page {
+    padding-top: 4px;
+  }
+  #journal-title {
+    font-size: 25px;
+    margin: 8px 0 12px;
+  }
+  #journal-text p {
+    font-size: 16px;
+  }
+}
+
+/* The Guide's dock takes its own space; the world remains a clickable canvas. */
+#app.guide-active {
+  --guide-height: 244px;
+}
+#app.guide-active #game {
+  top: 0;
+  bottom: auto;
+  height: calc(100% - var(--guide-height));
+  touch-action: none;
+}
+#app.guide-active #objective {
+  bottom: calc(var(--guide-height) + 18px);
+  max-width: 290px;
+  pointer-events: none;
+}
+#app.guide-active #interaction {
+  bottom: calc(var(--guide-height) + 22px);
+}
+#app.guide-active #abilities {
+  bottom: calc(var(--guide-height) + 30px);
+}
+#app.guide-active #toast {
+  top: auto;
+  bottom: calc(var(--guide-height) + 60px);
+  pointer-events: none;
+}
+#app.guide-active #save-status {
+  top: auto;
+  bottom: calc(var(--guide-height) + 8px);
+}
+#guide-dock {
+  position: absolute;
+  z-index: 5;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--guide-height);
+  padding: 8px 20px 10px;
+  background: #102027f5;
+  border-top: 1px solid #c8b78a55;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.guide-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+}
+.guide-heading > span {
+  font-size: 11px;
+  color: #b5c0ba;
+  margin-right: auto;
+}
+.guide-time {
+  background: #c5ad79;
+  color: #102027;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 3px;
+  min-width: 185px;
+}
+.guide-direction {
+  display: flex;
+  gap: 3px;
+}
+.guide-direction button {
+  width: 40px;
+  height: 32px;
+  border: 1px solid #8d9b9540;
+  border-radius: 3px;
+}
+#guide-dock [aria-pressed="true"] {
+  background: #c5ad7930;
+  border-color: #c5ad79;
+  color: #ecd5a5;
+}
+#guide-menu {
+  font-size: 11px;
+  padding: 8px;
+}
+.guide-needs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+}
+.guide-needs label {
+  color: #9faeaa;
+  font-size: 10px;
+}
+.guide-needs output {
+  float: right;
+  color: #e3d8ba;
+  font-variant-numeric: tabular-nums;
+}
+.guide-needs meter {
+  display: block;
+  width: 100%;
+  height: 9px;
+  margin-top: 2px;
+}
+.guide-needs meter::-webkit-meter-bar {
+  background: #07161c;
+  border: 0;
+  border-radius: 1px;
+}
+.guide-needs meter::-webkit-meter-optimum-value {
+  background: #91b2a1;
+}
+#guide-stress::-webkit-meter-optimum-value,
+#guide-corruption::-webkit-meter-optimum-value {
+  background: #b48a70;
+}
+#guide-focus::-webkit-meter-optimum-value {
+  background: #b2a0bf;
+}
+#guide-queue {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+#guide-queue li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  background: #1e343a;
+  border-left: 2px solid #bba778;
+  padding-left: 9px;
+  font-size: 11px;
+}
+#guide-queue li.empty {
+  border-color: #81928a40;
+  color: #85958e;
+}
+#guide-queue button {
+  font-size: 23px;
+  width: 34px;
+  align-self: stretch;
+}
+.guide-palette {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+  min-height: 33px;
+  scrollbar-width: thin;
+  flex-shrink: 0;
+}
+.guide-palette > button {
+  white-space: nowrap;
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid #b9c7b735;
+  border-radius: 3px;
+  font-size: 11px;
+}
+.guide-palette > button:hover {
+  border-color: #c5ad79;
+}
+.guide-tools > button {
+  color: #c6b5d1;
+}
+.guide-limb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  margin-left: auto;
+  padding-left: 8px;
+  white-space: nowrap;
+}
+.guide-limb select {
+  font-size: 11px;
+  background: #13272d;
+  padding: 5px;
+  border: 1px solid #b9c7b735;
+}
+.guide-message {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #b3bdb4;
+  min-height: 15px;
+}
+#guide-oracle {
+  text-align: right;
+  color: #9acaad;
+}
+#guide-oracle[data-risk="1"] {
+  color: #dfb86f;
+}
+#guide-oracle[data-risk="2"] {
+  color: #ec837d;
+}
+.safehouse-panel {
+  max-width: 620px;
+  width: min(620px, 92vw);
+}
+.safehouse-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 24px 0;
+}
+.safehouse-actions button {
+  padding: 16px;
+  text-align: left;
+  border: 1px solid #bba77850;
+  border-radius: 3px;
+  background: #c5ad7909;
+}
+.safehouse-actions strong {
+  display: block;
+  font:
+    normal 23px Georgia,
+    serif;
+  margin-bottom: 8px;
+  color: #dfc99c;
+}
+.safehouse-actions span {
+  font-size: 11px;
+  color: #aab7ae;
+}
+#safehouse-message {
+  min-height: 2em;
+  color: #d8bd88;
+}
+#safehouse-stats {
+  font-size: 12px;
+  line-height: 1.8;
+}
+@media (max-width: 700px) {
+  #app.guide-active {
+    --guide-height: 282px;
+  }
+  #guide-dock {
+    padding: 8px 9px max(8px, env(safe-area-inset-bottom));
+    gap: 7px;
+  }
+  .guide-heading {
+    display: grid;
+    grid-template-columns: minmax(145px, 1fr) auto auto;
+    gap: 5px;
+  }
+  .guide-heading > span {
+    font-size: 9px;
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+  .guide-time {
+    min-width: 145px;
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+  .guide-direction button {
+    width: 32px;
+  }
+  #guide-menu {
+    padding: 8px 4px;
+    font-size: 10px;
+  }
+  .guide-needs {
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .guide-needs label {
+    font-size: 9px;
+  }
+  #guide-queue {
+    gap: 5px;
+  }
+  #guide-queue li {
+    padding-left: 5px;
+    font-size: 9px;
+  }
+  .guide-palette > button {
+    min-height: 36px;
+    padding: 6px 10px;
+  }
+  .guide-message {
+    display: block;
+    font-size: 9px;
+  }
+  #guide-oracle {
+    display: block;
+    text-align: left;
+  }
+  #app.guide-active #objective {
+    display: none;
+  }
+  .safehouse-actions {
+    margin: 14px 0;
+  }
+}
+@media (pointer: coarse) and (orientation: landscape) {
+  #app.guide-active {
+    --guide-height: 176px;
+  }
+  #guide-dock {
+    gap: 3px;
+    padding: 4px 10px;
+  }
+  .guide-heading {
+    display: flex;
+    min-height: 28px;
+  }
+  .guide-time {
+    padding: 6px 12px;
+  }
+  .guide-needs {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .guide-palette {
+    min-height: 28px;
+  }
+  .guide-palette > button {
+    min-height: 28px;
+    padding: 4px 10px;
+  }
+  #guide-queue li {
+    min-height: 25px;
+  }
+  .guide-message {
+    display: flex;
+  }
+  .safehouse-panel {
+    padding: 16px 24px;
+  }
+  .safehouse-panel h2 {
+    font-size: 26px;
+    margin: 8px 0;
+  }
+  .safehouse-panel > p {
+    font-size: 11px;
+    margin: 8px 0;
+  }
+  .safehouse-actions {
+    margin: 8px 0;
+  }
+  .safehouse-actions button {
+    padding: 8px;
+  }
+  .safehouse-actions strong {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+}
 * {
   box-sizing: border-box;
 }

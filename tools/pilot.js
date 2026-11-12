@@ -397,7 +397,13 @@ export class JourneyPilot {
       );
     }
     if (task.kind === "use") {
-      const target = g.room.entities.find((e) => e.id === task.id);
+      if (g.guide.state.collectedSupplies.includes(task.id)) {
+        this.advance(g);
+        return this.action(g);
+      }
+      const target = [...g.room.entities, ...g.guide.supplies.available].find(
+        (e) => e.id === task.id,
+      );
       if (!target) throw Error("Missing pilot target " + task.id);
       const complete = task.flag
         ? g.flags.includes(task.flag)
@@ -405,7 +411,11 @@ export class JourneyPilot {
           ? g.progress.lastRest.roomId === task.room && g.health >= 5
           : target.type === "retry"
             ? this.state.used
-            : false;
+            : target.type === "supply"
+              ? g.guide.state.collectedSupplies.includes(target.id)
+              : ["inspect", "npc", "care"].includes(target.type)
+                ? g.progress.hints.includes(target.id)
+                : false;
       if (complete) {
         this.advance(g);
         return this.action(g);

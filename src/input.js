@@ -15,9 +15,14 @@ const keys = {
   ShiftRight: "dash",
   KeyK: "dash",
   KeyE: "interact",
+  KeyF: "guard",
+  KeyR: "roll",
+  KeyT: "tactical",
+  KeyC: "drop",
   Enter: "confirm",
   Escape: "pause",
   KeyM: "map",
+  KeyH: "journal",
   Backquote: "debug",
 };
 export class Input {
@@ -31,13 +36,19 @@ export class Input {
     this.edges = new Set();
     this.held = new Set();
     this.device = "keyboard";
+    this.guideMode = false;
     this.onBlur = () => {};
     target.addEventListener("keydown", (e) => {
       if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+      if (e.code === "Tab" && this.guideJournal) {
+        e.preventDefault();
+        if (!e.repeat) this.edges.add("journal");
+        return;
+      }
       if (keys[e.code]) {
         e.preventDefault();
         if (e.repeat) return;
-        if (!this.keys.has(e.code)) this.edges.add(keys[e.code]);
+        if (!this.keys.has(e.code)) this.edges.add(this.action(e.code));
         this.keys.add(e.code);
         this.device = "keyboard";
       }
@@ -85,6 +96,9 @@ export class Input {
       button.addEventListener("lostpointercapture", release);
     });
   }
+  action(code) {
+    return this.guideMode && code === "Space" ? "tactical" : keys[code];
+  }
   poll() {
     this.pad.clear();
     const pad = Array.from(navigator.getGamepads?.() || []).find(Boolean);
@@ -101,6 +115,13 @@ export class Input {
         [3, "interact"],
         [9, "pause"],
         [8, "map"],
+        ...(this.guideMode
+          ? [
+              [6, "tactical"],
+              [4, "guard"],
+              [5, "roll"],
+            ]
+          : []),
       ])
         if (b(i)) this.pad.add(name);
       if (this.pad.size) this.device = "gamepad";
@@ -109,7 +130,7 @@ export class Input {
       if (!this.pad.has(action)) this.blockedPad.delete(action);
     this.held = new Set(
       [...this.keys]
-        .map((k) => keys[k])
+        .map((k) => this.action(k))
         .concat([
           ...this.touch,
           ...[...this.pad].filter((action) => !this.blockedPad.has(action)),

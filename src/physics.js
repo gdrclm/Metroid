@@ -21,6 +21,10 @@ export function createPlayer(spawn, config) {
     invulnerable: 0,
     hurtTime: 0,
     state: "fall",
+    airJumpsLeft: 1,
+    guard: false,
+    rollTime: 0,
+    rollDirection: 1,
     contact: null,
     attackTime: 0,
     attackId: 0,
@@ -129,6 +133,18 @@ export function updatePlayer(
   const previousState = p.state;
   for (const k of ["wallLock", "dropTime", "invulnerable", "hurtTime"])
     p[k] = Math.max(0, p[k] - dt);
+  if (p.rollTime > 0) {
+    p.rollTime = Math.max(0, p.rollTime - dt);
+    p.vx = p.rollDirection * 520;
+    p.vy = Math.min(config.maxFallSpeed, p.vy + config.fallGravity * dt);
+    moveBody(p, p.vx * dt, p.vy * dt, surfaces);
+    p.x = clamp(p.x, 0, bounds.w - p.w);
+    p.state = "roll";
+    if (p.y > bounds.h + 100) emit("fallOut");
+    if (surfaces.some((s) => s.kind === "hazard" && overlaps(p, s)))
+      emit("hazard");
+    return;
+  }
   p.coyote = p.grounded ? config.coyoteTime : Math.max(0, p.coyote - dt);
   p.jumpBuffer = input.pressed("jump")
     ? config.jumpBuffer
@@ -180,6 +196,11 @@ export function updatePlayer(
       p.jumpBuffer = 0;
       if (config.wallRestoresDash) p.dashReady = true;
       emit("wallJump");
+    } else if (abilities.air_jump && p.airJumpsLeft > 0) {
+      p.vy = -config.jumpSpeed * 0.92;
+      p.airJumpsLeft--;
+      p.jumpBuffer = 0;
+      emit("airJump");
     }
   }
   if (
@@ -250,6 +271,7 @@ export function updatePlayer(
     p.vy = Math.max(0, p.vy);
   }
   if (p.grounded) {
+    p.airJumpsLeft = 1;
     if (!p.dashReady) emit("dashRecharge");
     p.dashReady = true;
     if (!wasGrounded) emit("land");

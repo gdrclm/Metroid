@@ -1,0 +1,65 @@
+{
+  "sourceSha256": "c10ecdb3f7443d52ec095533c7d3f1a9d0531fcea387832572e99909c97307d2",
+  "checks": {
+    "pause_and_particles": {
+      "paused": true,
+      "worldFrozen": true,
+      "particlesFrozen": false
+    },
+    "queue_limit_and_removal": {
+      "accepted": 5,
+      "remaining": 4,
+      "badges": 4
+    },
+    "double_jump_and_recharge": {
+      "first": {
+        "vy": -8.6,
+        "charge": 1
+      },
+      "second": {
+        "vy": -7.6,
+        "charge": 0
+      },
+      "landed": true,
+      "recharged": true
+    },
+    "live_queue_and_dash_direction": {
+      "immediatelyActive": "dash",
+      "facing": -1,
+      "vx": -7.5,
+      "movedLeft": true
+    },
+    "idle_behavior": {
+      "movesWithoutCommands": true,
+      "vx": 0.8
+    },
+    "attack_behind_hero": {
+      "killedEnemyBehind": true
+    },
+    "prediction_ignores_destruction": {
+      "predictedEndpoint": {
+        "x": 227.9,
+        "y": 279.9
+      },
+      "actualX": 255.4,
+      "actualFeet": 279.9,
+      "blockBefore": 2,
+      "blockAfter": 0,
+      "completed": true
+    },
+    "cancelling_dash_keeps_physics": {
+      "afterCancel": {
+        "isDashing": true,
+        "command": "move"
+      },
+      "afterDash": {
+        "command": null,
+        "x": 215.8
+      }
+    },
+    "blocked_move_has_no_timeout": {
+      "stillRunning": true,
+      "x": 215.9
+    }
+  }
+}

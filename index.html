@@ -91,19 +91,25 @@
             У города погасли огни.<br />Но где-то наверху ещё ждут рассвет.
           </p>
           <div class="title-actions">
-            <button id="play" class="primary">
-              Начать путешествие <span>⟶</span></button
+            <button id="guide-play" class="primary">
+              Стать Проводником <span>⟶</span>
+            </button>
+            <button id="guide-new" class="text-button" hidden>
+              Заново Проводником
+            </button>
+            <button id="play" class="secondary">
+              Прямое управление <span>⟶</span></button
             ><button id="new-game" class="text-button" hidden>
               Начать заново</button
             ><button id="title-settings" class="text-button">Настройки</button>
           </div>
           <div class="title-note">
-            <span>◈</span> ИССЛЕДУЙТЕ. ВОЗВРАЩАЙТЕСЬ. НАХОДИТЕ ПУТЬ.
+            <span>◈</span> АКТ I · ВЕДИТЕ ГЕРОЯ СКВОЗЬ СПЯЩИЙ ГОРОД.
           </div>
         </div>
         <div class="title-bottom">
           <span>НИЖНИЙ ПРИЧАЛ · ВОКЗАЛ · РАБОЧИЕ КВАРТАЛЫ</span
-          ><span>01 — 22 <i> / </i> ИГРОВОЙ СРЕЗ</span>
+          ><span id="world-count">АКТ I · 43 / 66 КОМНАТ</span>
         </div>
       </section>
 
@@ -268,9 +274,9 @@
       </section>
       <section id="complete-screen" class="screen modal-screen" hidden>
         <div class="panel completion">
-          <span class="eyebrow">ПЕРВЫЙ СВЕТ</span>
-          <h2>Город больше,<br />чем казалось.</h2>
-          <p>
+          <span id="completion-eyebrow" class="eyebrow">ПЕРВЫЙ СВЕТ</span>
+          <h2 id="completion-title">Город больше,<br />чем казалось.</h2>
+          <p id="completion-text">
             За крышами — сады, литейные и затопленный архив.<br />Путешествие
             только начинается.
           </p>

@@ -1,0 +1,3 @@
+# Uploaded source references retain their original bytes and CRLF line endings.
+docs/reference/GUIDE-FEATURES.en.md -text -whitespace
+docs/reference/hollow-tactics-v4.html -text -whitespace

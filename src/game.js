@@ -6,6 +6,7 @@ import {
   attackBox,
   lineBlocked,
   safeStandingPoint,
+  supportsAt,
 } from "./physics.js";
 import {
   accessibleInteraction,
@@ -17,6 +18,9 @@ import { record, newStats } from "./telemetry.js";
 import { Atmosphere } from "./atmosphere.js";
 import { createEnemy, updateEnemy } from "./enemies.js";
 import { setFlag, maxHealth, newProgress, fragmentCount } from "./save.js";
+import { HeroDirector } from "./hero/director.js";
+import { limbBox } from "./hero/commands.js";
+import { useCareStation } from "./hero/care.js";
 
 export class Game {
   constructor(world, config, store, events = {}) {
@@ -45,6 +49,7 @@ export class Game {
     this.mechanisms = new Map();
     this.safeHistory = [];
     this.atmosphere = new Atmosphere(this);
+    this.guide = new HeroDirector(this);
     this.loadRoom("P01", "start", false);
   }
   get flags() {
@@ -83,12 +88,16 @@ export class Game {
           kind: "solid",
           grippable: false,
         });
-    return surfaces;
+    return this.guide?.enabled
+      ? [...surfaces, ...this.guide.tools.surfaces]
+      : surfaces;
   }
   get abilities() {
     return {
       dash: this.flags.includes("ability.dash"),
       wall_grip: this.flags.includes("ability.wall_grip"),
+      air_jump:
+        !!this.guide?.enabled && this.flags.includes("ability.wall_grip"),
     };
   }
   emit(name, ...args) {
@@ -100,16 +109,18 @@ export class Game {
   flag(flag) {
     if (!setFlag(this.progress, flag)) return false;
     this.atmosphere?.trigger("flag", { flag });
+    this.guide?.story.sync(true);
     this.save();
     this.emit("progress", flag);
     return true;
   }
-  start(fresh = false) {
+  start(fresh = false, guideMode = this.progress.guide?.enabled || false) {
     if (fresh) {
       this.progress = newProgress();
       this.atmosphere.active.clear();
       this.save();
     }
+    this.progress.guide.enabled = guideMode;
     let { roomId, spawnPointId } =
       this.progress.retryCheckpoint &&
       !this.flags.includes("boss.courtyard_keeper")
@@ -143,7 +154,9 @@ export class Game {
       w: Math.min(desired.w, room.worldBounds.w),
       h: Math.min(desired.h, room.worldBounds.h),
     };
+    const firstLoad = !this.player;
     this.player = createPlayer(spawn, this.config);
+    if (!firstLoad) this.guide?.roomEntered();
     this.player.invulnerable = 0.6;
     this.enemies = room.entities
       .filter(
@@ -172,6 +185,8 @@ export class Game {
       ]),
     );
     this.surfaces = this.currentSurfaces();
+    if (this.guide.enabled)
+      this.player.grounded = supportsAt(this.player, this.surfaces).length > 0;
     this.atmosphere.load(room, record);
     if (record && room.arena && !this.flags.includes("boss.courtyard_keeper"))
       this.progress.retryCheckpoint = {
@@ -181,6 +196,7 @@ export class Game {
     if (record) {
       if (id !== "LAB" && !this.progress.visited.includes(id))
         this.progress.visited.push(id);
+      this.guide.story.sync();
       this.save();
       this.emit("room", room);
     }
@@ -257,7 +273,10 @@ export class Game {
       return;
     }
     this.atmosphere.trigger("interact", { entity: target.id });
-    if (target.type === "ability") {
+    if (target.type === "supply") {
+      const result = this.guide.supplies.collect(target.id);
+      if (!result.ok) this.emit("toast", result.reason);
+    } else if (target.type === "ability") {
       if (this.flag(target.flag)) {
         this.demonstration = {
           type: target.reward,
@@ -292,26 +311,20 @@ export class Game {
       this.emit("sound", "rest");
       this.emit("toast", "Лампа зажжена. После поражения вы вернётесь сюда.");
     } else if (target.type === "rest") {
-      this.defeatedOrdinary.clear();
-      this.progress.retryCheckpoint = null;
-      const spawnId = "rest." + target.id;
-      this.room.spawnPoints[spawnId] = {
-        x: target.x - 12,
-        y: target.y - this.config.height,
-        safeRadius: 28,
-      };
-      this.progress.lastRest = {
-        roomId: this.room.roomId,
-        spawnPointId: spawnId,
-      };
-      if (!this.progress.rests.includes(target.id))
-        this.progress.rests.push(target.id);
-      this.health = maxHealth(this.progress);
-      this.loadRoom(this.room.roomId, spawnId, false);
-      this.save();
-      this.emit("sound", "rest");
-      this.emit("toast", "Здоровье восстановлено · место отдыха сохранено");
-      this.burst(target.x, target.y - 20, 22, "#e0b36b");
+      if (this.guide.enabled) this.guide.openSafehouse(target);
+      else this.restAt(target);
+    } else if (target.type === "care") {
+      if (this.guide.enabled) {
+        const result = useCareStation(this, target.id);
+        if (!result.ok) this.emit("toast", result.reason);
+        return result;
+      } else {
+        this.emit(
+          "dialogue",
+          target.title,
+          "У плиты ещё тепло. Кто-то оставил общую корзину, чтобы жители могли делиться едой.",
+        );
+      }
     } else if (target.type === "lever" || target.type === "repair") {
       if (this.flag(target.flag)) {
         this.emit("sound", "lever");
@@ -319,14 +332,21 @@ export class Game {
         this.shake = target.flag.includes("bridge") ? 0.4 : 0.2;
         this.burst(target.x, target.y - 40, 20, "#d4b47b");
       } else this.emit("toast", "Механизм уже работает.");
-    } else if (target.type === "npc" || target.type === "barrier") {
+    } else if (["npc", "barrier", "inspect"].includes(target.type)) {
       if (
         target.giftFlag &&
         conditionMet(target.giftRequires, this.flags) &&
         this.flag(target.giftFlag)
       )
         this.emit("sound", "pickup");
-      let text = target.text;
+      let text =
+        this.progress.hints.includes(target.id) && target.repeatText
+          ? target.repeatText
+          : target.text;
+      const variant = target.dialogueVariants?.find((v) =>
+        conditionMet(v.condition, this.flags),
+      );
+      if (variant) text = variant.text;
       if (target.id === "npc.clockmaker") {
         if (!this.flags.includes("mechanism.clockwork"))
           text = "Поверни маховик на верстаке. Я попробую запустить часы.";
@@ -348,19 +368,53 @@ export class Game {
         text = "Ты уже взял осколок. Возвращайся, когда город снова проснётся.";
       if (!this.progress.hints.includes(target.id)) {
         this.progress.hints.push(target.id);
+        this.guide.story.sync(true);
         this.save();
+      }
+      if (this.guide.enabled) {
+        const reaction = (target.reactions || []).find(
+          (r) =>
+            r.need &&
+            Number.isFinite(r.below) &&
+            this.guide.state.needs[r.need] < r.below,
+        );
+        if (reaction) text += "\n\n" + reaction.text;
+        text = this.guide.story.dialogue(target, text);
       }
       this.emit("dialogue", target.title, text);
     } else if (target.type === "ending") {
       if (this.flag(target.flag)) {
         this.emit("sound", "ability");
         this.emit("complete");
-      } else
+      } else if (this.guide.enabled) this.emit("complete");
+      else
         this.emit(
           "toast",
-          "Сады, литейные и архив. Когда-нибудь вы доберётесь и туда.",
+          "Насосные, Висячие сады и Колокольный район. Когда-нибудь вы доберётесь и туда.",
         );
     }
+  }
+  restAt(target) {
+    this.defeatedOrdinary.clear();
+    this.progress.retryCheckpoint = null;
+    const spawnId = "rest." + target.id;
+    this.room.spawnPoints[spawnId] = {
+      x: target.x - 12,
+      y: target.y - this.config.height,
+      safeRadius: 28,
+    };
+    this.progress.lastRest = {
+      roomId: this.room.roomId,
+      spawnPointId: spawnId,
+    };
+    if (!this.progress.rests.includes(target.id))
+      this.progress.rests.push(target.id);
+    this.health = maxHealth(this.progress);
+    this.loadRoom(this.room.roomId, spawnId, false);
+    this.save();
+    this.emit("sound", "rest");
+    this.emit("toast", "Здоровье восстановлено · место отдыха сохранено");
+    this.burst(target.x, target.y - 20, 22, "#e0b36b");
   }
   findNearby() {
     const p = {
@@ -378,6 +432,7 @@ export class Game {
           ),
       ),
       ...this.room.exits,
+      ...this.guide.supplies.available,
     ];
     const rank = (e) =>
       e.type === "ability"
@@ -410,10 +465,23 @@ export class Game {
       this.transition ||
       p.invulnerable > 0 ||
       this.debug.god ||
-      (this.config.dashInvulnerable && p.dashTime > 0)
+      (this.config.dashInvulnerable && p.dashTime > 0) ||
+      (this.guide.enabled && p.rollTime > 0.07 && p.rollTime < 0.3)
     )
       return false;
+    if (
+      this.guide.enabled &&
+      p.guard &&
+      p.facing === -direction &&
+      !["fall", "corruption", "hazard"].includes(cause) &&
+      this.guide.needs.spend(10)
+    ) {
+      p.invulnerable = 0.18;
+      this.emit("sound", "lever");
+      return true;
+    }
     this.health -= this.progress.settings.assist ? amount * 0.5 : amount;
+    this.guide.afterHurt(amount);
     record(this, "damage", { cause, amount });
     p.invulnerable = this.config.hurtInvulnerability;
     p.hurtTime = 0.23;
@@ -450,6 +518,7 @@ export class Game {
         : this.progress.lastRest;
     this.defeatedOrdinary.clear();
     this.loadRoom(roomId, spawnPointId);
+    this.guide.respawned();
     this.player.invulnerable = 1.5;
     this.mode = "playing";
     if (forceRest) this.save();
@@ -515,6 +584,8 @@ export class Game {
 
   update(dt, input) {
     if (this.mode !== "playing") return;
+    if (this.guide.enabled) input = this.guide.beforeStep(dt);
+    if (this.mode !== "playing") return;
     if (
       !["left", "right", "up", "down", "interact"].some(
         (k) => input.down(k) || input.pressed(k),
@@ -522,7 +593,7 @@ export class Game {
     )
       this.blockedExitLatch = null;
     this.time += dt;
-    this.atmosphere.update(dt);
+    if (!this.prediction) this.atmosphere.update(dt);
     this.progress.playTime += dt;
     this.progress.stats || (this.progress.stats = newStats());
     this.progress.stats.roomTime[this.room.roomId] =
@@ -558,6 +629,17 @@ export class Game {
     }
     this.surfaces = this.currentSurfaces();
     const p = this.player;
+    if (
+      this.guide.enabled &&
+      input.pressed("roll") &&
+      p.grounded &&
+      this.guide.needs.spend(22)
+    ) {
+      p.rollTime = 0.34;
+      p.rollDirection = input.down("left") ? -1 : 1;
+      p.facing = p.rollDirection;
+      this.emit("sound", "dash");
+    }
     // A moving support carries its rider before player-controlled movement.
     if (p.grounded && p.support) {
       const s = this.surfaces.find((s) => s.id === p.support.id);
@@ -588,10 +670,20 @@ export class Game {
         input,
         dt,
         this.surfaces,
-        this.config,
+        this.guide.enabled
+          ? {
+              ...this.config,
+              maxSpeed: this.config.maxSpeed * this.guide.needs.stats.speed,
+            }
+          : this.config,
         this.abilities,
         this.room.worldBounds,
         (event) => {
+          if (
+            this.guide.enabled &&
+            ["jump", "wallJump", "airJump", "dash"].includes(event)
+          )
+            this.guide.needs.spend(event === "dash" ? 10 : 4);
           if (event === "fallOut" || event === "hazard") this.localReturn();
           else {
             const learned = {
@@ -641,7 +733,12 @@ export class Game {
     }
     for (const t of p.trail) t.life -= dt;
     p.trail = p.trail.filter((t) => t.life > 0);
-    if (input.pressed("attack") && p.attackTime <= 0 && p.hurtTime <= 0) {
+    if (
+      input.pressed("attack") &&
+      p.attackTime <= 0 &&
+      p.hurtTime <= 0 &&
+      (!this.guide.enabled || this.guide.needs.spend(8))
+    ) {
       p.attackTime =
         this.config.attackWindup +
         this.config.attackActive +
@@ -661,6 +758,10 @@ export class Game {
             e.hp <= 0 ||
             e.lastHit === p.attackId ||
             !overlaps(e, box) ||
+            (this.guide.enabled &&
+              this.guide.attackTarget &&
+              (this.guide.attackTarget.enemyId !== e.id ||
+                !overlaps(box, limbBox(e, this.guide.attackTarget.limb)))) ||
             lineBlocked(
               { x: p.x + p.w / 2, y: p.y + p.h / 2 },
               { x: e.x + e.w / 2, y: p.y + p.h / 2 },
@@ -669,13 +770,16 @@ export class Game {
           )
             continue;
           e.lastHit = p.attackId;
-          e.hp -= this.config.attackDamage;
+          e.hp -=
+            this.config.attackDamage *
+            (this.guide.enabled ? this.guide.needs.stats.damage : 1);
           e.flash = 0.15;
           if (e.enemyType !== "keeper") {
             e.vx = p.facing * 190;
             e.state = "stunned";
             e.timer = 0.32;
           }
+          this.guide.enemyHit(e);
           this.atmosphere.feedback("hit", {
             x: e.x + e.w / 2,
             y: e.y + e.h / 2,
@@ -704,6 +808,8 @@ export class Game {
       shot.x += shot.vx * dt;
       shot.y += shot.vy * dt;
       shot.life -= dt;
+      if (this.guide.enabled && this.guide.tools.projectileImpact(shot))
+        continue;
       if (overlaps(p, shot)) {
         if (
           this.hurt(
@@ -726,6 +832,7 @@ export class Game {
       (s) => s.life > 0 && s.x > -100 && s.x < this.room.worldBounds.w + 100,
     );
     this.nearby = this.findNearby();
+    if (this.guide.enterSafehouseZone()) return;
     if (input.pressed("interact")) this.interact();
     if (!this.transition && this.transitionCooldown <= 0)
       for (const exit of this.room.exits) {
@@ -763,11 +870,12 @@ export class Game {
           this.ambientSeen.add(e.id);
           this.emit(
             "sound",
-            e.title === "Висячие сады"
-              ? "horizonGardens"
-              : e.title === "Литейные"
-                ? "horizonForge"
-                : "horizonArchive",
+            e.soundCue ||
+              (e.title === "Висячие сады"
+                ? "horizonGardens"
+                : e.title === "Литейные"
+                  ? "horizonForge"
+                  : "horizonArchive"),
           );
         }
     for (const exit of this.room.exits) {
@@ -785,5 +893,6 @@ export class Game {
       )
         this.progress.seenExits.push(exit.exitId);
     }
+    if (this.guide.story.sync(true)) this.save();
   }
 }

@@ -1,6 +1,6 @@
+import { newGuideState, normalizeGuideState } from "./hero/needs.js";
 const VERSION = 1;
 export const SAVE_KEY = "last-harbour.save.v1";
-const BACKUP_KEY = SAVE_KEY + ".backup";
 export const defaultSettings = () => ({
   sound: true,
   volume: 0.4,
@@ -13,6 +13,7 @@ export const defaultSettings = () => ({
 });
 export const newProgress = () => ({
   version: VERSION,
+  guide: newGuideState(),
   flags: [],
   visited: ["P01"],
   rests: [],
@@ -72,6 +73,7 @@ export function decodeSave(text) {
     )
       return null;
     p.flags = [...new Set(p.flags)];
+    p.guide = normalizeGuideState(p.guide);
     p.visited = [...new Set(p.visited)];
     p.seenExits = Array.isArray(p.seenExits)
       ? p.seenExits.filter((x) => typeof x === "string")
@@ -127,15 +129,16 @@ export function decodeSave(text) {
   }
 }
 export class SaveStore {
-  constructor(storage, onStatus = () => {}) {
+  constructor(storage, onStatus = () => {}, key = SAVE_KEY) {
     this.storage = storage;
     this.onStatus = onStatus;
     this.hasSave = false;
+    this.key = key;
   }
   load() {
     try {
-      const raw = this.storage.getItem(SAVE_KEY),
-        backup = this.storage.getItem(BACKUP_KEY);
+      const raw = this.storage.getItem(this.key),
+        backup = this.storage.getItem(this.key + ".backup");
       const primary = decodeSave(raw),
         recovery = decodeSave(backup);
       this.hasSave = Boolean(primary || recovery);
@@ -160,11 +163,14 @@ export class SaveStore {
   }
   write(progress) {
     try {
-      const current = this.storage.getItem(SAVE_KEY);
+      const current = this.storage.getItem(this.key);
       const encoded = encodeSave(progress);
       // Each localStorage setItem is atomic. Keep the last valid record before replacing it.
-      this.storage.setItem(BACKUP_KEY, decodeSave(current) ? current : encoded);
-      this.storage.setItem(SAVE_KEY, encoded);
+      this.storage.setItem(
+        this.key + ".backup",
+        decodeSave(current) ? current : encoded,
+      );
+      this.storage.setItem(this.key, encoded);
       this.hasSave = true;
       this.onStatus("Сохранено");
       return true;

@@ -5,6 +5,9 @@ import { Renderer } from "./render.js";
 import { Audio } from "./audio.js";
 import { WorldMap } from "./map.js";
 import { validateWorld, objectiveFor, conditionMet } from "./core.js";
+import { GuideUI } from "./guide/ui.js";
+import { HeroDirector } from "./hero/director.js";
+import { JournalUI } from "./guide/journal.js";
 
 const $ = (id) => document.getElementById(id);
 async function boot() {
@@ -19,6 +22,8 @@ async function boot() {
   ]);
   const errors = validateWorld(world, config);
   if (errors.length) throw new Error(errors.join("\n"));
+  $("world-count").textContent =
+    `АКТ I · ${world.rooms.length} / ${world.actOne?.targetRooms || world.rooms.length} КОМНАТ`;
   // Rest spawns are stable data derived from the immutable rest entity IDs.
   for (const room of world.rooms)
     for (const e of room.entities)
@@ -32,8 +37,10 @@ async function boot() {
     toastTimer,
     captionTimer,
     settingsParent = "title",
-    mapParent = "playing";
-  const store = new SaveStore(
+    mapParent = "playing",
+    pauseParent = "playing",
+    newGuide = false;
+  const classicStore = new SaveStore(
     {
       getItem: (key) => window.localStorage.getItem(key),
       setItem: (key, value) => window.localStorage.setItem(key, value),
@@ -46,10 +53,17 @@ async function boot() {
         saveTimer = setTimeout(() => ($("save-status").textContent = ""), 1800);
     },
   );
+  const guideStore = new SaveStore(
+    classicStore.storage,
+    classicStore.onStatus,
+    "last-harbour.guide.v1",
+  );
+  guideStore.load();
+  let store = classicStore;
   const input = new Input();
   const touchScreen = matchMedia("(pointer: coarse)");
   input.device = touchScreen.matches ? "touch" : "keyboard";
-  let audio, map;
+  let audio, map, guideUI, journal;
   const game = new Game(world, config, store, {
     toast: (text) => toast(text),
     sound: (name, options) => audio?.play(name, options),
@@ -64,11 +78,26 @@ async function boot() {
       setMode("dialogue");
     },
     complete: () => {
+      const guide = game.guide.enabled,
+        ending = game.guide.state.story?.ending;
+      $("completion-eyebrow").textContent = guide
+        ? "АКТ I · ПЕРВЫЙ СВЕТ"
+        : "ПЕРВЫЙ СВЕТ";
+      $("completion-title").textContent = guide
+        ? "Мы дошли.\nВместе."
+        : "Город больше,\nчем казалось.";
+      $("completion-text").textContent = guide
+        ? "Он стоит у края башни и слушает три далёких горизонта. «Я всё ещё слышу тебя. Пойдём вместе, когда я отдышусь». Открытые пути ждут возвращения; наш путь записан в журнале."
+        : "За крышами — Насосные, Висячие сады и Колокольный район. Путешествие только начинается.";
       $("completion-stats").textContent =
-        `Исследовано: ${game.progress.visited.length} / ${game.world.rooms.length} · Осколки: ${fragmentCount(game.progress)} / 3 · Секрет сердца: ${game.flags.includes("pickup.p03_upper") ? "найден" : "ещё ждёт"}`;
+        `Исследовано: ${game.progress.visited.length} / ${game.world.rooms.length} · Осколки: ${fragmentCount(game.progress)} / 3 · Секрет сердца: ${game.flags.includes("pickup.p03_upper") ? "найден" : "ещё ждёт"}` +
+        (guide && ending
+          ? ` · До первого света: ${Math.floor(ending.time / 60)}:${String(Math.floor(ending.time % 60)).padStart(2, "0")} · Приказов: ${ending.commands} · Смертей: ${ending.deaths}`
+          : "");
       setMode("complete");
     },
     mode: (mode) => setMode(mode),
+    story: (entry) => toast("Запись в журнале: " + entry.title),
   });
   audio = new Audio(game.progress.settings);
   const renderer = new Renderer($("game"));
@@ -109,6 +138,8 @@ async function boot() {
     setMode(game.mode);
   });
   map = new WorldMap($("world-map"), game);
+  guideUI = new GuideUI(game, $("game"), setMode, toast);
+  journal = new JournalUI(game, setMode);
   function toast(text) {
     $("toast").textContent = text;
     $("toast").hidden = false;
@@ -138,9 +169,25 @@ async function boot() {
     death: "death-screen",
     complete: "complete-screen",
     confirm: "confirm-screen",
+    safehouse: "safehouse-screen",
+    journal: "journal-screen",
   };
   function setMode(mode) {
+    if (mode === "pause" && ["playing", "tactical"].includes(game.mode))
+      pauseParent = game.mode;
     game.mode = mode;
+    input.guideMode =
+      game.guide.enabled && ["playing", "tactical"].includes(mode);
+    input.guideJournal =
+      game.guide.enabled &&
+      [
+        "playing",
+        "tactical",
+        "pause",
+        "safehouse",
+        "complete",
+        "journal",
+      ].includes(mode);
     $("app").dataset.mode = mode;
     input.clear();
     if (mode === "dialogue") {
@@ -149,21 +196,34 @@ async function boot() {
     }
     for (const [m, id] of Object.entries(screens)) $(id).hidden = m !== mode;
     for (const id of ["hud", "controls", "abilities", "objective"])
-      $(id).hidden = mode === "title" || mode === "confirm";
-    $("touch-controls").hidden = mode !== "playing" || !touchScreen.matches;
+      $(id).hidden =
+        mode === "title" ||
+        mode === "confirm" ||
+        (game.guide.enabled && id === "controls");
+    $("touch-controls").hidden =
+      game.guide.enabled || mode !== "playing" || !touchScreen.matches;
     resizeViewport();
     $("interaction").hidden = mode !== "playing" || !game.nearby;
     if (mode !== "playing") $("room-caption").hidden = true;
     if (mode === "title") {
       $("play").innerHTML =
-        (store.hasSave ? "Продолжить путь" : "Начать путешествие") +
+        (classicStore.hasSave
+          ? "Классическое прохождение"
+          : "Прямое управление") + " <span>⟶</span>";
+      $("new-game").hidden = !classicStore.hasSave;
+      $("guide-play").innerHTML =
+        (guideStore.hasSave ? "Продолжить Проводником" : "Стать Проводником") +
         " <span>⟶</span>";
-      $("new-game").hidden = !store.hasSave;
+      $("guide-new").hidden = !guideStore.hasSave;
     }
     if (mode === "map") {
       map.open();
     }
-    if (mode === "playing") $("game").focus({ preventScroll: true });
+    guideUI?.sync();
+    journal?.sync();
+    resizeViewport();
+    if (mode === "playing" || mode === "tactical")
+      $("game").focus({ preventScroll: true });
     else if (screens[mode])
       $(screens[mode]).querySelector("button")?.focus({ preventScroll: true });
     audio?.update(mode !== "playing" && mode !== "title");
@@ -224,7 +284,8 @@ async function boot() {
             ? "Y"
             : "E";
       el.onclick = () => {
-        game.interact();
+        if (game.guide.enabled) guideUI.issue("interact");
+        else game.interact();
       };
     }
     map?.mini($("mini-map"));
@@ -239,31 +300,61 @@ async function boot() {
         action === "dash" && !game.player.dashReady,
       );
     }
+    guideUI?.sync();
+    journal?.sync();
   }
-  function start(fresh = false) {
+  function start(fresh = false, guideMode = false) {
+    game.guide.commands.clear();
+    game.guide.tools.leave();
+    if (store.hasSave) game.save();
+    store = guideMode ? guideStore : classicStore;
+    game.store = store;
+    game.progress = store.load();
+    game.guide = new HeroDirector(game);
+    game.atmosphere.active.clear();
+    guideUI.oracle.reset();
+    guideUI.queueKey = "";
     audio.settings = game.progress.settings;
     audio.unlock();
     if (fresh) audio.resetJourney();
-    game.start(fresh);
+    game.start(fresh, guideMode);
+    if (guideMode) {
+      setMode("tactical");
+      toast(
+        "Клик — путь или цель. Space — исполнить план. Tab — журнал и помощь герою.",
+      );
+    }
     audio.settings = game.progress.settings;
     audio.update();
     syncSettings();
     roomCaption(game.room);
   }
   $("play").onclick = () => start(false);
-  $("new-game").onclick = () => setMode("confirm");
-  $("confirm-new").onclick = () => start(true);
+  $("guide-play").onclick = () => start(false, true);
+  $("guide-new").onclick = () => {
+    newGuide = true;
+    setMode("confirm");
+  };
+  $("new-game").onclick = () => {
+    newGuide = false;
+    setMode("confirm");
+  };
+  $("confirm-new").onclick = () => start(true, newGuide);
   $("cancel-new").onclick = () => setMode("title");
-  $("resume").onclick = () => setMode("playing");
+  $("resume").onclick = () => setMode(pauseParent);
   $("pause-button").onclick = () => setMode("pause");
   $("to-title").onclick = () => {
+    game.guide.commands.clear();
+    game.guide.tools.leave();
     game.save();
     game.atmosphere.active.clear();
-    game.loadRoom("P01", "start", false);
+    if (!game.guide.enabled) game.loadRoom("P01", "start", false);
     setMode("title");
   };
   function openMap() {
-    mapParent = game.mode === "pause" ? "pause" : "playing";
+    mapParent = ["pause", "tactical"].includes(game.mode)
+      ? game.mode
+      : "playing";
     setMode("map");
   }
   $("map-button").onclick = openMap;
@@ -332,7 +423,7 @@ async function boot() {
       syncHUD();
     });
   input.onBlur = () => {
-    if (game.mode === "playing") setMode("pause");
+    if (["playing", "tactical"].includes(game.mode)) setMode("pause");
   };
   window.addEventListener("pagehide", () => {
     if (store.hasSave) game.save();
@@ -407,6 +498,7 @@ async function boot() {
     window.__game = game;
     window.__setMode = setMode;
     window.__audio = audio;
+    window.__guideUI = guideUI;
     const atmospherePanel = document.createElement("div");
     atmospherePanel.innerHTML = `<h3>Атмосфера</h3><label><input type="checkbox" data-atmosphere="audioSources"> Источники и радиусы звука</label><label><input type="checkbox" data-atmosphere="emitters"> Области частиц</label><label>Состояние <select id="atmosphere-preview"><option value="live">Игра</option><option value="before">До события</option><option value="after">После события</option></select></label><p id="atmosphere-card"></p>`;
     $("debug").append(atmospherePanel);
@@ -428,21 +520,28 @@ async function boot() {
     if (input.pressed("debug") && debugAllowed)
       $("debug").hidden = !$("debug").hidden;
     if (input.pressed("pause")) {
-      if (game.mode === "playing") setMode("pause");
-      else if (game.mode === "pause") setMode("playing");
+      if (["playing", "tactical"].includes(game.mode)) setMode("pause");
+      else if (game.mode === "pause") setMode(pauseParent);
+      else if (game.mode === "safehouse") setMode("tactical");
+      else if (game.mode === "journal") journal.close();
       else if (game.mode === "map") setMode(mapParent);
       else if (game.mode === "settings") setMode(settingsParent);
       else if (game.mode === "dialogue") setMode("playing");
       else if (game.mode === "confirm") setMode("title");
     }
+    if (input.pressed("journal") && game.guide.enabled) {
+      journal.toggle();
+      input.consume();
+      return;
+    }
     if (
       input.pressed("map") &&
-      ["playing", "pause", "map"].includes(game.mode)
+      ["playing", "tactical", "pause", "map"].includes(game.mode)
     ) {
       if (game.mode === "map") setMode(mapParent);
       else openMap();
     }
-    if (game.mode === "playing") return;
+    if (game.mode === "playing" || game.mode === "tactical") return;
     if (
       game.mode === "dialogue" &&
       (input.pressed("interact") ||
@@ -477,6 +576,7 @@ async function boot() {
     previous = now;
     input.poll();
     handleMenus();
+    guideUI.handleInput(input);
     if (game.mode === "playing") {
       accumulator += dt;
       let steps = 0;

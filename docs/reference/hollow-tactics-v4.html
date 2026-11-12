@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hollow Tactics V4 — Dynamic Action & Double Jump</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0b0e14;
+            color: #c9d1d9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1100px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin: 0 0 10px 0;
+            color: #58a6ff;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .instructions {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #8b949e;
+        }
+
+        .instructions strong {
+            color: #f0f6fc;
+        }
+
+        canvas {
+            background-color: #0d1117;
+            border: 2px solid #30363d;
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            cursor: pointer;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        button {
+            background-color: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            flex: 1;
+        }
+
+        button:hover {
+            background-color: #30363d;
+            border-color: #8b949e;
+        }
+
+        button.active-pause {
+            background-color: #1f6feb;
+            color: #ffffff;
+            border-color: #58a6ff;
+            box-shadow: 0 0 12px rgba(31, 111, 235, 0.4);
+        }
+
+        button.active-pause:hover {
+            background-color: #388bfd;
+        }
+
+        button.clear-btn {
+            background-color: #da3633;
+            color: #ffffff;
+            border-color: #f85149;
+            flex: 0.5;
+        }
+
+        button.clear-btn:hover {
+            background-color: #f85149;
+        }
+
+        .queue-container {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px;
+            min-height: 54px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .queue-title {
+            font-size: 0.85rem;
+            color: #8b949e;
+            text-transform: uppercase;
+            align-self: flex-start;
+            margin-top: 5px;
+        }
+
+        .command-badge {
+            background: #21262d;
+            border: 1px solid #58a6ff;
+            color: #58a6ff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .command-badge:hover {
+            background: #8b1a1a;
+            color: #ff7b72;
+            border-color: #f85149;
+            text-decoration: line-through;
+        }
+
+        .command-badge.executing {
+            background: #1f6feb;
+            color: white;
+            border-color: #fff;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .status-passive {
+            background-color: rgba(240, 134, 25, 0.15);
+            color: #f08619;
+            border: 1px solid rgba(240, 134, 25, 0.3);
+        }
+
+        .status-tactical {
+            background-color: rgba(31, 111, 235, 0.15);
+            color: #58a6ff;
+            border: 1px solid rgba(31, 111, 235, 0.3);
+        }
+
+        .status-active {
+            background-color: rgba(56, 139, 253, 0.15);
+            color: #388bfd;
+            border: 1px solid rgba(56, 139, 253, 0.3);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #21262d;
+            padding-bottom: 8px;
+        }
+
+        .stat-value {
+            color: #f0f6fc;
+            font-weight: 600;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-alert {
+            position: absolute;
+            top: 30%;
+            background: rgba(22, 27, 34, 0.95);
+            border: 2px solid #f85149;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            display: none;
+            z-index: 10;
+            max-width: 300px;
+        }
+        .custom-alert h2 { margin: 0 0 10px 0; color: #f85149; }
+        .custom-alert button { margin-top: 15px; width: auto; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Левая панель: Экран игры -->
+        <div class="game-panel">
+            <div id="endGameModal" class="custom-alert">
+                <h2 id="endGameTitle">Вы погибли</h2>
+                <p id="endGameReason">Рыцарь оказался слишком пассивен...</p>
+                <button onclick="resetGame()">Начать заново</button>
+            </div>
+
+            <canvas id="gameCanvas" width="760" height="440"></canvas>
+            
+            <div class="controls">
+                <button id="pauseBtn" class="active-pause" onclick="toggleTacticalPause()">
+                    <span>⏸</span> ТАКТИЧЕСКАЯ ПАУЗА (Space)
+                </button>
+                <button class="clear-btn" onclick="clearCommands()">Очистить</button>
+            </div>
+
+            <div class="queue-title">Очередь инструкций (Добавляйте команды во время боя или стирайте кликом):</div>
+            <div id="commandQueue" class="queue-container"></div>
+
+            <div class="controls" style="margin-top: 10px;">
+                <button onclick="addImmediateCommand('jump')">🦘 +Прыжок / Двойной</button>
+                <button onclick="addImmediateCommand('dash')">⚡ +Рывок (По направлению)</button>
+                <button onclick="addImmediateCommand('attack')">⚔️ +Атака</button>
+            </div>
+        </div>
+
+        <!-- Правая панель: Спецификации и статус -->
+        <div class="sidebar">
+            <h1>Hollow Tactics v4</h1>
+            
+            <div class="stat-row">
+                <span>Режим Мира:</span>
+                <span id="statusMode" class="status-badge status-tactical">ПАУЗА (ТАКТИКА)</span>
+            </div>
+            
+            <div class="stat-row">
+                <span>Здоровье Рыцаря:</span>
+                <span id="heroHp" class="stat-value" style="color: #ff7b72;">❤️ 5 / 5</span>
+            </div>
+
+            <div class="stat-row">
+                <span>Кубов сломано:</span>
+                <span id="blocksBroken" class="stat-value">0 / 4</span>
+            </div>
+
+            <div class="instructions">
+                <strong>⚡ Живое управление (Real-time):</strong>
+                <p>Вы можете нажимать на кнопки способностей или кликать по экрану прямо <strong>во время активного движения героя</strong> без паузы. Очередь мгновенно подхватит команду.</p>
+                
+                <strong>🦘 Механика Двойного прыжка:</strong>
+                <ul>
+                    <li>Базовая высота прыжка увеличена (импульс <code>-9.0</code>).</li>
+                    <li>Если в очередь поступает вторая команда прыжка, пока герой находится в воздухе, активируется <strong>двойной прыжок</strong> с сияющими синими частицами.</li>
+                </ul>
+
+                <strong>💨 Инерция направления рывка:</strong>
+                <p>Рывок гарантированно совершается строго в сторону последнего зарегистрированного направления взгляда (<code>facingDir</code>), предотвращая случайные развороты на месте.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let isPaused = true;
+        let blocksBrokenCount = 0;
+        let gameActive = true;
+
+        const GRAVITY = 0.4;
+        const TILE_SIZE = 40;
+
+        // Карта уровня
+        let map = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1],
+            [1,0,0,0,1,1,1,1,0,0,1,1,1,1,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1],
+            [1,0,0,0,0,0,2,2,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,0,0,0,0,0,0,0,3,3,3,0,0,0,0,0,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        // Герой
+        let hero = {
+            x: 60, y: 320, width: 24, height: 34,
+            vx: 0, vy: 0, hp: 5, maxHp: 5,
+            grounded: false, facingDir: 1,
+            isDashing: false, dashTimer: 0, attackTimer: 0,
+            passiveTimer: 0, passiveDir: 1, invulnerableTimer: 0,
+            doubleJumpsLeft: 1
+        };
+
+        // Мобы на честной физике
+        let enemies = [
+            { x: 220, y: 80, width: 26, height: 26, vx: 1, vy: 0, grounded: false, facingDir: 1, radius: 150, state: 'patrol', color: '#ff4444', aiTimer: 0 },
+            { x: 450, y: 240, width: 28, height: 28, vx: -1, vy: 0, grounded: false, facingDir: -1, radius: 150, state: 'patrol', color: '#ff4444', aiTimer: 0 }
+        ];
+
+        let commandQueue = [];
+        let currentCommand = null;
+        let particles = [];
+
+        function spawnParticles(x, y, color, count = 8) {
+            for(let i=0; i<count; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+                    life: 20 + Math.random() * 20, color: color
+                });
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                toggleTacticalPause();
+            }
+        });
+
+        // Добавление приказов движения кликом по экрану (работает и на паузе, и в реалтайме)
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            commandQueue.push({ type: 'move', x: mouseX, started: false });
+            
+            // Если игра активна и стек пуст — мгновенно активируем
+            if (!isPaused && !currentCommand) {
+                currentCommand = commandQueue.shift();
+            }
+            updateQueueUI();
+        });
+
+        function toggleTacticalPause() {
+            if (!gameActive) return;
+            isPaused = !isPaused;
+            const btn = document.getElementById('pauseBtn');
+            const status = document.getElementById('statusMode');
+            
+            if (isPaused) {
+                btn.classList.add('active-pause');
+                status.innerText = "ПАУЗА (ТАКТИКА)";
+                status.className = "status-badge status-tactical";
+            } else {
+                btn.classList.remove('active-pause');
+                status.innerText = "В ИГРЕ (ВЫПОЛНЕНИЕ)";
+                status.className = "status-badge status-active";
+                if (!currentCommand && commandQueue.length > 0) {
+                    currentCommand = commandQueue.shift();
+                }
+            }
+            updateQueueUI();
+        }
+
+        // Кнопки добавления приказов теперь могут нажиматься на лету
+        function addImmediateCommand(type) {
+            commandQueue.push({ type: type, started: false });
+            
+            if (!isPaused && !currentCommand) {
+                currentCommand = commandQueue.shift();
+            }
+            updateQueueUI();
+        }
+
+        function clearCommands() {
+            commandQueue = [];
+            currentCommand = null;
+            updateQueueUI();
+        }
+
+        window.removeQueueItem = function(index) {
+            commandQueue.splice(index, 1);
+            updateQueueUI();
+        };
+
+        window.removeCurrentCommand = function() {
+            currentCommand = null;
+            if (commandQueue.length > 0) {
+                currentCommand = commandQueue.shift();
+            }
+            updateQueueUI();
+        };
+
+        function updateQueueUI() {
+            const container = document.getElementById('commandQueue');
+            container.innerHTML = '';
+
+            if (!currentCommand && commandQueue.length === 0) {
+                container.innerHTML = '<span style="color: #484f58; font-size: 0.85rem;">Очередь пуста. Герой пассивен.</span>';
+                return;
+            }
+
+            if (currentCommand) {
+                const badge = document.createElement('div');
+                badge.className = 'command-badge executing';
+                badge.innerHTML = `⚙️ ${getCommandName(currentCommand)} [✖]`;
+                badge.onclick = () => removeCurrentCommand();
+                container.appendChild(badge);
+            }
+
+            commandQueue.forEach((cmd, idx) => {
+                const badge = document.createElement('div');
+                badge.className = 'command-badge';
+                badge.innerHTML = `${getCommandIcon(cmd.type)} ${getCommandName(cmd)} [✖]`;
+                badge.onclick = () => removeQueueItem(idx);
+                container.appendChild(badge);
+            });
+        }
+
+        function getCommandIcon(type) {
+            switch(type) {
+                case 'move': return '📍';
+                case 'jump': return '🦘';
+                case 'dash': return '⚡';
+                case 'attack': return '⚔️';
+                default: return '📜';
+            }
+        }
+
+        function getCommandName(cmd) {
+            switch(cmd.type) {
+                case 'move': return `Идти к X:${Math.round(cmd.x)}`;
+                case 'jump': return 'Прыжок';
+                case 'dash': return 'Рывок';
+                case 'attack': return 'Атака';
+                default: return 'Действие';
+            }
+        }
+
+        function checkCollision(x, y, w, h) {
+            let left = Math.floor(x / TILE_SIZE);
+            let right = Math.floor((x + w) / TILE_SIZE);
+            let top = Math.floor(y / TILE_SIZE);
+            let bottom = Math.floor((y + h) / TILE_SIZE);
+
+            if (left < 0 || right >= map[0].length || top < 0 || bottom >= map.length) {
+                return { hit: true, type: 1 };
+            }
+
+            for (let r = top; r <= bottom; r++) {
+                for (let c = left; c <= right; c++) {
+                    if (map[r][c] === 1 || map[r][c] === 2) {
+                        return { hit: true, type: map[r][c], row: r, col: c };
+                    }
+                    if (map[r][c] === 3) return { hit: true, type: 3 }; 
+                }
+            }
+            return { hit: false };
+        }
+
+        function update() {
+            if (!gameActive) return;
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.life--;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            if (isPaused) return;
+
+            if (hero.invulnerableTimer > 0) hero.invulnerableTimer--;
+            if (hero.attackTimer > 0) hero.attackTimer--;
+
+            // Физика рывка: использует строго направление последнего взгляда
+            if (hero.isDashing) {
+                hero.dashTimer--;
+                hero.vy = 0;
+                hero.vx = hero.facingDir * 7.5;
+                if (hero.dashTimer <= 0) {
+                    hero.isDashing = false;
+                    advanceCommand();
+                }
+            } else {
+                if (currentCommand) {
+                    executeCommandLogic();
+                } else {
+                    executePassiveAI();
+                }
+            }
+
+            // Применение гравитации
+            if (!hero.isDashing) {
+                hero.vy += GRAVITY;
+                if (hero.vy > 10) hero.vy = 10;
+            }
+
+            // Коллизии X
+            hero.x += hero.vx;
+            let colX = checkCollision(hero.x, hero.y, hero.width, hero.height);
+            if (colX.hit) {
+                if (colX.type === 3) { handleSpikeDamage(); return; }
+                if (hero.vx > 0) hero.x = colX.col * TILE_SIZE - hero.width - 0.1;
+                else if (hero.vx < 0) hero.x = (colX.col + 1) * TILE_SIZE + 0.1;
+                hero.vx = 0;
+            }
+
+            // Коллизии Y
+            hero.y += hero.vy;
+            let wasGrounded = hero.grounded;
+            hero.grounded = false;
+            let colY = checkCollision(hero.x, hero.y, hero.width, hero.height);
+            if (colY.hit) {
+                if (colY.type === 3) { handleSpikeDamage(); return; }
+                if (hero.vy > 0) {
+                    hero.y = colY.row * TILE_SIZE - hero.height - 0.1;
+                    hero.grounded = true;
+                    hero.doubleJumpsLeft = 1; // Восстанавливаем заряд двойного прыжка при приземлении
+                } else if (hero.vy < 0) {
+                    hero.y = (colY.row + 1) * TILE_SIZE + 0.1;
+                }
+                hero.vy = 0;
+            }
+
+            // Переключение по апексу для команды прыжка
+            if (currentCommand && currentCommand.type === 'jump' && currentCommand.started) {
+                if (hero.vy >= 0) {
+                    advanceCommand();
+                }
+            }
+
+            updateEnemiesPhysics();
+
+            // Динамический рендеринг статуса пассивности
+            const statusModeText = document.getElementById('statusMode');
+            if (!isPaused) {
+                if (!currentCommand && commandQueue.length === 0) {
+                    statusModeText.innerText = "ИГРОК ПАССИВЕН (ПЛОХОЙ AI)";
+                    statusModeText.className = "status-badge status-passive";
+                } else {
+                    statusModeText.innerText = "В ИГРЕ (ВЫПОЛНЕНИЕ)";
+                    statusModeText.className = "status-badge status-active";
+                }
+            }
+        }
+
+        function executeCommandLogic() {
+            if (!currentCommand) return;
+
+            switch (currentCommand.type) {
+                case 'move':
+                    let diffX = currentCommand.x - (hero.x + hero.width/2);
+                    if (Math.abs(diffX) < 6) {
+                        hero.vx = 0;
+                        advanceCommand();
+                    } else {
+                        hero.facingDir = diffX > 0 ? 1 : -1;
+                        hero.vx = hero.facingDir * 2.5;
+                    }
+                    break;
+
+                case 'jump':
+                    if (!currentCommand.started) {
+                        if (hero.grounded) {
+                            // Обычный сильный прыжок с земли
+                            hero.vy = -9.0;
+                            spawnParticles(hero.x + hero.width/2, hero.y + hero.height, '#58a6ff', 5);
+                            currentCommand.started = true;
+                        } else if (hero.doubleJumpsLeft > 0) {
+                            // Двойной воздушный прыжок
+                            hero.vy = -8.0;
+                            hero.doubleJumpsLeft--;
+                            spawnParticles(hero.x + hero.width/2, hero.y + hero.height/2, '#00f3ff', 8);
+                            currentCommand.started = true;
+                        } else {
+                            // Если прыгать неоткуда и заряды кончились — пропускаем
+                            advanceCommand();
+                        }
+                    }
+                    break;
+
+                case 'dash':
+                    if (!currentCommand.started) {
+                        hero.isDashing = true;
+                        hero.dashTimer = 12;
+                        spawnParticles(hero.x + hero.width/2, hero.y + hero.height/2, '#00f3ff', 8);
+                        currentCommand.started = true;
+                    }
+                    break;
+
+                case 'attack':
+                    hero.attackTimer = 15;
+                    let reach = 30;
+                    let attackX = hero.facingDir === 1 ? (hero.x + hero.width) : (hero.x - reach);
+                    let tRow = Math.floor((hero.y + hero.height/2) / TILE_SIZE);
+                    let tCol = Math.floor((attackX + reach/2) / TILE_SIZE);
+                    
+                    if (tRow >= 0 && tRow < map.length && tCol >= 0 && tCol < map[0].length) {
+                        if (map[tRow][tCol] === 2) {
+                            map[tRow][tCol] = 0;
+                            blocksBrokenCount++;
+                            document.getElementById('blocksBroken').innerText = `${blocksBrokenCount} / 4`;
+                            spawnParticles(tCol * TILE_SIZE + TILE_SIZE/2, tRow * TILE_SIZE + TILE_SIZE/2, '#e3b341', 15);
+                        }
+                    }
+
+                    for (let i = enemies.length - 1; i >= 0; i--) {
+                        let enemy = enemies[i];
+                        if (Math.abs((hero.y + hero.height/2) - (enemy.y + enemy.height/2)) < 40 &&
+                            Math.abs((hero.x + hero.width/2) - (enemy.x + enemy.width/2)) < 60) {
+                            spawnParticles(enemy.x, enemy.y, '#ff4444', 12);
+                            enemies.splice(i, 1);
+                        }
+                    }
+                    advanceCommand();
+                    break;
+            }
+        }
+
+        function advanceCommand() {
+            if (commandQueue.length > 0) {
+                currentCommand = commandQueue.shift();
+            } else {
+                currentCommand = null;
+            }
+            updateQueueUI();
+        }
+
+        function executePassiveAI() {
+            hero.passiveTimer--;
+            if (hero.passiveTimer <= 0) {
+                hero.passiveTimer = 40 + Math.random() * 60;
+                hero.passiveDir = Math.random() > 0.5 ? 1 : -1;
+            }
+            hero.facingDir = hero.passiveDir;
+            hero.vx = hero.passiveDir * 0.8;
+        }
+
+        function updateEnemiesPhysics() {
+            enemies.forEach(enemy => {
+                enemy.vy += GRAVITY;
+                if (enemy.vy > 10) enemy.vy = 10;
+
+                let dist = Math.hypot((enemy.x - hero.x), (enemy.y - hero.y));
+                if (dist < enemy.radius) {
+                    enemy.state = 'chase';
+                    enemy.color = '#ff0000';
+                } else {
+                    if (enemy.state === 'chase') enemy.state = 'patrol';
+                    enemy.color = '#ff4444';
+                }
+
+                if (enemy.state === 'chase') {
+                    enemy.facingDir = hero.x > enemy.x ? 1 : -1;
+                    enemy.vx = enemy.facingDir * 1.6;
+                } else {
+                    enemy.aiTimer--;
+                    if (enemy.aiTimer <= 0) {
+                        enemy.aiTimer = 80 + Math.random() * 80;
+                        enemy.facingDir = Math.random() > 0.5 ? 1 : -1;
+                    }
+                    enemy.vx = enemy.facingDir * 1.0;
+                }
+
+                let lookAheadX = enemy.x + enemy.vx * 12;
+                let wallAhead = checkCollision(lookAheadX, enemy.y, enemy.width, enemy.height);
+                let floorAhead = checkCollision(lookAheadX, enemy.y + enemy.height + 10, enemy.width, enemy.height);
+
+                if (enemy.grounded) {
+                    if ((wallAhead.hit && wallAhead.type !== 3) || !floorAhead.hit) {
+                        if (enemy.state === 'chase') {
+                            enemy.vy = -6.8; 
+                        } else {
+                            enemy.facingDir *= -1;
+                            enemy.vx = enemy.facingDir * 1.0;
+                            enemy.aiTimer = 80;
+                        }
+                    }
+                }
+
+                enemy.x += enemy.vx;
+                let ecolX = checkCollision(enemy.x, enemy.y, enemy.width, enemy.height);
+                if (ecolX.hit) {
+                    if (enemy.vx > 0) enemy.x = ecolX.col * TILE_SIZE - enemy.width - 0.1;
+                    else if (enemy.vx < 0) enemy.x = (ecolX.col + 1) * TILE_SIZE + 0.1;
+                    enemy.vx = 0;
+                    if (enemy.state === 'patrol') enemy.facingDir *= -1;
+                }
+
+                enemy.y += enemy.vy;
+                enemy.grounded = false;
+                let ecolY = checkCollision(enemy.x, enemy.y, enemy.width, enemy.height);
+                if (ecolY.hit) {
+                    if (ecolY.type !== 3 && enemy.vy > 0) {
+                        enemy.y = ecolY.row * TILE_SIZE - enemy.height - 0.1;
+                        enemy.grounded = true;
+                    } else if (enemy.vy < 0) {
+                        enemy.y = (ecolY.row + 1) * TILE_SIZE + 0.1;
+                    }
+                    enemy.vy = 0;
+                }
+
+                if (hero.invulnerableTimer === 0 &&
+                    hero.x < enemy.x + enemy.width &&
+                    hero.x + hero.width > enemy.x &&
+                    hero.y < enemy.y + enemy.height &&
+                    hero.y + hero.height > enemy.y) {
+                    takeDamage(1, enemy.x + enemy.width/2);
+                }
+            });
+        }
+
+        function handleSpikeDamage() {
+            takeDamage(1, hero.x);
+            hero.y -= 40;
+            hero.vy = -4;
+        }
+
+        function takeDamage(amount, sourceX) {
+            if (hero.invulnerableTimer > 0) return;
+            hero.hp -= amount;
+            hero.invulnerableTimer = 45;
+            hero.vy = -3.5;
+            hero.vx = hero.x + hero.width/2 > sourceX ? 3 : -3;
+            spawnParticles(hero.x + hero.width/2, hero.y + hero.height/2, '#ff3333', 10);
+            document.getElementById('heroHp').innerText = `❤️ ${hero.hp} / ${hero.maxHp}`;
+            if (hero.hp <= 0) gameOver(false);
+        }
+
+        function gameOver(win) {
+            gameActive = false;
+            isPaused = true;
+            const modal = document.getElementById('endGameModal');
+            const title = document.getElementById('endGameTitle');
+            const reason = document.getElementById('endGameReason');
+            modal.style.display = 'block';
+            if(win) {
+                title.innerText = "Победа!";
+                title.style.color = "#58a6ff";
+                reason.innerText = "Полный симуляционный контроль привел вас к выходу!";
+            } else {
+                title.innerText = "Рыцарь погиб";
+                title.style.color = "#f85149";
+                reason.innerText = "Пассивное блуждание или шипы оборвали цепочку жизни.";
+            }
+        }
+
+        function resetGame() {
+            hero.hp = 5; hero.x = 60; hero.y = 320; hero.vx = 0; hero.vy = 0;
+            hero.invulnerableTimer = 0; hero.isDashing = false; hero.doubleJumpsLeft = 1;
+            blocksBrokenCount = 0; gameActive = true; isPaused = true;
+            map[2][11] = 2; map[6][6] = 2; map[6][7] = 2;
+            enemies = [
+                { x: 220, y: 80, width: 26, height: 26, vx: 1, vy: 0, grounded: false, facingDir: 1, radius: 150, state: 'patrol', color: '#ff4444', aiTimer: 0 },
+                { x: 450, y: 240, width: 28, height: 28, vx: -1, vy: 0, grounded: false, facingDir: -1, radius: 150, state: 'patrol', color: '#ff4444', aiTimer: 0 }
+            ];
+            clearCommands();
+            document.getElementById('endGameModal').style.display = 'none';
+            document.getElementById('heroHp').innerText = `❤️ 5 / 5`;
+            document.getElementById('blocksBroken').innerText = `0 / 4`;
+            toggleTacticalPause(); toggleTacticalPause();
+        }
+
+        // ОБСЧЕТ ПРОГНОЗА ПУНКТИРНОЙ ТРАЕКТОРИИ С УЧЕТОМ ДВОЙНОГО ПРЫЖКА
+        function drawPredictiveTrajectory() {
+            let vHero = {
+                x: hero.x, y: hero.y, vx: hero.vx, vy: hero.vy,
+                width: hero.width, height: hero.height,
+                grounded: hero.grounded, facingDir: hero.facingDir,
+                isDashing: hero.isDashing, dashTimer: hero.dashTimer,
+                doubleJumpsLeft: hero.doubleJumpsLeft
+            };
+
+            let vQueue = [];
+            if (currentCommand) vQueue.push(JSON.parse(JSON.stringify(currentCommand)));
+            commandQueue.forEach(cmd => vQueue.push(JSON.parse(JSON.stringify(cmd))));
+
+            let points = [];
+            let curCmd = vQueue.shift();
+
+            for (let f = 0; f < 350; f++) {
+                if (vHero.isDashing) {
+                    vHero.dashTimer--;
+                    vHero.vy = 0;
+                    vHero.vx = vHero.facingDir * 7.5;
+                    if (vHero.dashTimer <= 0) {
+                        vHero.isDashing = false;
+                        curCmd = vQueue.shift(); 
+                    }
+                } else {
+                    if (curCmd) {
+                        if (curCmd.type === 'move') {
+                            let diffX = curCmd.x - (vHero.x + vHero.width/2);
+                            if (Math.abs(diffX) < 6) {
+                                vHero.vx = 0;
+                                curCmd = vQueue.shift();
+                            } else {
+                                vHero.facingDir = diffX > 0 ? 1 : -1;
+                                vHero.vx = vHero.facingDir * 2.5;
+                            }
+                        } else if (curCmd.type === 'jump') {
+                            if (!curCmd.started) {
+                                if (vHero.grounded) {
+                                    vHero.vy = -9.0;
+                                    curCmd.started = true;
+                                } else if (vHero.doubleJumpsLeft > 0) {
+                                    vHero.vy = -8.0;
+                                    vHero.doubleJumpsLeft--;
+                                    curCmd.started = true;
+                                } else {
+                                    curCmd = vQueue.shift();
+                                }
+                            }
+                        } else if (curCmd.type === 'dash') {
+                            if (!curCmd.started) {
+                                vHero.isDashing = true;
+                                vHero.dashTimer = 12;
+                                curCmd.started = true;
+                            }
+                        } else if (curCmd.type === 'attack') {
+                            curCmd = vQueue.shift();
+                        }
+                    } else {
+                        vHero.vx = 0;
+                    }
+                }
+
+                if (!vHero.isDashing) {
+                    vHero.vy += GRAVITY;
+                    if (vHero.vy > 10) vHero.vy = 10;
+                }
+
+                vHero.x += vHero.vx;
+                let cvX = checkCollision(vHero.x, vHero.y, vHero.width, vHero.height);
+                if (cvX.hit) {
+                    if (vHero.vx > 0) vHero.x = cvX.col * TILE_SIZE - vHero.width - 0.1;
+                    else if (vHero.vx < 0) vHero.x = (cvX.col + 1) * TILE_SIZE + 0.1;
+                    vHero.vx = 0;
+                }
+
+                vHero.y += vHero.vy;
+                vHero.grounded = false;
+                let cvY = checkCollision(vHero.x, vHero.y, vHero.width, vHero.height);
+                if (cvY.hit) {
+                    if (vHero.vy > 0) {
+                        vHero.y = cvY.row * TILE_SIZE - vHero.height - 0.1;
+                        vHero.grounded = true;
+                        vHero.doubleJumpsLeft = 1;
+                    }
+                    vHero.vy = 0;
+                }
+
+                if (curCmd && curCmd.type === 'jump' && curCmd.started && vHero.vy >= 0) {
+                    curCmd = vQueue.shift();
+                }
+
+                if (f % 3 === 0) {
+                    points.push({ x: vHero.x + vHero.width/2, y: vHero.y + vHero.height });
+                }
+
+                if (!curCmd && vHero.grounded && Math.abs(vHero.vx) < 0.1 && Math.abs(vHero.vy) < 0.1) {
+                    break;
+                }
+            }
+
+            if (points.length > 1) {
+                ctx.strokeStyle = '#58a6ff';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 4]);
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = '#00f3ff';
+                ctx.beginPath();
+                ctx.arc(points[points.length-1].x, points[points.length-1].y, 5, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let r = 0; r < map.length; r++) {
+                for (let c = 0; c < map[0].length; c++) {
+                    if (map[r][c] === 1) {
+                        ctx.fillStyle = '#21262d';
+                        ctx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.strokeStyle = '#30363d';
+                        ctx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    } else if (map[r][c] === 2) {
+                        ctx.fillStyle = '#b48629';
+                        ctx.fillRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                        ctx.strokeStyle = '#7c5912';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(c*TILE_SIZE+4, r*TILE_SIZE+4); ctx.lineTo(c*TILE_SIZE+30, r*TILE_SIZE+34);
+                        ctx.stroke();
+                    } else if (map[r][c] === 3) {
+                        ctx.fillStyle = '#8b949e';
+                        ctx.beginPath();
+                        for(let i=0; i<4; i++) {
+                            let startX = c * TILE_SIZE + i*10;
+                            ctx.moveTo(startX, (r+1)*TILE_SIZE);
+                            ctx.lineTo(startX + 5, r*TILE_SIZE + 15);
+                            ctx.lineTo(startX + 10, (r+1)*TILE_SIZE);
+                        }
+                        ctx.fill();
+                    }
+                }
+            }
+
+            ctx.fillStyle = blocksBrokenCount >= 1 ? '#58a6ff' : '#30363d';
+            ctx.fillRect(700, 70, 30, 50);
+
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 4, 4);
+            });
+
+            enemies.forEach(enemy => {
+                ctx.fillStyle = enemy.color;
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                ctx.fillStyle = '#fff';
+                let eyeOffset = enemy.vx > 0 ? 16 : 4;
+                ctx.fillRect(enemy.x + eyeOffset, enemy.y + 6, 4, 4);
+
+                if (isPaused) {
+                    ctx.strokeStyle = 'rgba(255, 68, 68, 0.15)';
+                    ctx.beginPath();
+                    ctx.arc(enemy.x + enemy.width/2, enemy.y + enemy.height/2, enemy.radius, 0, Math.PI*2);
+                    ctx.stroke();
+                }
+            });
+
+            if (hero.invulnerableTimer % 4 < 2) {
+                if (hero.isDashing) {
+                    ctx.fillStyle = 'rgba(0, 243, 255, 0.3)';
+                    ctx.fillRect(hero.x - hero.facingDir*12, hero.y, hero.width, hero.height);
+                }
+
+                ctx.fillStyle = (!currentCommand && commandQueue.length === 0 && !isPaused) ? '#e29746' : '#f0f6fc';
+                ctx.fillRect(hero.x, hero.y, hero.width, hero.height);
+
+                ctx.fillStyle = '#8b949e';
+                let cloakX = hero.facingDir === 1 ? hero.x : hero.x + hero.width - 6;
+                ctx.fillRect(cloakX, hero.y + 8, 6, hero.height - 8);
+                ctx.fillStyle = '#0d1117';
+                let eyeX = hero.facingDir === 1 ? (hero.x + 12) : (hero.x + 4);
+                ctx.fillRect(eyeX, hero.y + 8, 4, 6);
+
+                if (hero.attackTimer > 0) {
+                    ctx.strokeStyle = '#00f3ff';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    if (hero.facingDir === 1) ctx.arc(hero.x + hero.width, hero.y + hero.height/2, 25, -Math.PI/3, Math.PI/3);
+                    else ctx.arc(hero.x, hero.y + hero.height/2, 25, Math.PI - Math.PI/3, Math.PI + Math.PI/3);
+                    ctx.stroke();
+                }
+            }
+
+            if (isPaused) {
+                drawPredictiveTrajectory();
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        resetGame();
+        gameLoop();
+    </script>
+</body>
+</html>

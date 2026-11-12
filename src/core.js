@@ -53,6 +53,21 @@ export function validateWorld(world, physics) {
     }
     if (!world.regions[room.regionId])
       errors.push(`${room.roomId}: unknown region`);
+    if (room.survival !== undefined) {
+      const s = room.survival;
+      if (
+        !s ||
+        !Number.isFinite(s.darkness) ||
+        s.darkness < 0 ||
+        s.darkness > 1 ||
+        !Number.isFinite(s.grimeRate) ||
+        s.grimeRate < 0 ||
+        !Number.isFinite(s.wetBelowY) ||
+        s.wetBelowY < 0 ||
+        s.wetBelowY > room.worldBounds?.h
+      )
+        errors.push(`${room.roomId}: invalid survival profile`);
+    }
     const finiteRect = (r) =>
       r && [r.x, r.y, r.w, r.h].every(Number.isFinite) && r.w > 0 && r.h > 0;
     if (
@@ -93,6 +108,15 @@ export function validateWorld(world, physics) {
       ...room.triggers,
     ])
       unique(item.id, room.roomId);
+    for (const e of room.entities) {
+      if (
+        e.type === "care" &&
+        (!["food", "coffee", "donate"].includes(e.action) ||
+          (e.action === "donate" &&
+            (typeof e.flag !== "string" || !e.flag.startsWith("story."))))
+      )
+        errors.push(`${e.id}: invalid care station`);
+    }
     for (const exit of room.exits) {
       unique(exit.exitId, room.roomId);
       const target = rooms.get(exit.targetRoomId);
@@ -234,6 +258,84 @@ export function validateWorld(world, physics) {
     }
   }
   if (!rooms.has(world.startRoomId)) errors.push("Missing start room");
+  if (world.actOne !== undefined) {
+    const plan = world.actOne,
+      targets = plan?.regionalTargets;
+    if (
+      !Number.isInteger(plan?.targetRooms) ||
+      plan.targetRooms < world.rooms.length ||
+      !targets ||
+      Object.keys(targets).length !== Object.keys(world.regions).length ||
+      Object.entries(world.regions).some(
+        ([id]) =>
+          !Number.isInteger(targets?.[id]) ||
+          targets[id] < world.rooms.filter((r) => r.regionId === id).length,
+      ) ||
+      Object.values(targets || {}).reduce((sum, n) => sum + n, 0) !==
+        plan?.targetRooms
+    )
+      errors.push("actOne: invalid regional room targets");
+    if (
+      !Array.isArray(plan?.baseRoomIds) ||
+      !plan.baseRoomIds.length ||
+      new Set(plan.baseRoomIds).size !== plan.baseRoomIds.length ||
+      plan.baseRoomIds.some((id) => !rooms.has(id))
+    )
+      errors.push("actOne: invalid baseline room IDs");
+  }
+  if (world.guideCaches !== undefined && !Array.isArray(world.guideCaches))
+    errors.push("guideCaches: expected an array");
+  for (const cache of Array.isArray(world.guideCaches)
+    ? world.guideCaches
+    : []) {
+    if (!cache || typeof cache !== "object") {
+      errors.push("guide cache: invalid record");
+      continue;
+    }
+    unique(cache.id, "guide cache");
+    const room = rooms.get(cache.roomId);
+    if (!room) {
+      errors.push(`${cache.id}: missing cache room`);
+      continue;
+    }
+    const contents = Object.entries(cache.contents || {});
+    if (
+      !contents.length ||
+      contents.some(
+        ([key, n]) =>
+          !["rations", "beans"].includes(key) ||
+          !Number.isInteger(n) ||
+          n < 1 ||
+          n > 5,
+      )
+    )
+      errors.push(`${cache.id}: invalid cache contents`);
+    if (
+      typeof cache.title !== "string" ||
+      ![cache.x, cache.y].every(Number.isFinite) ||
+      cache.x < 16 ||
+      cache.x > room.worldBounds.w - 16 ||
+      cache.y < 28 ||
+      cache.y > room.worldBounds.h
+    )
+      errors.push(`${cache.id}: invalid cache position`);
+    const body = { x: cache.x - 14, y: cache.y - 28, w: 28, h: 28 };
+    if (
+      room.collisionLayers.some(
+        (s) => !s.requires && s.kind !== "oneWay" && overlaps(body, s),
+      ) ||
+      !room.collisionLayers.some(
+        (s) =>
+          !s.requires &&
+          !s.motion &&
+          s.kind !== "hazard" &&
+          Math.abs(s.y - cache.y) < 0.1 &&
+          cache.x - 14 >= s.x &&
+          cache.x + 14 <= s.x + s.w,
+      )
+    )
+      errors.push(`${cache.id}: cache needs a clear static support`);
+  }
   return errors;
 }
 

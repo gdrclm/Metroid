@@ -28,6 +28,17 @@ export function createEnemy(entity) {
 }
 export function updateEnemy(e, player, dt, surfaces, game) {
   if (e.hp <= 0) return;
+  if (e.kneelCooldown > 0) e.kneelCooldown = Math.max(0, e.kneelCooldown - dt);
+  if (e.kneelTime > 0) {
+    e.kneelTime = Math.max(0, e.kneelTime - dt);
+    if (e.kneelTime === 0 && e.standingHeight) {
+      e.y -= e.standingHeight - e.h;
+      e.h = e.standingHeight;
+      e.standingHeight = null;
+      e.legHits = 0;
+      e.kneelCooldown = 4;
+    }
+  }
   e.flash = Math.max(0, e.flash - dt);
   e.timer -= dt;
   const cx = e.x + e.w / 2,

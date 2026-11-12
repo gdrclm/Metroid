@@ -4,12 +4,12 @@ import { world, config, fixture, controls, positionAt } from "./helpers.js";
 import { validateWorld, conditionMet } from "../src/core.js";
 import { maxHealth, fragmentCount } from "../src/save.js";
 
-test("all 22 rooms conform to the contract; stable IDs, reciprocal exits and safe spawns", () => {
-  assert.equal(world.rooms.length, 22);
+test("all 43 rooms conform to the contract; stable IDs, reciprocal exits and safe spawns", () => {
+  assert.equal(world.rooms.length, 43);
   assert.deepEqual(validateWorld(world, config), []);
   assert.equal(
     world.rooms.reduce((n, r) => n + r.exits.length, 0),
-    50,
+    110,
   );
   assert.equal(
     world.rooms
@@ -70,7 +70,7 @@ test("entire graph can be completed without acquiring an ability behind its own 
         }
     }
   }
-  assert.equal(visited.size, 22);
+  assert.equal(visited.size, 43);
   assert.ok(flags.includes("slice.overlook_seen"));
   // With both shortcuts, the late secret is reachable from the tower and back.
   function reachable(start, end) {
