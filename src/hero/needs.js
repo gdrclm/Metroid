@@ -1,5 +1,6 @@
 import { clamp } from "../core.js";
 import { newStoryState, normalizeStoryState } from "../story.js";
+import { newAutonomyState, normalizeAutonomyState } from "./brain-state.js";
 
 const bounded = (value, fallback, max = 100) =>
   Number.isFinite(value) ? clamp(value, 0, max) : fallback;
@@ -17,6 +18,7 @@ export function newGuideState() {
     collectedSupplies: [],
     deliveries: [],
     memory: {},
+    autonomy: newAutonomyState(),
     completedCommands: 0,
     cleanProtection: 0,
     story: newStoryState(),
@@ -26,6 +28,7 @@ export function normalizeGuideState(raw) {
   const state = newGuideState();
   if (!raw || typeof raw !== "object") return state;
   state.enabled = raw.enabled === true;
+  state.autonomy = normalizeAutonomyState(raw.autonomy);
   state.story = normalizeStoryState(raw.story);
   state.volition = bounded(raw.volition, 6, 25);
   state.focus = bounded(raw.focus, 100);

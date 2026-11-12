@@ -68,8 +68,12 @@ export class Commands {
       status: "queued",
       timeout: options.timeout || (type === "move" ? 12 : 5),
     };
-    if (type === "move")
+    if (type === "move") {
       command.x = clamp(options.x, 12, g.room.worldBounds.w - 12);
+      command.stuckFor = 0;
+      delete command.lastX;
+      delete command.lastY;
+    }
     if (type === "guard" || type === "wait")
       command.duration = clamp(Number(options.duration) || 1, 0.15, 5);
     if (
@@ -120,6 +124,7 @@ export class Commands {
     this.items.shift();
     this.revision++;
     this.result = { id: c.id, type: c.type, status, reason };
+    d.brain?.commandEnded(c, status, reason);
     if (status === "failed") {
       this.items = [];
       d.message = reason;
@@ -156,7 +161,7 @@ export class Commands {
       p = g.player,
       c = this.current;
     p.guard = false;
-    if (!c) return this.idle();
+    if (!c) return this.idle(dt);
     if (c.generation !== d.generation)
       return this.fail("Комната изменилась: план очищен");
     if (p.hurtTime > 0 || d.needs.microSleep > 0) {
@@ -176,6 +181,33 @@ export class Commands {
         this.finish();
         return heroInput();
       }
+      const direction = Math.sign(dx);
+      const obstacle = g.surfaces.some(
+        (s) =>
+          s.kind !== "oneWay" &&
+          s.kind !== "hazard" &&
+          p.y + p.h > s.y + 2 &&
+          p.y < s.y + s.h - 2 &&
+          (direction > 0
+            ? Math.abs(s.x - p.x - p.w) < 1.5
+            : Math.abs(p.x - s.x - s.w) < 1.5),
+      );
+      const boundary =
+        direction > 0 ? p.x + p.w >= g.room.worldBounds.w - 0.1 : p.x <= 0.1;
+      const still =
+        Number.isFinite(c.lastX) &&
+        Math.abs(p.x - c.lastX) < 0.001 &&
+        Math.abs(p.y - c.lastY) < 0.001;
+      c.stuckFor =
+        (obstacle || boundary) && p.grounded && still && Math.abs(p.vx) < 1
+          ? (c.stuckFor || 0) + dt
+          : 0;
+      c.lastX = p.x;
+      c.lastY = p.y;
+      if (c.stuckFor >= 0.16)
+        return this.fail(
+          "Перед героем препятствие: действие очищено. Нужен новый путь",
+        );
       const stopping = (p.vx * p.vx) / (2 * g.config.braking) + 3;
       if (
         !edge &&
@@ -326,12 +358,7 @@ export class Commands {
     }
     return heroInput();
   }
-  idle() {
-    const d = this.director,
-      g = d.game,
-      lure = d.tools.lure;
-    if (lure && Math.abs(lure.x - g.player.x) > 18)
-      return heroInput([lure.x > g.player.x ? "right" : "left"]);
-    return heroInput();
+  idle(dt) {
+    return this.director.brain.idle(dt);
   }
 }

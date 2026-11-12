@@ -486,6 +486,11 @@
   text-align: right;
   color: #9acaad;
 }
+#guide-brain {
+  display: block;
+  color: #9baea2;
+  margin-top: 2px;
+}
 #guide-oracle[data-risk="1"] {
   color: #dfb86f;
 }

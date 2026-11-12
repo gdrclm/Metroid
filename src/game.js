@@ -264,6 +264,8 @@ export class Game {
     const target = this.nearby;
     if (!target || !accessibleInteraction(this.player, target, this.surfaces))
       return;
+    if (this.guide.enabled)
+      this.guide.brain.holdPosition("Остаётся у выбранного предмета");
     if (target.exitId) {
       this.tryExit(target);
       return;

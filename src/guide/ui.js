@@ -66,7 +66,7 @@ export class GuideUI {
       )
         .map(([key, label]) => `<button data-tool="${key}">${label}</button>`)
         .join("")}<button id="guide-clear">Очистить план</button></div>
-      <div class="guide-message"><span id="guide-message" role="status"></span><span id="guide-oracle"></span></div>`;
+      <div class="guide-message"><span><span id="guide-message" role="status"></span><span id="guide-brain"></span></span><span id="guide-oracle"></span></div>`;
     document.getElementById("app").append(dock);
     this.dock = dock;
     const jumpUp = document.createElement("button");
@@ -379,6 +379,8 @@ export class GuideUI {
     $("guide-message").textContent = this.tool
       ? "Разместите: " + TOOLS[this.tool]
       : d.message;
+    const brain = d.brain.describe();
+    $("guide-brain").textContent = `Герой: ${brain.label} · ${brain.reason}`;
     this.oracle.update();
     const f = d.forecast?.queue;
     const proposal = d.forecast?.recommendation;

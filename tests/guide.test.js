@@ -83,7 +83,7 @@ test("Act I ignores direct movement, caps the plan at three, and cancellation pr
   }
 });
 
-test("blocked movement times out and clears dependent commands; pause freezes needs, TTL and actors", () => {
+test("blocked movement clears dependent commands; pause freezes needs, TTL, brain and actors", () => {
   const { game: g } = guideArena();
   g.room.collisionLayers.push({
     id: "wall",
@@ -292,6 +292,10 @@ test("platforms expire at three seconds; barricades stop shots and bodies until 
     tools.projectileImpact({ x: 290, y: 570, w: 12, h: 16, life: 1 }),
     false,
   );
+  run(g, 0.5);
+  assert.equal(g.guide.commands.items.length, 0);
+  assert.ok(g.player.x + g.player.w <= 278.01);
+  g.guide.commands.enqueue("move", { x: 500 });
   run(g, 0.5);
   assert.ok(g.player.x > 300);
 });

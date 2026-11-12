@@ -613,6 +613,7 @@ async function boot() {
           {
             room: game.room.roomId,
             state: game.player.state,
+            heroBrain: game.guide.enabled ? game.guide.brain.describe() : null,
             x: Math.round(game.player.x),
             y: Math.round(game.player.y),
             velocity: [Math.round(game.player.vx), Math.round(game.player.vy)],

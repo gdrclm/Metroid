@@ -4,11 +4,13 @@ import { Needs, newGuideState } from "./needs.js";
 import { Interventions } from "../guide/interventions.js";
 import { ActOneStory } from "../story.js";
 import { Supplies } from "../guide/supplies.js";
+import { HeroBrain } from "./brain.js";
 
 export class HeroDirector {
   constructor(game) {
     this.game = game;
     this.commands = new Commands(this);
+    this.brain = new HeroBrain(this);
     this.needs = new Needs(this);
     this.tools = new Interventions(this);
     this.story = new ActOneStory(this);
@@ -39,6 +41,7 @@ export class HeroDirector {
     this.forecast = null;
     const g = this.game,
       buff = this.state.caffeine;
+    this.brain.roomEntered();
     if (this.safehouseLatch?.roomId !== g.room.roomId)
       this.safehouseLatch = null;
     if (buff?.state === "active" && buff.roomId !== g.room.roomId)
@@ -57,6 +60,7 @@ export class HeroDirector {
     if (this.game.mode !== "playing") return heroInput();
     this.tools.update(dt);
     if (this.game.transition || this.game.hitStop > 0) return heroInput();
+    this.brain.observe(dt);
     for (const e of this.game.enemies)
       if (
         e.hp > 0 &&
@@ -69,7 +73,10 @@ export class HeroDirector {
           (this.state.memory[key] || 0) + dt,
         );
       }
-    if (this.needs.microSleep > 0) return heroInput();
+    if (this.needs.microSleep > 0) {
+      this.brain.setIntent("recover", "Сонливость: удерживает равновесие");
+      return heroInput();
+    }
     return this.commands.step(dt);
   }
   afterHurt(amount) {
@@ -107,6 +114,7 @@ export class HeroDirector {
     if (enemy.hp <= 0) this.needs.slain();
   }
   openSafehouse(target) {
+    this.brain.holdPosition("Остаётся у места отдыха");
     this.safehouseLatch = { roomId: this.game.room.roomId, id: target.id };
     this.safehouseId = target.id;
     this.commands.clear();
@@ -196,6 +204,7 @@ export class HeroDirector {
       attackTarget: this.attackTarget,
       safehouseId: this.safehouseId,
       safehouseLatch: this.safehouseLatch,
+      brain: this.brain.snapshot(),
       commands: {
         items: this.commands.items,
         serial: this.commands.serial,
@@ -227,6 +236,7 @@ export class HeroDirector {
       safehouseLatch: snapshot.safehouseLatch || null,
     });
     Object.assign(this.commands, snapshot.commands);
+    this.brain.restore(snapshot.brain);
     Object.assign(this.tools, snapshot.tools);
     Object.assign(this.needs, snapshot.needs);
   }

@@ -22,6 +22,7 @@
     "test:atmosphere": "python tools/atmosphere_smoke.py",
     "test:audio": "python tools/music_smoke.py",
     "test:guide": "python tools/guide_smoke.py",
+    "test:hero-brain": "python tools/hero_brain_smoke.py",
     "test:guide-journey": "node tools/guide-continuous.mjs",
     "test:guide-expanded": "node tools/guide-continuous.mjs --expanded",
     "test:pier-browser": "python tools/pier_expansion_smoke.py",
